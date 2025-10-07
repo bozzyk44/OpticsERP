@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for:*)",
+      "Bash(do sed -i 's/ITigris/OpticsERP/g' \"$file\")",
+      "Bash(done)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

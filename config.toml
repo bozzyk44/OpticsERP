@@ -1,0 +1,195 @@
+# Конфигурация проекта «Оптическая сеть (MVP, модульный монолит)»
+# Формат: TOML. Ключи и секции можно переопределять через переменные окружения (см. README).
+
+[app]
+name = "optics-mono-mvp"
+env = "development"                # development|staging|production
+timezone = "Europe/Moscow"         # или Europe/Helsinki при необходимости
+base_url = "https://example.com"   # публичный URL фронтенда
+admin_email = "admin@example.com"
+
+[http]
+bind = "0.0.0.0"
+port = 8080
+cors_origins = ["*"]               # для production сузить список
+request_body_limit_mb = 10
+rate_limit_rps = 50                # глобальный, можно переопределить на уровне маршрутов
+
+[secrets]
+# значения берутся из переменных окружения в проде; здесь — заглушки для dev
+jwt_secret = "CHANGE_ME_DEV_ONLY"
+csrf_secret = "CHANGE_ME_DEV_ONLY"
+encryption_key = "CHANGE_ME_32_BYTES_KEY_CHANGE_ME!!"  # 32 байта для AES-256-GCM
+
+[auth]
+jwt_ttl_minutes = 480
+password_min_length = 10
+password_require_symbols = true
+allow_signup = false               # регистрацию пользователей делает админ
+session_cookie_secure = true
+session_cookie_samesite = "Lax"
+
+[db.postgres]
+host = "postgres"
+port = 5432
+database = "optics"
+user = "optics"
+password = "optics_dev"
+sslmode = "disable"                # в проде: require/verify-full
+pool_min = 2
+pool_max = 20
+statement_timeout_ms = 30000
+
+[cache.redis]
+host = "redis"
+port = 6379
+db = 0
+password = ""
+
+[queue.rq]
+worker_concurrency = 2
+scheduled_jobs_poll_seconds = 10
+
+[storage]
+# Локально — файловая система; nightly backup в MinIO (S3 совместимое)
+media_root = "/var/app/media"
+static_root = "/var/app/static"
+
+[storage.s3]
+enabled = true
+endpoint_url = "http://minio:9000"
+bucket = "optics-backups"
+access_key = "minio_admin"
+secret_key = "minio_admin_secret"
+use_ssl = false
+
+[email.smtp]
+enabled = false
+host = "smtp.example.com"
+port = 587
+user = ""
+password = ""
+from_name = "Optics"
+from_email = "noreply@example.com"
+tls = true
+
+[sms]
+# Подключается при необходимости (через поставщика SMS). Для dev — лог в консоль.
+provider = "console"               # console|some_vendor
+sender = "OPTICS"
+
+[logging]
+level = "INFO"                     # DEBUG|INFO|WARN|ERROR
+json = false
+# пути логов в контейнере — перенаправляются в stdout/stderr
+
+[monitoring.sentry]
+dsn = ""
+traces_sample_rate = 0.2
+
+[monitoring.prometheus]
+enabled = true
+metrics_path = "/metrics"
+
+[features]
+enable_loyalty = true
+enable_virtual_supplier_catalogs = true
+enable_excel_import = true
+enable_accounting_export = true
+enable_pos_cash_accounts = true    # контроль наличных по точкам
+enable_markdown_docs = true
+
+# --- Бизнес-настройки ---
+
+[cash]
+# Валюта и правила округления
+currency = "RUB"
+price_rounding = 0.01
+
+[cash.accounts_defaults]
+# Автоматически создаваемые кассы/счета при заведении точки
+create_default_store_cash_account = true
+create_default_collection_account = true
+
+[pricing]
+tax_inclusive = false              # цены хранятся без НДС
+default_vat_rate = 0.20
+allow_per_customer_discounts = true
+
+[loyalty]
+enabled = true
+accrual_rate = 0.02                # 2% от чека в баллы
+redemption_rate = 1.0              # 1 балл = 1 рубль
+max_redeem_percent = 0.3           # не более 30% чека можно закрыть баллами
+
+[accounting_export]
+enabled = true
+format = "CSV"                     # CSV|XML|JSON
+target = "1C"                      # подсказка мэпперам
+export_dir = "/var/app/exports"
+schedule_cron = "0 2 * * *"        # выгрузка каждую ночь
+
+[pos_agent]
+# Локальный агент на кассовом ПК (54-ФЗ)
+protocol = "http"
+host = "127.0.0.1"
+port = 49200
+timeout_ms = 20000
+ffd = "1.2"                        # формат фискальных документов
+require_marking_codes = true       # запрет закрытия чека без КИ для маркированных товаров
+allow_offline_mode = true          # буферизация в агенте
+offline_max_days = 30
+
+[reports]
+# Список витрин/отчётов, которые активны в системе (MVP)
+enabled = [
+  "sales_by_store",
+  "gp_by_category",
+  "mto_funnel",
+  "supplier_sla",
+  "stock_and_deficit",
+  "mcl_repeat_sales",
+  "gp_overview",
+  "pnl_by_store"
+]
+
+[suppliers]
+# Унифицированные настройки и таймауты для коннекторов
+default_request_timeout_ms = 15000
+default_retry_backoff_ms = 2000
+max_retries = 5
+
+[suppliers.rest_connector_A]
+type = "REST"
+base_url = "https://supplier-a.example.com/api"
+api_key = "CHANGE_ME"
+catalog_sync_cron = "*/30 * * * *"          # каждые 30 минут
+orders_endpoint = "/orders"
+catalog_endpoint = "/catalog"
+stock_endpoint = "/stock"
+asn_webhook_secret = "CHANGE_ME"
+
+[suppliers.file_connector_B]
+type = "SFTP"
+host = "sftp.supplier-b.example.com"
+port = 22
+username = "user"
+password = "pass"
+remote_inbox = "/inbox"                    # куда кладём заявки
+remote_outbox = "/outbox"                  # откуда читаем статусы/ASN
+catalog_dir = "/catalogs"                  # каталоги/прайсы
+supports_xlsx = true                       # импорт Excel (XLSX)
+local_sync_dir = "/var/app/integration/supplier_b"
+poll_cron = "*/15 * * * *"                 # опрос каждые 15 минут
+
+[webhooks]
+# Секреты в env; здесь включаем/отключаем обработчики
+suppliers_status = true
+customer_notifications = true
+
+[security]
+# Ограничения для загрузок/импорта
+max_excel_size_mb = 25
+allowed_excel_mime = ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]
+max_csv_size_mb = 50
+allowed_csv_mime = ["text/csv","application/csv"]
