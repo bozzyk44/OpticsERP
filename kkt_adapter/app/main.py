@@ -29,11 +29,9 @@ from typing import Optional
 # Import buffer operations
 try:
     from .buffer import (
-        insert_receipt,
         get_buffer_status,
         init_buffer_db,
         close_buffer_db,
-        update_receipt_fiscal_doc,
         BufferFullError
     )
     from .models import (
@@ -44,15 +42,14 @@ try:
     )
     from .circuit_breaker import get_circuit_breaker
     from .sync_worker import start_sync_worker, stop_sync_worker, trigger_manual_sync, get_worker_status
-    from .kkt_driver import print_receipt, get_kkt_status
+    from .kkt_driver import get_kkt_status
+    from .fiscal import process_fiscal_receipt  # OPTERP-18: Use fiscal module
 except ImportError:
     # Handle direct execution
     from buffer import (
-        insert_receipt,
         get_buffer_status,
         init_buffer_db,
         close_buffer_db,
-        update_receipt_fiscal_doc,
         BufferFullError
     )
     from models import (
@@ -63,7 +60,8 @@ except ImportError:
     )
     from circuit_breaker import get_circuit_breaker
     from sync_worker import start_sync_worker, stop_sync_worker, trigger_manual_sync, get_worker_status
-    from kkt_driver import print_receipt, get_kkt_status
+    from kkt_driver import get_kkt_status
+    from fiscal import process_fiscal_receipt  # OPTERP-18: Use fiscal module
 
 
 # ====================
@@ -225,7 +223,7 @@ async def create_receipt(
     logger.info(f"Creating receipt for POS {request.pos_id}, idempotency_key={idempotency_key}")
 
     try:
-        # Convert Pydantic model to dict for buffer.insert_receipt()
+        # Convert Pydantic model to dict
         # Use model_dump() instead of deprecated dict()
         # mode='json' ensures Decimal is converted to float for JSON serialization
         receipt_data = {
@@ -238,38 +236,26 @@ async def create_receipt(
             }
         }
 
-        # Phase 1: Insert into buffer (local)
-        receipt_id = insert_receipt(receipt_data)
-        logger.info(f"✅ Receipt buffered: {receipt_id}")
+        # OPTERP-18: Use fiscal module for two-phase processing
+        # Fiscal module handles:
+        # - Phase 1: buffer + print (always succeeds, offline-first)
+        # - Phase 2: async sync (handled by worker)
+        result = process_fiscal_receipt(receipt_data)
 
-        # Print on KKT (mock driver for POC)
-        try:
-            fiscal_doc = print_receipt(receipt_data)
-            logger.info(f"✅ Receipt printed: {receipt_id}, fiscal_doc_number={fiscal_doc['fiscal_doc_number']}")
+        # Map FiscalResult to CreateReceiptResponse
+        if result.status == 'printed':
+            message = "Receipt printed successfully"
+        elif result.status == 'buffered':
+            message = f"Receipt buffered, print failed: {result.error}"
+        else:
+            message = f"Receipt processing failed: {result.error}"
 
-            # Update receipt with fiscal document data
-            update_receipt_fiscal_doc(receipt_id, fiscal_doc)
-
-            # Phase 2: Sync worker will automatically pick up pending receipt
-            # No manual trigger needed - decoupled for reliability (OPTERP-21)
-
-            return CreateReceiptResponse(
-                status='printed',
-                receipt_id=receipt_id,
-                fiscal_doc=fiscal_doc,
-                message="Receipt printed successfully"
-            )
-
-        except Exception as print_error:
-            # If printing fails, receipt is still in buffer (offline-first!)
-            logger.error(f"⚠️ Print failed but receipt buffered: {receipt_id}, error={print_error}")
-
-            return CreateReceiptResponse(
-                status='buffered',
-                receipt_id=receipt_id,
-                fiscal_doc=None,
-                message=f"Receipt buffered, print failed: {str(print_error)}"
-            )
+        return CreateReceiptResponse(
+            status=result.status,
+            receipt_id=result.receipt_id,
+            fiscal_doc=result.fiscal_doc,
+            message=message
+        )
 
     except BufferFullError as e:
         logger.error(f"❌ Buffer full: {e}")
