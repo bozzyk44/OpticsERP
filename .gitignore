@@ -20,9 +20,12 @@ htmlcov/
 
 # Odoo
 odoo.conf
-*.log
 filestore/
 sessions/
+
+# Logs (except test logs structure)
+*.log
+!tests/logs/**/.gitkeep
 
 # SQLite
 *.db

@@ -79,6 +79,197 @@
 - Добавлять заголовок с автором, датой обновления и назначением файла
 - Использовать Prettify для форматирования
 
+## Логирование тестов (ОБЯЗАТЕЛЬНО)
+
+### Правила сохранения логов тестов:
+- **КРИТИЧНО:** ВСЕГДА сохранять логи выполнения тестов в `/tests/logs/`
+- Логи сохраняются для КАЖДОГО запуска тестов (unit, integration, smoke, POC, UAT)
+- Логи необходимы для отладки, воспроизведения проблем и аудита
+
+### Структура директории логов:
+```
+tests/
+├── logs/
+│   ├── unit/
+│   │   ├── 20251008_OPTERP-3_hlc_tests.log
+│   │   └── 20251008_OPTERP-5_buffer_tests.log
+│   ├── integration/
+│   ├── smoke/
+│   ├── poc/
+│   └── uat/
+```
+
+### Формат имени файла лога:
+```
+tests/logs/{test_type}/YYYYMMDD_{TASK_ID}_{description}.log
+```
+
+**Примеры:**
+- `tests/logs/unit/20251008_OPTERP-3_hlc_tests.log`
+- `tests/logs/unit/20251008_OPTERP-5_buffer_crud_tests.log`
+- `tests/logs/smoke/20251008_buffer_smoke_test.log`
+- `tests/logs/poc/20251015_POC-4_offline_8h_sync.log`
+
+### Команды для сохранения логов:
+
+**Unit tests:**
+```bash
+# Создать директорию если не существует
+mkdir -p tests/logs/unit
+
+# Запустить тесты с сохранением лога
+pytest tests/unit/test_hlc.py -v --tb=short 2>&1 | tee tests/logs/unit/$(date +%Y%m%d)_OPTERP-3_hlc_tests.log
+
+# С coverage
+pytest tests/unit/test_buffer.py -v --cov=kkt_adapter.app.buffer --cov-report=term-missing 2>&1 | tee tests/logs/unit/$(date +%Y%m%d)_OPTERP-5_buffer_tests.log
+```
+
+**Integration tests:**
+```bash
+mkdir -p tests/logs/integration
+pytest tests/integration/ -v 2>&1 | tee tests/logs/integration/$(date +%Y%m%d)_integration_tests.log
+```
+
+**Smoke tests:**
+```bash
+mkdir -p tests/logs/smoke
+python test_buffer_smoke.py 2>&1 | tee tests/logs/smoke/$(date +%Y%m%d)_buffer_smoke.log
+```
+
+### Содержание лога должно включать:
+
+1. **Заголовок:**
+   - Дата и время запуска
+   - Task ID (JIRA)
+   - Тип тестов (unit/integration/smoke/etc)
+   - Окружение (Python version, OS, dependencies)
+
+2. **Вывод pytest/тестов:**
+   - Полный вывод с `-v` (verbose)
+   - Traceback для failed tests
+   - Coverage report (если применимо)
+
+3. **Итоговая статистика:**
+   - Количество тестов (passed/failed/skipped)
+   - Coverage percentage
+   - Время выполнения
+
+### Пример структуры лога:
+
+```
+=== Test Log ===
+Date: 2025-10-08 15:30:00
+Task: OPTERP-3 (Create HLC Unit Tests)
+Type: Unit Tests
+File: tests/unit/test_hlc.py
+Python: 3.11.7
+OS: Windows 11
+
+Command:
+pytest tests/unit/test_hlc.py -v --cov=kkt_adapter.app.hlc
+
+Output:
+============================= test session starts =============================
+platform win32 -- Python 3.11.7, pytest-8.1.1, pluggy-1.4.0
+...
+[полный вывод pytest]
+...
+
+Coverage:
+Name                     Stmts   Miss  Cover   Missing
+------------------------------------------------------
+kkt_adapter/app/hlc.py      57      1    98%   175
+------------------------------------------------------
+
+Summary:
+✅ 26 tests passed
+✅ 0 tests failed
+✅ Coverage: 98%
+✅ Duration: 1.29s
+
+Result: SUCCESS
+```
+
+### Когда сохранять логи:
+
+| Событие | Действие |
+|---------|----------|
+| **Запуск unit tests** | ВСЕГДА сохранять лог в `tests/logs/unit/` |
+| **Запуск integration tests** | ВСЕГДА сохранять лог в `tests/logs/integration/` |
+| **Smoke test** | ВСЕГДА сохранять лог в `tests/logs/smoke/` |
+| **POC тесты (POC-1 до POC-5)** | ВСЕГДА сохранять лог в `tests/logs/poc/` |
+| **UAT тесты** | ВСЕГДА сохранять лог в `tests/logs/uat/` |
+| **Load tests** | ВСЕГДА сохранять лог в `tests/logs/load/` |
+| **Failed test** | Дополнительно создать `{taskid}_FAILED.log` с полным traceback |
+
+### Обработка failed tests:
+
+**Если тест упал (FAILED):**
+1. Сохранить лог с суффиксом `_FAILED.log`
+2. Сохранить полный traceback
+3. Записать в `claude_history/` описание проблемы
+4. НЕ делать commit до исправления
+
+**Пример:**
+```bash
+# Тест упал
+pytest tests/unit/test_buffer.py -v 2>&1 | tee tests/logs/unit/20251008_OPTERP-5_buffer_tests_FAILED.log
+
+# Записать в историю
+cat >> claude_history/session_20251008.md << EOF
+
+## Test Failure: OPTERP-5
+- Test: test_buffer_capacity_check
+- Error: AssertionError: Expected BufferFullError
+- File: tests/unit/test_buffer.py:123
+- Action: Fix capacity check logic in buffer.py:215
+EOF
+```
+
+### Автоматизация логирования:
+
+**Добавить в Makefile:**
+```makefile
+# Run unit tests with logging
+test-unit:
+	@mkdir -p tests/logs/unit
+	pytest tests/unit/ -v --cov --cov-report=term-missing 2>&1 | tee tests/logs/unit/$$(date +%Y%m%d)_unit_tests.log
+
+# Run all tests with logging
+test-all:
+	@mkdir -p tests/logs/{unit,integration,smoke}
+	pytest tests/ -v --cov --cov-report=term-missing 2>&1 | tee tests/logs/$$(date +%Y%m%d)_all_tests.log
+```
+
+### Git и логи:
+
+**Добавить в .gitignore:**
+```
+# Test logs (keep structure, ignore content)
+tests/logs/**/*.log
+!tests/logs/**/.gitkeep
+```
+
+**Создать .gitkeep файлы:**
+```bash
+mkdir -p tests/logs/{unit,integration,smoke,poc,uat,load}
+touch tests/logs/{unit,integration,smoke,poc,uat,load}/.gitkeep
+```
+
+### Checklist перед commit:
+
+- [ ] Все тесты пройдены (0 FAILED)
+- [ ] Логи сохранены в `tests/logs/{test_type}/`
+- [ ] Coverage ≥95% (для unit tests)
+- [ ] Нет FAILED логов в `tests/logs/`
+- [ ] Session history обновлена (если были проблемы)
+
+**ВАЖНО:** Логи тестов — это часть документации разработки. Они помогают:
+1. Воспроизвести проблемы
+2. Отследить регрессии
+3. Провести аудит качества
+4. Восстановить контекст после перерывов
+
 # CLAUDE.md — План имплементации OpticsERP (Offline-First POS)
 
 > **Назначение:** Единый план для разработки системы на базе Odoo Community 17 с поддержкой offline-first архитектуры для сети оптик.
