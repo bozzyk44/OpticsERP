@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_connector_import_profile_user,connector.import.profile.user,model_connector_import_profile,base.group_user,1,0,0,0
+access_connector_import_profile_manager,connector.import.profile.manager,model_connector_import_profile,base.group_system,1,1,1,1
+access_connector_import_job_user,connector.import.job.user,model_connector_import_job,base.group_user,1,0,0,0
+access_connector_import_job_manager,connector.import.job.manager,model_connector_import_job,base.group_system,1,1,1,1
+access_connector_import_log_user,connector.import.log.user,model_connector_import_log,base.group_user,1,0,0,0
+access_connector_import_log_manager,connector.import.log.manager,model_connector_import_log,base.group_system,1,1,1,1

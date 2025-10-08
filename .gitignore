@@ -1,3 +1,35 @@
 .vscode/
 .DS_Store
 .*pdf
+
+# Environment variables (sensitive data)
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.coverage
+htmlcov/
+
+# Odoo
+odoo.conf
+*.log
+filestore/
+sessions/
+
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets
+*.key
+*.pem
+credentials.json

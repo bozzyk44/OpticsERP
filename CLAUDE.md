@@ -1,13 +1,79 @@
 # Инструкции для Claude
+
+## Основные правила работы
+
+### Управление задачами
+- **ВАЖНО:** Решать только ОДНУ задачу за запрос
+- Если задача требует нескольких шагов, разбить на подзадачи и решать последовательно
+- После завершения задачи запросить подтверждение перед началом следующей
+
+### Языковые правила
 - Использовать английский язык для комментариев в коде
 - Использовать английский язык для документации API
-- Добавлять диаграммы для сложных концепций
-- Любая документация должна храниться в /docs
 - Использовать русский язык для остальной документации и ответов
+
+### Документация
+- **КРИТИЧНО:** Записывать и хранить ЛЮБУЮ документацию ИСКЛЮЧИТЕЛЬНО в `/docs`
+- Добавлять диаграммы для сложных концепций
+- Запрещено хранить документацию в корне проекта или других каталогах
+
+### Git Workflow (обязательный процесс)
+
+#### Перед началом работы над задачей:
+1. Создать отдельную ветку под задачу:
+   ```bash
+   git checkout -b feature/task-name
+   # Например: feature/week1-buffer-crud
+   ```
+
+#### Планирование перед кодированием:
+2. Создать файл с планом задачи в `/docs/task_plans/`:
+   ```bash
+   docs/task_plans/YYYYMMDD_task_name.md
+   # Например: docs/task_plans/20251008_week1_buffer_crud.md
+   ```
+3. План должен содержать:
+   - Описание задачи
+   - Шаги выполнения (детально)
+   - Список файлов для создания/изменения
+   - Acceptance criteria
+   - Команды для тестирования
+
+#### После завершения задачи:
+4. Сделать commit с описательным сообщением:
+   ```bash
+   git add .
+   git commit -m "feat: краткое описание задачи
+
+   Подробное описание изменений
+
+   🤖 Generated with Claude Code
+
+   Co-Authored-By: Claude <noreply@anthropic.com>"
+   ```
+
+5. Push в remote:
+   ```bash
+   git push -u origin feature/task-name
+   ```
+
+6. Создать Pull Request:
+   ```bash
+   gh pr create --title "feat: название задачи" --body "$(cat <<'EOF'
+   ## Summary
+   - Описание изменений
+
+   ## Test plan
+   - [ ] Команды для проверки
+
+   🤖 Generated with Claude Code
+   EOF
+   )"
+   ```
 
 ## При каждом compact чата:
 - Всегда хранить саммари истории чата и действий
-- Записывать саммари в /claude_history
+- Записывать саммари в `/claude_history`
 
 ## При каждом создании/изменении файла:
 - Добавлять заголовок с автором, датой обновления и назначением файла
@@ -18,6 +84,120 @@
 > **Назначение:** Единый план для разработки системы на базе Odoo Community 17 с поддержкой offline-first архитектуры для сети оптик.
 > **Версия:** 1.0 • Дата: 2025-10-08 • Разработчик: 1 человек
 > **Базовые документы:** docs/1-5 (Постановка задачи, Требования, Архитектура, Дорожная карта, Offline-режим)
+
+---
+
+## 🤖 AI Agent Quick Start
+
+**IMPORTANT:** Read this section first before writing any code.
+
+### Bootstrap Project (First Time Setup)
+
+```bash
+# Clone and navigate to project
+cd OpticsERP
+
+# Bootstrap: create structure, install dependencies, init database
+make bootstrap
+
+# Verify environment (Python 3.11+, Docker, SQLite, Git)
+make verify-env
+
+# Run smoke test (verify bootstrap worked)
+make smoke-test
+```
+
+**Expected output:**
+```
+✅ Bootstrap complete!
+✅ Environment verification complete
+✅ Smoke test passed. Ready to develop.
+```
+
+### Essential Resources
+
+**Before coding, familiarize yourself with:**
+
+1. **GLOSSARY.md** — Domain terminology (ККТ, ОФД, ФН, Circuit Breaker, etc.)
+2. **docs/5. Руководство по офлайн-режиму.md** — Offline architecture (§5.2-5.6)
+3. **docs/PROMPT_ENGINEERING_TEMPLATES.md** — Reusable prompts for common tasks
+4. **bootstrap/kkt_adapter_skeleton/schema.sql** — SQLite buffer schema
+
+### Your First Task
+
+**Task:** Implement SQLite buffer database CRUD operations
+
+**Steps:**
+1. Read `bootstrap/kkt_adapter_skeleton/schema.sql` (understand schema)
+2. Implement `kkt_adapter/app/buffer.py` with functions:
+   - `insert_receipt(receipt_data)` → receipt_id
+   - `get_pending_receipts(limit=50)` → List[Receipt]
+   - `mark_synced(receipt_id, server_time)` → bool
+   - `move_to_dlq(receipt_id, reason)` → bool
+3. Write unit tests in `tests/unit/test_buffer_db.py`
+
+**Checkpoint W1.1:** Run `pytest tests/unit/test_buffer_db.py` — all 5 tests should PASS.
+
+**Reference:** See docs/PROMPT_ENGINEERING_TEMPLATES.md §3.2 for SQLite CRUD template.
+
+---
+
+## 0. Dependency Graph
+
+**Purpose:** Understand task dependencies to parallelize independent work.
+
+```mermaid
+graph TD
+    A[SQLite буфер CRUD] --> B[Hybrid Logical Clock]
+    B --> C[Адаптер ККТ базовый API]
+    C --> D[Circuit Breaker для ОФД]
+    D --> E[Двухфазная фискализация]
+    E --> F[Sync Worker]
+
+    G[optics_core models] --> H[optics_core views]
+    G --> I[optics_pos_ru54fz расширения]
+
+    J[connector_b базовый] --> K[connector_b профили маппинга]
+    K --> L[Блокировка импорта при буфере]
+    L --> I
+
+    M[ru_accounting_extras] --> N[Отчёт GP]
+    M --> O[Кассовые счета по точкам]
+
+    I --> P[POS UI офлайн-режим]
+    F --> P
+
+    style A fill:#90EE90
+    style G fill:#90EE90
+    style J fill:#90EE90
+    style M fill:#90EE90
+```
+
+**Legend:**
+- 🟢 Green nodes: **INDEPENDENT** — can start immediately
+- Arrows: Dependencies (A → B means "B depends on A")
+
+**Task Annotations:**
+
+| Task | Status | Dependencies |
+|------|--------|-------------|
+| SQLite буфер CRUD | INDEPENDENT | None — start immediately |
+| Hybrid Logical Clock | INDEPENDENT | None — start immediately |
+| optics_core models | INDEPENDENT | None — start immediately |
+| connector_b базовый | INDEPENDENT | None — start immediately |
+| ru_accounting_extras | INDEPENDENT | None — start immediately |
+| Адаптер ККТ базовый API | DEPENDS ON | SQLite буфер, HLC |
+| Circuit Breaker | DEPENDS ON | Адаптер ККТ API |
+| Двухфазная фискализация | DEPENDS ON | Circuit Breaker |
+| Sync Worker | DEPENDS ON | Двухфазная фискализация |
+| optics_pos_ru54fz | DEPENDS ON | optics_core, Адаптер ККТ |
+| Блокировка импорта | DEPENDS ON | connector_b, Адаптер ККТ buffer API |
+| POS UI офлайн | DEPENDS ON | optics_pos_ru54fz, Sync Worker |
+
+**Parallelization Strategy:**
+- **Week 1-2 (POC):** Work on SQLite + HLC + optics_core in parallel
+- **Week 3-4:** After SQLite done → start Адаптер ККТ; optics_core done → start views
+- **Week 6-7 (MVP):** All Odoo modules can be developed in parallel (independent)
 
 ---
 
@@ -816,3 +996,333 @@ groups:
 ✅ **Пошаговый план** с чёткими критериями успеха
 
 **Следующий шаг:** начать Спринт 1 (POC) с настройки инфраструктуры.
+
+---
+
+## 13. AI Agent Handoff Protocol
+
+### 13.1 When Starting New AI Session
+
+**Purpose:** Resume development from last checkpoint without loss of context.
+
+**Steps:**
+
+1. **Resume from checkpoint history:**
+   ```bash
+   # Read last session notes
+   cat claude_history/session_$(date +%Y%m%d).md
+
+   # Or find latest session
+   ls -t claude_history/ | head -1
+   ```
+
+2. **Verify environment:**
+   ```bash
+   # Check project structure
+   make verify-env
+
+   # Check git status (what was changed?)
+   git status
+
+   # List all tests (should be 50+ after POC)
+   pytest --co
+   ```
+
+3. **Run last checkpoint:**
+   ```bash
+   # Example: resuming after W6.2 (optics.lens model)
+   pytest tests/unit/test_lens.py -v
+
+   # Expected: All tests PASS
+   ```
+
+4. **If checkpoint fails:**
+   - **STOP** — do not proceed with development
+   - **Escalate to human** with detailed error report:
+     ```
+     ❌ Checkpoint W6.2 failed
+
+     Test: tests/unit/test_lens.py::test_lens_coating_validation
+     Error: AssertionError: Expected coating 'AR' in allowed list
+
+     Last commit: a3f2d1e "feat(optics_core): add lens model"
+     Last session: claude_history/session_20251008.md
+
+     Action needed: Review lens.py:45 coating validation logic
+     ```
+
+### 13.2 When Ending AI Session
+
+**Purpose:** Document progress for next session (human or AI).
+
+**Steps:**
+
+1. **Document progress:**
+   ```bash
+   # Create/update session file
+   SESSION_FILE="claude_history/session_$(date +%Y%m%d).md"
+
+   cat >> $SESSION_FILE << EOF
+   ## Session $(date +%Y-%m-%d\ %H:%M)
+
+   ### Completed
+   - ✅ optics.lens model implemented (models/lens.py)
+   - ✅ Unit tests written (tests/unit/test_lens.py)
+   - ✅ Checkpoint W6.2 passed
+
+   ### Next Session Tasks
+   - [ ] Implement optics.manufacturing.order workflow
+   - [ ] Run Checkpoint W6.3
+
+   ### Checkpoints Status
+   - W6.1 (prescription model): ✅ PASS
+   - W6.2 (lens model): ✅ PASS
+   - W6.3 (manufacturing order): ⏳ Pending
+
+   ### Blockers
+   - None
+
+   ### Notes
+   - Lens coating validation required additional enum constraint
+   - Added index range check (1.5-1.9) per specs
+   EOF
+   ```
+
+2. **Commit work:**
+   ```bash
+   # Stage changes
+   git add .
+
+   # Commit with checkpoint reference
+   git commit -m "feat(optics_core): implement lens model [W6.2]
+
+   - Add Lens model with type, index, coating fields
+   - Validation for coating options and index range
+   - Unit tests for all lens types (single/bifocal/progressive)
+
+   Checkpoint: W6.2 ✅"
+   ```
+
+3. **Push to remote (if applicable):**
+   ```bash
+   git push origin main
+   ```
+
+### 13.3 Session History Template
+
+**File:** `claude_history/session_YYYYMMDD.md`
+
+```markdown
+# Development Session — YYYY-MM-DD
+
+## Session Info
+- **Date:** 2025-10-08
+- **Duration:** 2 hours
+- **Sprint:** POC Week 6
+- **AI Agent:** Claude Sonnet 4.5
+
+---
+
+## Completed Tasks
+
+- ✅ Task description
+  - File: path/to/file.py
+  - Lines changed: +150 -20
+  - Tests: tests/unit/test_file.py (5 tests, all PASS)
+
+---
+
+## Checkpoints
+
+| Checkpoint | Status | Details |
+|------------|--------|---------|
+| W6.1 | ✅ PASS | Prescription model tests pass |
+| W6.2 | ✅ PASS | Lens model tests pass |
+| W6.3 | ⏳ Next | Manufacturing order (pending) |
+
+---
+
+## Next Session Tasks
+
+1. [ ] Implement optics.manufacturing.order
+2. [ ] Run Checkpoint W6.3
+3. [ ] Start optics_core views if W6.3 passes
+
+---
+
+## Blockers
+
+- None
+
+---
+
+## Notes & Learnings
+
+- Lens coating enum required CHECK constraint in Odoo
+- Index range validation: 1.5-1.9 (common optical indices)
+- Progressive lens type needs Add field validation
+
+---
+
+## Git Commits
+
+- `a3f2d1e` feat(optics_core): implement prescription model [W6.1]
+- `b4e5f2a` feat(optics_core): implement lens model [W6.2]
+```
+
+### 13.4 Error Recovery Protocol
+
+**When checkpoint fails, follow this protocol:**
+
+1. **Analyze failure:**
+   ```bash
+   # Run with verbose output
+   pytest tests/unit/test_prescription.py -vv
+
+   # Check logs
+   tail -100 logs/app.log | grep ERROR
+   ```
+
+2. **Check if regression:**
+   ```bash
+   # Run all previously passing tests
+   pytest tests/unit/ -k "not prescription"
+
+   # If other tests now fail → ROLLBACK
+   git log --oneline -5
+   git reset --hard HEAD~1  # Rollback last commit
+   ```
+
+3. **Fix root cause:**
+   - Edit code (NOT tests) to fix issue
+   - Do NOT modify passing tests to make them fail
+   - Re-run full test suite (not just failed tests)
+
+4. **Re-run full test suite:**
+   ```bash
+   pytest tests/unit/ -v
+
+   # All tests should PASS
+   ```
+
+5. **If 3 consecutive failures:**
+   - **Escalate to human**
+   - Create detailed issue report:
+     ```markdown
+     ## ❌ Checkpoint W6.1 Failed (3 attempts)
+
+     **Test:** tests/unit/test_prescription.py::test_sph_range
+     **Error:** AssertionError: -25 not in valid Sph range (-20, +20)
+
+     **Attempts:**
+     1. Fixed Sph validation → test_cyl_validation failed
+     2. Fixed Cyl validation → test_sph_range failed again
+     3. Tried different approach → same error
+
+     **Root Cause Hypothesis:**
+     - Sph range validation logic incorrect (models/prescription.py:67)
+     - Test data generator creating invalid prescriptions?
+
+     **Action Needed:**
+     Human review of Sph validation logic and test fixtures.
+     ```
+
+### 13.5 Auto-Rollback Triggers
+
+**Automatically rollback (git reset) if:**
+
+1. **Regression detected:**
+   - Previously passing tests now fail
+   - Action: `git reset --hard HEAD~1`
+
+2. **Coverage drops >5%:**
+   ```bash
+   # Before commit
+   pytest --cov=kkt_adapter --cov-report=term | grep TOTAL
+   # Coverage: 82%
+
+   # After commit
+   pytest --cov=kkt_adapter --cov-report=term | grep TOTAL
+   # Coverage: 75%  (dropped 7% → ROLLBACK)
+   ```
+
+3. **Linter errors increase:**
+   ```bash
+   # Before: 0 errors
+   # After: 15 errors → ROLLBACK
+   ```
+
+### 13.6 Code Stability Zones
+
+**Frozen after POC (do NOT refactor without explicit approval):**
+
+- SQLite schema (`bootstrap/kkt_adapter_skeleton/schema.sql`)
+- Hybrid Logical Clock implementation (`kkt_adapter/app/hlc.py`)
+- Circuit Breaker configuration (`config.toml` §buffer.*)
+- FFD 1.2 fiscal document structure
+
+**Refactorable during MVP:**
+
+- API endpoint names (for consistency)
+- UI components (офлайн-режим indicators)
+- Prometheus metric names (if Grafana needs changes)
+- Internal function names (non-public API)
+
+**Rule:** If AI wants to refactor frozen code, create issue + ask human approval first.
+
+### 13.7 Context Preservation Checklist
+
+**Before ending session, ensure:**
+
+- [ ] Session history updated (`claude_history/session_YYYYMMDD.md`)
+- [ ] All changes committed with checkpoint reference
+- [ ] Last checkpoint passed (verified with pytest)
+- [ ] No uncommitted changes (`git status` clean)
+- [ ] Next tasks documented clearly
+- [ ] Blockers (if any) escalated to human
+
+**Before starting session, ensure:**
+
+- [ ] Read last session history
+- [ ] Environment verified (`make verify-env`)
+- [ ] Last checkpoint re-run (to verify state)
+- [ ] If checkpoint fails → escalate, do NOT proceed
+
+---
+
+## 14. Code Freeze Points & Refactoring Policy
+
+### 14.1 Frozen Components (After POC Sign-Off)
+
+**Components below are FROZEN after POC passes. Do NOT modify without human approval.**
+
+| Component | File(s) | Reason |
+|-----------|---------|--------|
+| **SQLite Schema** | `bootstrap/kkt_adapter_skeleton/schema.sql` | Migration complexity, data durability |
+| **HLC Implementation** | `kkt_adapter/app/hlc.py` | Timestamp ordering critical for conflict resolution |
+| **Circuit Breaker Params** | `config.toml` (buffer.*) | Tuned during POC testing |
+| **FFD 1.2 Structure** | Fiscal doc JSON schema | 54-ФЗ compliance |
+| **Prometheus Metrics** | Metric names/labels | Grafana dashboards depend on them |
+
+**If refactoring needed:**
+1. Create GitHub issue with detailed justification
+2. Wait for human approval
+3. Create migration script (for DB changes)
+4. Update all dependent code/tests
+5. Run full regression test suite
+
+### 14.2 Refactorable Components (During MVP)
+
+**Safe to refactor without approval:**
+
+- API endpoint paths (update docs)
+- Internal function names (non-public API)
+- UI component structure
+- Variable names (maintain readability)
+- Test helper functions
+
+**Best practice:** Still document refactoring in commit message.
+
+---
+
+**🤖 For AI Agents:** This handoff protocol ensures continuity across sessions. Always follow §13.1-13.2 when starting/ending work.

@@ -2,8 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(for:*)",
-      "Bash(do sed -i 's/ITigris/OpticsERP/g' \"$file\")",
-      "Bash(done)"
+      "Bash(do sed -i 's/OpticsERP/OpticsERP/g' \"$file\")",
+      "Bash(done)",
+      "Bash(make:*)",
+      "Bash(python:*)",
+      "Bash(sqlite3:*)",
+      "Bash(git --version)",
+      "Bash(docker:*)",
+      "Bash(pip install:*)",
+      "Bash(env)",
+      "Read(//c/Users/bozzy/**)",
+      "Bash(cat:*)",
+      "Bash(claude mcp:*)",
+      "Bash(source .env)"
     ],
     "deny": [],
     "ask": []

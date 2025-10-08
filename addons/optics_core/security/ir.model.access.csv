@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_optics_prescription_user,optics.prescription.user,model_optics_prescription,base.group_user,1,1,1,0
+access_optics_prescription_manager,optics.prescription.manager,model_optics_prescription,base.group_system,1,1,1,1
+access_optics_lens_user,optics.lens.user,model_optics_lens,base.group_user,1,1,1,0
+access_optics_lens_manager,optics.lens.manager,model_optics_lens,base.group_system,1,1,1,1
+access_optics_manufacturing_order_user,optics.manufacturing.order.user,model_optics_manufacturing_order,base.group_user,1,1,1,0
+access_optics_manufacturing_order_manager,optics.manufacturing.order.manager,model_optics_manufacturing_order,base.group_system,1,1,1,1
