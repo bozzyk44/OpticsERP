@@ -30,16 +30,30 @@ from kkt_driver import reset_counter
 @pytest.fixture(scope="function")
 def reset_database():
     """Reset SQLite database before each test"""
-    # Close existing connection
-    close_buffer_db()
+    # Close existing connection if any
+    try:
+        close_buffer_db()
+    except:
+        pass
 
-    # Re-initialize with fresh database
+    # Re-initialize database
     init_buffer_db()
+
+    # Clear all tables instead of deleting file (avoids Windows lock issues)
+    conn = get_db()
+    with conn:
+        conn.execute("DELETE FROM receipts")
+        conn.execute("DELETE FROM dlq")
+        conn.execute("DELETE FROM buffer_events")
+        conn.commit()
 
     yield
 
     # Cleanup
-    close_buffer_db()
+    try:
+        close_buffer_db()
+    except:
+        pass
 
 
 @pytest.fixture(scope="function")
