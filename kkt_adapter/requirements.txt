@@ -4,6 +4,9 @@ uvicorn[standard]==0.24.0
 pydantic==2.5.0
 python-multipart==0.0.6
 
+# Circuit Breaker
+pybreaker==1.0.1
+
 # Testing (for future unit tests)
 pytest==7.4.3
 pytest-cov==4.1.0

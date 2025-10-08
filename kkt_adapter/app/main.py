@@ -41,6 +41,7 @@ try:
         BufferStatusResponse,
         HealthCheckResponse
     )
+    from .circuit_breaker import get_circuit_breaker
 except ImportError:
     # Handle direct execution
     from buffer import (
@@ -56,6 +57,7 @@ except ImportError:
         BufferStatusResponse,
         HealthCheckResponse
     )
+    from circuit_breaker import get_circuit_breaker
 
 
 # ====================
@@ -350,15 +352,19 @@ async def health_check():
         status = get_buffer_status()
         buffer_healthy = True
 
-        # Determine overall health based on buffer metrics
-        if status.dlq_size > 50 or status.percent_full > 90:
+        # Check circuit breaker status
+        cb = get_circuit_breaker()
+        cb_stats = cb.get_stats()
+
+        # Determine overall health based on buffer metrics and circuit breaker
+        if status.dlq_size > 50 or status.percent_full > 90 or cb_stats.state == 'OPEN':
             overall_status = 'degraded'
         elif status.dlq_size > 100 or status.percent_full >= 100:
             overall_status = 'unhealthy'
         else:
             overall_status = 'healthy'
 
-        logger.debug(f"Health check: {overall_status}, DLQ={status.dlq_size}, buffer={status.percent_full}%")
+        logger.debug(f"Health check: {overall_status}, DLQ={status.dlq_size}, buffer={status.percent_full}%, CB={cb_stats.state}")
 
         return HealthCheckResponse(
             status=overall_status,
@@ -370,8 +376,10 @@ async def health_check():
                     'pending': status.pending
                 },
                 'circuit_breaker': {
-                    'state': 'CLOSED',  # TODO: Integrate actual circuit breaker state (OPTERP-8)
-                    'note': 'Not implemented yet'
+                    'state': cb_stats.state,
+                    'failure_count': cb_stats.failure_count,
+                    'success_count': cb_stats.success_count,
+                    'last_failure': cb_stats.last_failure_time.isoformat() if cb_stats.last_failure_time else None
                 },
                 'database': {
                     'status': 'healthy',
