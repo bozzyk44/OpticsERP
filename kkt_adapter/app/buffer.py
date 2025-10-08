@@ -103,8 +103,8 @@ class BufferStatus:
 # Connection Management
 # ====================
 
-# Thread-safe connection pool
-_db_lock = threading.Lock()
+# Thread-safe connection pool (RLock for reentrant calls)
+_db_lock = threading.RLock()
 _db_connection: Optional[sqlite3.Connection] = None
 
 
