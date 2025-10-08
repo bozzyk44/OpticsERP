@@ -141,8 +141,20 @@ def init_buffer_db(db_path: str = 'kkt_adapter/data/buffer.db') -> sqlite3.Conne
     conn.execute("PRAGMA foreign_keys=ON")          # Enable FK constraints
 
     # Execute schema from bootstrap directory
-    schema_path = Path('bootstrap/kkt_adapter_skeleton/schema.sql')
-    if schema_path.exists():
+    # Try multiple paths to find schema file
+    possible_paths = [
+        Path('bootstrap/kkt_adapter_skeleton/schema.sql'),  # From project root
+        Path('../../bootstrap/kkt_adapter_skeleton/schema.sql'),  # From kkt_adapter/app/
+        Path(__file__).parent.parent.parent / 'bootstrap' / 'kkt_adapter_skeleton' / 'schema.sql'  # Absolute
+    ]
+
+    schema_path = None
+    for path in possible_paths:
+        if path.exists():
+            schema_path = path
+            break
+
+    if schema_path:
         with open(schema_path, 'r', encoding='utf-8') as f:
             schema_sql = f.read()
             conn.executescript(schema_sql)
