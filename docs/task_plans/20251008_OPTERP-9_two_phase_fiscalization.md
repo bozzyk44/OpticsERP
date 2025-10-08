@@ -382,4 +382,4 @@ curl http://localhost:8000/v1/kkt/buffer/status
 ---
 
 **Status:** Ready to implement
-**Next Task:** OPTERP-10 (Heartbeat to Odoo)
+**Next Task:** OPTERP-10 (Receipt Endpoint Phase 1)

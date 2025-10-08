@@ -31,7 +31,9 @@
       "Bash(while read f)",
       "Bash(do rm -f \"$f\")",
       "Bash(echo:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "WebFetch(domain:bozzyk44.atlassian.net)",
+      "Read(//d/**)"
     ],
     "deny": [],
     "ask": []
