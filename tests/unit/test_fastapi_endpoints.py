@@ -121,7 +121,7 @@ class TestCreateReceipt:
 
     @pytest.mark.asyncio
     async def test_create_receipt_success(self, client, valid_receipt_data):
-        """Test successful receipt creation"""
+        """Test successful receipt creation with KKT printing"""
         response = await client.post(
             "/v1/kkt/receipt",
             json=valid_receipt_data,
@@ -131,10 +131,12 @@ class TestCreateReceipt:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["status"] == "buffered"
+        assert data["status"] == "printed"  # Phase 1: now prints on KKT
         assert "receipt_id" in data
-        assert data["fiscal_doc"] is None
-        assert data["message"] == "Receipt saved to buffer successfully"
+        assert data["fiscal_doc"] is not None  # Now populated after print
+        assert "fiscal_doc_number" in data["fiscal_doc"]
+        assert "fiscal_sign" in data["fiscal_doc"]
+        assert data["message"] == "Receipt printed successfully"
 
         # Verify receipt_id is a valid UUID
         try:
@@ -237,7 +239,7 @@ class TestCreateReceipt:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "buffered"
+        assert data["status"] == "printed"
 
     @pytest.mark.asyncio
     async def test_create_receipt_multiple_items(self, client, valid_receipt_data):

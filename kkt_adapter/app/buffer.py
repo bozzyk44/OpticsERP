@@ -483,6 +483,61 @@ def update_receipt_status(receipt_id: str, status: str) -> bool:
         return cursor.rowcount > 0
 
 
+def update_receipt_fiscal_doc(receipt_id: str, fiscal_doc_update: Dict[str, Any]) -> bool:
+    """
+    Update receipt fiscal_doc with data from KKT driver (after printing)
+
+    This merges the fiscal document data (fiscal_doc_number, fiscal_sign, etc.)
+    into the existing fiscal_doc JSON.
+
+    Args:
+        receipt_id: Receipt UUID
+        fiscal_doc_update: Dict with fiscal doc fields to merge:
+            - fiscal_doc_number: int
+            - fiscal_sign: str
+            - fiscal_datetime: str
+            - fn_number: str
+            - kkt_number: str
+            - qr_code_data: str
+            - shift_number: int
+            - receipt_number: int
+
+    Returns:
+        True if updated, False if receipt not found
+
+    Raises:
+        ValueError: If receipt_id invalid or fiscal_doc malformed
+    """
+    conn = get_db()
+
+    with _db_lock:
+        # Get existing fiscal_doc
+        cursor = conn.execute("""
+            SELECT fiscal_doc FROM receipts WHERE id = ?
+        """, (receipt_id,))
+
+        row = cursor.fetchone()
+        if not row:
+            return False
+
+        # Parse existing fiscal_doc
+        try:
+            fiscal_doc = json.loads(row[0])
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Malformed fiscal_doc JSON: {e}")
+
+        # Merge update into existing fiscal_doc
+        fiscal_doc.update(fiscal_doc_update)
+
+        # Update database
+        conn.execute("""
+            UPDATE receipts SET fiscal_doc = ? WHERE id = ?
+        """, (json.dumps(fiscal_doc), receipt_id))
+
+        conn.commit()
+        return True
+
+
 def increment_retry_count(receipt_id: str, error: str) -> int:
     """
     Increment retry count and update last_error

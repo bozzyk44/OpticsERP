@@ -33,6 +33,7 @@ try:
         get_buffer_status,
         init_buffer_db,
         close_buffer_db,
+        update_receipt_fiscal_doc,
         BufferFullError
     )
     from .models import (
@@ -43,6 +44,7 @@ try:
     )
     from .circuit_breaker import get_circuit_breaker
     from .sync_worker import start_sync_worker, stop_sync_worker, trigger_manual_sync, get_worker_status
+    from .kkt_driver import print_receipt, get_kkt_status
 except ImportError:
     # Handle direct execution
     from buffer import (
@@ -50,6 +52,7 @@ except ImportError:
         get_buffer_status,
         init_buffer_db,
         close_buffer_db,
+        update_receipt_fiscal_doc,
         BufferFullError
     )
     from models import (
@@ -60,6 +63,7 @@ except ImportError:
     )
     from circuit_breaker import get_circuit_breaker
     from sync_worker import start_sync_worker, stop_sync_worker, trigger_manual_sync, get_worker_status
+    from kkt_driver import print_receipt, get_kkt_status
 
 
 # ====================
@@ -236,18 +240,36 @@ async def create_receipt(
 
         # Phase 1: Insert into buffer (local)
         receipt_id = insert_receipt(receipt_data)
+        logger.info(f"✅ Receipt buffered: {receipt_id}")
 
-        logger.info(f"✅ Receipt created successfully: {receipt_id}")
+        # Print on KKT (mock driver for POC)
+        try:
+            fiscal_doc = print_receipt(receipt_data)
+            logger.info(f"✅ Receipt printed: {receipt_id}, fiscal_doc_number={fiscal_doc['fiscal_doc_number']}")
 
-        # Phase 2: Sync worker will automatically pick up pending receipt
-        # No manual trigger needed - decoupled for reliability (OPTERP-9)
+            # Update receipt with fiscal document data
+            update_receipt_fiscal_doc(receipt_id, fiscal_doc)
 
-        return CreateReceiptResponse(
-            status='buffered',  # Will be 'printed' after KKT driver integration
-            receipt_id=receipt_id,
-            fiscal_doc=None,  # Populated after OFD sync
-            message="Receipt saved to buffer successfully"
-        )
+            # Phase 2: Sync worker will automatically pick up pending receipt
+            # No manual trigger needed - decoupled for reliability (OPTERP-21)
+
+            return CreateReceiptResponse(
+                status='printed',
+                receipt_id=receipt_id,
+                fiscal_doc=fiscal_doc,
+                message="Receipt printed successfully"
+            )
+
+        except Exception as print_error:
+            # If printing fails, receipt is still in buffer (offline-first!)
+            logger.error(f"⚠️ Print failed but receipt buffered: {receipt_id}, error={print_error}")
+
+            return CreateReceiptResponse(
+                status='buffered',
+                receipt_id=receipt_id,
+                fiscal_doc=None,
+                message=f"Receipt buffered, print failed: {str(print_error)}"
+            )
 
     except BufferFullError as e:
         logger.error(f"❌ Buffer full: {e}")
