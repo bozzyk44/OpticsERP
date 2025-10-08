@@ -29,23 +29,40 @@ from kkt_driver import reset_counter
 
 @pytest.fixture(scope="function")
 def reset_database():
-    """Reset SQLite database before each test"""
+    """
+    Reset SQLite database before each test
+
+    Uses DELETE + VACUUM approach:
+    - DELETE removes all data from tables
+    - VACUUM rebuilds database, reclaiming space and resetting AUTOINCREMENT
+    - Avoids Windows file lock issues (vs DROP TABLE or file deletion)
+    """
     # Close existing connection if any
     try:
         close_buffer_db()
     except:
         pass
 
-    # Re-initialize database
+    # Re-initialize database (creates tables if not exist)
     init_buffer_db()
 
-    # Clear all tables instead of deleting file (avoids Windows lock issues)
+    # Get connection and clear all tables
     conn = get_db()
-    with conn:
-        conn.execute("DELETE FROM receipts")
-        conn.execute("DELETE FROM dlq")
-        conn.execute("DELETE FROM buffer_events")
-        conn.commit()
+
+    # Delete all data (tables become empty)
+    conn.execute("DELETE FROM receipts")
+    conn.execute("DELETE FROM dlq")
+    conn.execute("DELETE FROM buffer_events")
+    conn.commit()
+
+    # VACUUM rebuilds database:
+    # - Resets AUTOINCREMENT counters (tables are empty)
+    # - Reclaims disk space (removes fragmentation)
+    # - Optimizes page layout and indexes
+    # Note: VACUUM requires isolation_level=None (autocommit)
+    conn.isolation_level = None  # Enable autocommit for VACUUM
+    conn.execute("VACUUM")
+    conn.isolation_level = ""    # Restore default
 
     yield
 
