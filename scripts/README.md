@@ -64,7 +64,7 @@ python scripts/test_fastapi.py
 Установка зависимостей:
 
 ```bash
-pip install psutil requests
+pip install -r scripts/requirements.txt
 ```
 
 ## См. также
