@@ -30,7 +30,8 @@
       "Bash(find:*)",
       "Bash(while read f)",
       "Bash(do rm -f \"$f\")",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

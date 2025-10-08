@@ -42,6 +42,7 @@ try:
         HealthCheckResponse
     )
     from .circuit_breaker import get_circuit_breaker
+    from .sync_worker import start_sync_worker, stop_sync_worker, trigger_manual_sync, get_worker_status
 except ImportError:
     # Handle direct execution
     from buffer import (
@@ -58,6 +59,7 @@ except ImportError:
         HealthCheckResponse
     )
     from circuit_breaker import get_circuit_breaker
+    from sync_worker import start_sync_worker, stop_sync_worker, trigger_manual_sync, get_worker_status
 
 
 # ====================
@@ -145,6 +147,10 @@ async def startup_event():
         init_buffer_db()
         logger.info("✅ Buffer database initialized")
 
+        # Start sync worker (Phase 2 fiscalization)
+        start_sync_worker()
+        logger.info("✅ Sync worker started")
+
         # Log startup completion
         logger.info("=== KKT Adapter started successfully ===")
         logger.info(f"API docs available at: http://localhost:8000/docs")
@@ -160,6 +166,10 @@ async def shutdown_event():
     logger.info("=== KKT Adapter shutting down ===")
 
     try:
+        # Stop sync worker
+        stop_sync_worker()
+        logger.info("✅ Sync worker stopped")
+
         # Close database connections
         close_buffer_db()
         logger.info("✅ Database connections closed")
@@ -229,7 +239,8 @@ async def create_receipt(
 
         logger.info(f"✅ Receipt created successfully: {receipt_id}")
 
-        # TODO: Phase 2: Send to OFD asynchronously (OPTERP-8)
+        # Phase 2: Sync worker will automatically pick up pending receipt
+        # No manual trigger needed - decoupled for reliability (OPTERP-9)
 
         return CreateReceiptResponse(
             status='buffered',  # Will be 'printed' after KKT driver integration
@@ -426,6 +437,75 @@ async def root():
         "health": "/v1/health",
         "status": "operational"
     }
+
+
+@app.post(
+    "/v1/kkt/buffer/sync",
+    status_code=202,
+    summary="Trigger manual sync",
+    description="""
+    Trigger manual synchronization of pending receipts to OFD.
+
+    This endpoint forces an immediate sync cycle, useful for:
+    - Testing/debugging
+    - Recovery after system downtime
+    - Admin intervention
+
+    The sync worker runs automatically every 10s, so manual sync is rarely needed.
+    """,
+    tags=["Buffer"]
+)
+async def manual_sync():
+    """
+    Trigger manual sync of pending receipts
+
+    Returns:
+        Sync results with counts and duration
+    """
+    try:
+        result = await trigger_manual_sync()
+
+        return {
+            "status": "completed",
+            "synced": result["synced"],
+            "failed": result["failed"],
+            "skipped": result["skipped"],
+            "duration_seconds": result["duration_seconds"],
+            "message": result.get("message", "Manual sync completed successfully")
+        }
+
+    except Exception as e:
+        logger.exception(f"❌ Manual sync error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Manual sync failed: {str(e)}"
+        )
+
+
+@app.get(
+    "/v1/kkt/worker/status",
+    status_code=200,
+    summary="Get sync worker status",
+    description="Get current status of the background sync worker",
+    tags=["Monitoring"]
+)
+async def worker_status():
+    """
+    Get sync worker status
+
+    Returns:
+        Worker status (running/stopped)
+    """
+    try:
+        status = get_worker_status()
+        return status
+
+    except Exception as e:
+        logger.exception(f"❌ Worker status error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to get worker status"
+        )
 
 
 # ====================
