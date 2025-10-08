@@ -131,3 +131,23 @@ def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
+
+
+@pytest.fixture(scope="function")
+def mock_ofd_server():
+    """
+    Mock OFD Server fixture for Phase 2 OFD sync tests
+
+    Provides isolated HTTP Mock OFD Server for each test.
+    Server runs on port 9000 (default).
+    """
+    sys.path.insert(0, str(Path(__file__).parent))
+    from mock_ofd_server import MockOFDServer
+
+    server = MockOFDServer(port=9000)
+    server.start()
+    server.set_success()  # Default: all requests succeed
+
+    yield server
+
+    server.stop()
