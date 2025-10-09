@@ -31,6 +31,16 @@
 
 ### JIRA Integration (КРИТИЧНО)
 
+**API Credentials:**
+- **Файл:** `.env` (root проекта)
+- **Переменные:**
+  - `JIRA_URL`: https://bozzyk44.atlassian.net
+  - `JIRA_EMAIL`: bozzyk44@gmail.com
+  - `JIRA_API_TOKEN`: API токен для авторизации
+  - `JIRA_PROJECT_KEY`: OpticsERP
+
+**Важно:** `.env` в `.gitignore` - не коммитить!
+
 **Приоритет источников информации:**
 1. **ПЕРВИЧНО:** Реальная JIRA (WebFetch от bozzyk44.atlassian.net)
 2. **ВТОРИЧНО:** `docs/jira/jira_import.csv` (только если JIRA недоступна)
