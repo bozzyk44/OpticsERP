@@ -33,8 +33,10 @@ import asyncio
 import logging
 import time
 import json
+import redis
 from typing import List, Optional
 from datetime import datetime
+from redis_lock import Lock as RedisLock
 
 # Import buffer operations
 try:
@@ -70,11 +72,106 @@ logger = logging.getLogger(__name__)
 
 _sync_worker_running = False
 _sync_worker_task: Optional[asyncio.Task] = None
+_redis_client: Optional[redis.Redis] = None
 
 # Configuration
 SYNC_INTERVAL_SECONDS = 10  # Run every 10 seconds
 SYNC_BATCH_SIZE = 50  # Process up to 50 receipts per iteration
 MAX_RETRY_ATTEMPTS = 20  # Move to DLQ after 20 failed attempts
+
+# Distributed Lock Configuration
+LOCK_NAME = "kkt_sync_lock"
+LOCK_EXPIRE_SECONDS = 300  # 5 minutes (protects against crash)
+LOCK_AUTO_RENEWAL = True  # Extend lock if still processing
+
+# Exponential Backoff Configuration
+BACKOFF_BASE_DELAY = 1  # 1 second
+BACKOFF_MAX_DELAY = 60  # 60 seconds
+
+
+# ====================
+# Redis Client
+# ====================
+
+def get_redis_client() -> Optional[redis.Redis]:
+    """
+    Get Redis client singleton
+
+    Lazy initialization - creates client on first call.
+    Returns None if Redis is unavailable (fallback to no distributed lock).
+
+    Returns:
+        Redis client or None if connection fails
+    """
+    global _redis_client
+
+    if _redis_client is None:
+        try:
+            _redis_client = redis.Redis(
+                host='localhost',
+                port=6379,
+                db=0,
+                decode_responses=False,  # Lock needs bytes
+                socket_timeout=5,
+                socket_connect_timeout=5
+            )
+
+            # Test connection
+            _redis_client.ping()
+            logger.info("✅ Redis connection established for distributed locking")
+
+        except (redis.ConnectionError, redis.TimeoutError) as e:
+            logger.warning(f"⚠️ Redis connection failed: {e}. Distributed locking disabled.")
+            _redis_client = None
+
+    return _redis_client
+
+
+def reset_redis_client():
+    """
+    Reset Redis client (for testing)
+
+    Closes existing connection and clears singleton.
+    """
+    global _redis_client
+    if _redis_client:
+        try:
+            _redis_client.close()
+        except:
+            pass
+    _redis_client = None
+
+
+# ====================
+# Exponential Backoff
+# ====================
+
+def calculate_backoff_delay(consecutive_failures: int) -> float:
+    """
+    Calculate exponential backoff delay
+
+    Uses formula: min(BASE * 2^failures, MAX)
+
+    Args:
+        consecutive_failures: Number of consecutive sync failures (0-based)
+
+    Returns:
+        Delay in seconds
+
+    Examples:
+        failures=0 → 1s
+        failures=1 → 2s
+        failures=2 → 4s
+        failures=3 → 8s
+        failures=4 → 16s
+        failures=5 → 32s
+        failures=6+ → 60s (max)
+    """
+    if consecutive_failures < 0:
+        consecutive_failures = 0
+
+    delay = min(BACKOFF_BASE_DELAY * (2 ** consecutive_failures), BACKOFF_MAX_DELAY)
+    return delay
 
 
 # ====================
@@ -156,23 +253,54 @@ async def sync_pending_receipts():
     """
     Main sync loop: fetch pending receipts and send to OFD
 
-    This function runs continuously in the background:
-    1. Fetches pending receipts from buffer (limit: SYNC_BATCH_SIZE)
-    2. Processes each receipt via process_receipt()
-    3. Logs summary statistics
-    4. Sleeps SYNC_INTERVAL_SECONDS before next iteration
+    This function runs continuously in the background with:
+    1. Distributed Lock - prevents concurrent sync from multiple workers
+    2. Exponential Backoff - reduces load during outages
+    3. Batch Processing - processes up to SYNC_BATCH_SIZE receipts
+    4. Error Recovery - continues running despite errors
 
     The loop continues until _sync_worker_running is set to False.
     """
     logger.info(f"🚀 Sync worker started (interval: {SYNC_INTERVAL_SECONDS}s, batch: {SYNC_BATCH_SIZE})")
 
+    # Track consecutive failures for exponential backoff
+    consecutive_failures = 0
+
     while _sync_worker_running:
+        lock = None
+
         try:
+            # Try to get Redis client for distributed locking
+            redis_client = get_redis_client()
+
+            if redis_client:
+                # Try to acquire distributed lock (non-blocking)
+                lock = RedisLock(
+                    redis_client,
+                    name=LOCK_NAME,
+                    expire=LOCK_EXPIRE_SECONDS,
+                    auto_renewal=LOCK_AUTO_RENEWAL
+                )
+
+                acquired = lock.acquire(blocking=False)
+
+                if not acquired:
+                    # Another worker holds the lock - skip this iteration
+                    logger.debug("⏳ Another worker holds sync lock, skipping iteration...")
+                    await asyncio.sleep(SYNC_INTERVAL_SECONDS)
+                    continue
+
+                logger.debug("🔒 Distributed lock acquired")
+            else:
+                # Redis unavailable - proceed without lock (warn once per startup)
+                logger.debug("⚠️ Distributed lock unavailable (Redis not connected)")
+
             # Get pending receipts
             receipts = get_pending_receipts(limit=SYNC_BATCH_SIZE)
 
             if not receipts:
-                # No pending receipts - wait and continue
+                # No pending receipts - reset backoff and wait
+                consecutive_failures = 0
                 logger.debug("No pending receipts, waiting...")
                 await asyncio.sleep(SYNC_INTERVAL_SECONDS)
                 continue
@@ -202,8 +330,22 @@ async def sync_pending_receipts():
                 f"synced={synced_count}, failed={failed_count}, skipped={skipped_count}"
             )
 
-            # Wait before next iteration
-            await asyncio.sleep(SYNC_INTERVAL_SECONDS)
+            # Update backoff based on results
+            if synced_count == 0 and len(receipts) > 0:
+                # All failed - increment backoff
+                consecutive_failures += 1
+            else:
+                # At least one success - reset backoff
+                consecutive_failures = 0
+
+            # Calculate delay with exponential backoff
+            if consecutive_failures > 0:
+                delay = calculate_backoff_delay(consecutive_failures)
+                logger.info(f"⏰ Backing off for {delay}s (consecutive_failures={consecutive_failures})")
+            else:
+                delay = SYNC_INTERVAL_SECONDS
+
+            await asyncio.sleep(delay)
 
         except asyncio.CancelledError:
             logger.info("Sync worker cancelled, stopping...")
@@ -212,7 +354,18 @@ async def sync_pending_receipts():
         except Exception as e:
             logger.exception(f"❌ Sync worker error: {e}")
             # Continue running despite error
-            await asyncio.sleep(SYNC_INTERVAL_SECONDS)
+            consecutive_failures += 1
+            delay = calculate_backoff_delay(consecutive_failures)
+            await asyncio.sleep(delay)
+
+        finally:
+            # Always release lock if acquired
+            if lock:
+                try:
+                    lock.release()
+                    logger.debug("🔓 Distributed lock released")
+                except:
+                    pass  # Lock may have expired or Redis disconnected
 
 
 # ====================
