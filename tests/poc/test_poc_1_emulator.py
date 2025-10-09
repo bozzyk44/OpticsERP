@@ -50,85 +50,19 @@ from typing import List, Dict, Any
 # Add kkt_adapter/app to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'kkt_adapter' / 'app'))
 
-from buffer import get_buffer_status, get_db, init_buffer_db, close_buffer_db
+from buffer import get_buffer_status
 
 
 # ====================
 # Configuration
 # ====================
 
-FASTAPI_BASE_URL = "http://localhost:8000"
 NUM_RECEIPTS = 50
 P95_THRESHOLD_SECONDS = 7.0
 THROUGHPUT_THRESHOLD_PER_MINUTE = 20.0
 
 # KKT log file (mock driver writes here)
 KKT_LOG_FILE = Path(__file__).parent.parent.parent / 'kkt_adapter' / 'data' / 'kkt_print.log'
-
-
-# ====================
-# Fixtures
-# ====================
-
-@pytest.fixture(scope="module")
-def fastapi_server():
-    """
-    Start FastAPI server for POC-1 test
-
-    Note: For POC testing, FastAPI should be started manually:
-    $ cd kkt_adapter/app && python main.py
-
-    This fixture just verifies server is running.
-    """
-    # Verify server is running
-    try:
-        response = requests.get(f"{FASTAPI_BASE_URL}/v1/health", timeout=2)
-        if response.status_code != 200:
-            pytest.skip("FastAPI server not responding at localhost:8000")
-    except requests.ConnectionError:
-        pytest.skip("FastAPI server not running. Start with: cd kkt_adapter/app && python main.py")
-
-    yield FASTAPI_BASE_URL
-
-    # No teardown - server runs independently
-
-
-@pytest.fixture(scope="module")
-def clean_buffer():
-    """
-    Clean buffer before POC-1 test
-
-    Ensures test starts with empty buffer for accurate metrics.
-    """
-    # Initialize buffer
-    init_buffer_db()
-
-    # Clean receipts table
-    conn = get_db()
-    conn.execute("DELETE FROM receipts")
-    conn.execute("DELETE FROM dlq")
-    conn.execute("DELETE FROM buffer_events")
-    conn.commit()
-
-    yield
-
-    # No teardown - keep results for inspection
-
-
-@pytest.fixture(scope="module")
-def clean_kkt_log():
-    """
-    Clean KKT log before POC-1 test
-
-    Ensures test starts with empty log for accurate verification.
-    """
-    if KKT_LOG_FILE.exists():
-        KKT_LOG_FILE.unlink()
-
-    # Ensure parent directory exists
-    KKT_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-    yield KKT_LOG_FILE
 
 
 # ====================
@@ -234,6 +168,8 @@ def count_kkt_prints(log_file: Path) -> int:
 # POC-1 Test
 # ====================
 
+@pytest.mark.poc
+@pytest.mark.fastapi
 class TestPOC1Emulator:
     """
     POC-1: KKT Emulator - Basic Fiscalization Test

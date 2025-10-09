@@ -33,7 +33,11 @@
       "Bash(echo:*)",
       "Bash(git log:*)",
       "WebFetch(domain:bozzyk44.atlassian.net)",
-      "Read(//d/**)"
+      "Read(//d/**)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git restore:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []

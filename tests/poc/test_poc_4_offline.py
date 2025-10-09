@@ -58,86 +58,18 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 # Add paths
-sys.path.insert(0, str(Path(__file__).parent.parent / 'integration'))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'kkt_adapter' / 'app'))
 
-from mock_ofd_server import MockOFDServer
-from buffer import get_buffer_status, get_db, init_buffer_db, close_buffer_db
+from buffer import get_buffer_status
 
 
 # ====================
 # Configuration
 # ====================
 
-FASTAPI_BASE_URL = "http://localhost:8000"
 NUM_RECEIPTS = 50
 SYNC_TIMEOUT_SECONDS = 600  # 10 minutes
 SYNC_CHECK_INTERVAL_SECONDS = 5  # Check every 5s
-
-# Mock OFD Server
-MOCK_OFD_PORT = 8080
-
-
-# ====================
-# Fixtures
-# ====================
-
-@pytest.fixture(scope="module")
-def fastapi_server():
-    """
-    Verify FastAPI server is running
-
-    Server should be started manually:
-    $ cd kkt_adapter/app && python main.py
-    """
-    try:
-        response = requests.get(f"{FASTAPI_BASE_URL}/v1/health", timeout=2)
-        if response.status_code != 200:
-            pytest.skip("FastAPI server not responding at localhost:8000")
-    except requests.ConnectionError:
-        pytest.skip("FastAPI server not running. Start with: cd kkt_adapter/app && python main.py")
-
-    yield FASTAPI_BASE_URL
-
-
-@pytest.fixture(scope="module")
-def clean_buffer():
-    """
-    Clean buffer before POC-4 test
-
-    Ensures test starts with empty buffer.
-    """
-    init_buffer_db()
-
-    conn = get_db()
-    conn.execute("DELETE FROM receipts")
-    conn.execute("DELETE FROM dlq")
-    conn.execute("DELETE FROM buffer_events")
-    conn.commit()
-
-    yield
-
-    # Keep results for inspection
-
-
-@pytest.fixture(scope="module")
-def mock_ofd_server():
-    """
-    Start Mock OFD Server for POC-4 test
-
-    Returns MockOFDServer instance in permanent failure mode.
-    Test will toggle between failure and success modes.
-    """
-    server = MockOFDServer(port=MOCK_OFD_PORT)
-    server.start()
-
-    # Wait for server to be ready
-    time.sleep(1)
-
-    yield server
-
-    # Stop server
-    server.stop()
 
 
 # ====================
@@ -225,6 +157,8 @@ def wait_for_sync_complete(
 # POC-4 Test
 # ====================
 
+@pytest.mark.poc
+@pytest.mark.fastapi
 class TestPOC4Offline:
     """
     POC-4: 8h Offline Mode - Extended Offline Operation

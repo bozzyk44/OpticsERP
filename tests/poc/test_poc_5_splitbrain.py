@@ -55,11 +55,9 @@ from typing import List, Dict, Any
 import threading
 
 # Add paths
-sys.path.insert(0, str(Path(__file__).parent.parent / 'integration'))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'kkt_adapter' / 'app'))
 
-from mock_ofd_server import MockOFDServer
-from buffer import get_buffer_status, get_db, init_buffer_db, close_buffer_db
+from buffer import get_buffer_status
 from circuit_breaker import get_circuit_breaker
 
 
@@ -67,66 +65,7 @@ from circuit_breaker import get_circuit_breaker
 # Configuration
 # ====================
 
-FASTAPI_BASE_URL = "http://localhost:8000"
 NUM_RECEIPTS_PER_SCENARIO = 10
-MOCK_OFD_PORT = 8080
-
-
-# ====================
-# Fixtures
-# ====================
-
-@pytest.fixture(scope="module")
-def fastapi_server():
-    """
-    Verify FastAPI server is running
-
-    Server should be started manually:
-    $ cd kkt_adapter/app && python main.py
-    """
-    try:
-        response = requests.get(f"{FASTAPI_BASE_URL}/v1/health", timeout=2)
-        if response.status_code != 200:
-            pytest.skip("FastAPI server not responding at localhost:8000")
-    except requests.ConnectionError:
-        pytest.skip("FastAPI server not running. Start with: cd kkt_adapter/app && python main.py")
-
-    yield FASTAPI_BASE_URL
-
-
-@pytest.fixture
-def clean_buffer():
-    """
-    Clean buffer before each test
-
-    Ensures test starts with empty buffer.
-    """
-    init_buffer_db()
-
-    conn = get_db()
-    conn.execute("DELETE FROM receipts")
-    conn.execute("DELETE FROM dlq")
-    conn.execute("DELETE FROM buffer_events")
-    conn.commit()
-
-    yield
-
-
-@pytest.fixture
-def mock_ofd_server():
-    """
-    Start Mock OFD Server for POC-5 tests
-
-    Returns MockOFDServer instance.
-    Tests will control success/failure modes.
-    """
-    server = MockOFDServer(port=MOCK_OFD_PORT)
-    server.start()
-    time.sleep(1)
-
-    yield server
-
-    server.stop()
 
 
 # ====================
@@ -199,6 +138,9 @@ def trigger_sync() -> Dict[str, Any]:
 # POC-5 Tests
 # ====================
 
+@pytest.mark.poc
+@pytest.mark.fastapi
+@pytest.mark.redis
 class TestPOC5SplitBrain:
     """
     POC-5: Split-Brain - HA and Network Flapping
