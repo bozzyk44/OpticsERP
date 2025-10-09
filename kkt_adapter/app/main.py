@@ -44,6 +44,7 @@ try:
     from .sync_worker import start_sync_worker, stop_sync_worker, trigger_manual_sync, get_worker_status
     from .kkt_driver import get_kkt_status
     from .fiscal import process_fiscal_receipt  # OPTERP-18: Use fiscal module
+    from .heartbeat import start_heartbeat, stop_heartbeat, get_heartbeat_status  # OPTERP-24: Heartbeat
 except ImportError:
     # Handle direct execution
     from buffer import (
@@ -62,6 +63,7 @@ except ImportError:
     from sync_worker import start_sync_worker, stop_sync_worker, trigger_manual_sync, get_worker_status
     from kkt_driver import get_kkt_status
     from fiscal import process_fiscal_receipt  # OPTERP-18: Use fiscal module
+    from heartbeat import start_heartbeat, stop_heartbeat, get_heartbeat_status  # OPTERP-24: Heartbeat
 
 
 # ====================
@@ -153,6 +155,10 @@ async def startup_event():
         start_sync_worker()
         logger.info("✅ Sync worker started")
 
+        # Start heartbeat (monitoring)
+        start_heartbeat()
+        logger.info("✅ Heartbeat started")
+
         # Log startup completion
         logger.info("=== KKT Adapter started successfully ===")
         logger.info(f"API docs available at: http://localhost:8000/docs")
@@ -168,6 +174,10 @@ async def shutdown_event():
     logger.info("=== KKT Adapter shutting down ===")
 
     try:
+        # Stop heartbeat
+        stop_heartbeat()
+        logger.info("✅ Heartbeat stopped")
+
         # Stop sync worker
         stop_sync_worker()
         logger.info("✅ Sync worker stopped")
@@ -513,6 +523,32 @@ async def worker_status():
         raise HTTPException(
             status_code=500,
             detail="Failed to get worker status"
+        )
+
+
+@app.get(
+    "/v1/kkt/heartbeat/status",
+    status_code=200,
+    summary="Get heartbeat status",
+    description="Get current heartbeat status and connection state to Odoo",
+    tags=["Monitoring"]
+)
+async def heartbeat_status():
+    """
+    Get heartbeat status
+
+    Returns:
+        Heartbeat status (running, state, counters)
+    """
+    try:
+        status = get_heartbeat_status()
+        return status
+
+    except Exception as e:
+        logger.exception(f"❌ Heartbeat status error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to get heartbeat status"
         )
 
 
