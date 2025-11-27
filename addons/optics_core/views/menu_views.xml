@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root Menu -->
+    <menuitem id="menu_optics_root"
+              name="Optics"
+              sequence="50"
+              web_icon="optics_core,static/description/icon.png"/>
+
+    <!-- Prescriptions Menu -->
+    <menuitem id="menu_optics_prescriptions"
+              name="Prescriptions"
+              parent="menu_optics_root"
+              action="action_optics_prescription"
+              sequence="10"/>
+
+    <!-- Lenses Menu (placeholder for OPTERP-34) -->
+    <menuitem id="menu_optics_lenses"
+              name="Lenses"
+              parent="menu_optics_root"
+              sequence="20"/>
+
+    <!-- Manufacturing Orders Menu (placeholder for OPTERP-36) -->
+    <menuitem id="menu_optics_manufacturing"
+              name="Manufacturing Orders"
+              parent="menu_optics_root"
+              sequence="30"/>
+
+    <!-- Configuration Menu -->
+    <menuitem id="menu_optics_configuration"
+              name="Configuration"
+              parent="menu_optics_root"
+              sequence="100"/>
+
+</odoo>
