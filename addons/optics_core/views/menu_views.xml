@@ -13,11 +13,19 @@
               action="action_optics_prescription"
               sequence="10"/>
 
-    <!-- Lenses Menu (placeholder for OPTERP-34) -->
+    <!-- Lenses Menu -->
     <menuitem id="menu_optics_lenses"
               name="Lenses"
               parent="menu_optics_root"
+              action="action_optics_lens"
               sequence="20"/>
+
+    <!-- Lens Coatings Menu (Configuration) -->
+    <menuitem id="menu_optics_lens_coatings"
+              name="Lens Coatings"
+              parent="menu_optics_configuration"
+              action="action_optics_lens_coating"
+              sequence="10"/>
 
     <!-- Manufacturing Orders Menu (placeholder for OPTERP-36) -->
     <menuitem id="menu_optics_manufacturing"

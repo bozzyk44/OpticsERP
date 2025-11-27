@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Lens Tree View -->
+    <record id="view_optics_lens_tree" model="ir.ui.view">
+        <field name="name">optics.lens.tree</field>
+        <field name="model">optics.lens</field>
+        <field name="arch" type="xml">
+            <tree string="Lenses">
+                <field name="name"/>
+                <field name="type"/>
+                <field name="index"/>
+                <field name="material"/>
+                <field name="coating_summary"/>
+                <field name="manufacturer"/>
+                <field name="sale_price"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Lens Form View -->
+    <record id="view_optics_lens_form" model="ir.ui.view">
+        <field name="name">optics.lens.form</field>
+        <field name="model">optics.lens</field>
+        <field name="arch" type="xml">
+            <form string="Lens">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options='{"terminology": "archive"}'/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="Lens Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Specification">
+                            <field name="type"/>
+                            <field name="index"/>
+                            <field name="material"/>
+                            <field name="coating_ids" widget="many2many_tags"/>
+                        </group>
+                        <group string="Manufacturer">
+                            <field name="manufacturer"/>
+                            <field name="sku"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Pricing">
+                            <field name="cost_price"/>
+                            <field name="sale_price"/>
+                        </group>
+                        <group string="Physical Properties">
+                            <field name="diameter"/>
+                            <field name="center_thickness"/>
+                            <field name="weight"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description" placeholder="Detailed lens description, features, and specifications..."/>
+                        </page>
+                        <page string="Internal Notes">
+                            <field name="notes" placeholder="Internal notes for staff (not visible to customers)..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Lens Search View -->
+    <record id="view_optics_lens_search" model="ir.ui.view">
+        <field name="name">optics.lens.search</field>
+        <field name="model">optics.lens</field>
+        <field name="arch" type="xml">
+            <search string="Search Lenses">
+                <field name="name" string="Lens Name"/>
+                <field name="manufacturer"/>
+                <field name="sku"/>
+                <field name="type"/>
+                <field name="material"/>
+                <field name="coating_ids"/>
+                <filter string="Single Vision" name="filter_single" domain="[('type', '=', 'single')]"/>
+                <filter string="Bifocal" name="filter_bifocal" domain="[('type', '=', 'bifocal')]"/>
+                <filter string="Progressive" name="filter_progressive" domain="[('type', '=', 'progressive')]"/>
+                <separator/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Type" name="group_type" context="{'group_by':'type'}"/>
+                    <filter string="Material" name="group_material" context="{'group_by':'material'}"/>
+                    <filter string="Manufacturer" name="group_manufacturer" context="{'group_by':'manufacturer'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Lens Action -->
+    <record id="action_optics_lens" model="ir.actions.act_window">
+        <field name="name">Lenses</field>
+        <field name="res_model">optics.lens</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_optics_lens_search"/>
+        <field name="context">{'search_default_filter_single': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first lens!
+            </p>
+            <p>
+                Define lens catalog with specifications (type, index, material, coatings).
+            </p>
+        </field>
+    </record>
+
+    <!-- Lens Coating Tree View -->
+    <record id="view_optics_lens_coating_tree" model="ir.ui.view">
+        <field name="name">optics.lens.coating.tree</field>
+        <field name="model">optics.lens.coating</field>
+        <field name="arch" type="xml">
+            <tree string="Lens Coatings" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="additional_cost"/>
+                <field name="description"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Lens Coating Form View -->
+    <record id="view_optics_lens_coating_form" model="ir.ui.view">
+        <field name="name">optics.lens.coating.form</field>
+        <field name="model">optics.lens.coating</field>
+        <field name="arch" type="xml">
+            <form string="Lens Coating">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options='{"terminology": "archive"}'/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="Coating Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="additional_cost"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Coating benefits and features..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Lens Coating Action -->
+    <record id="action_optics_lens_coating" model="ir.actions.act_window">
+        <field name="name">Lens Coatings</field>
+        <field name="res_model">optics.lens.coating</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first coating!
+            </p>
+            <p>
+                Define available coatings: AR, HC, UV, Photochromic, etc.
+            </p>
+        </field>
+    </record>
+
+</odoo>
