@@ -133,6 +133,74 @@ CREATE INDEX IF NOT EXISTS idx_events_receipt_id
   ON buffer_events(receipt_id);
 
 -- ====================
+-- POS Sessions Table (OPTERP-104)
+-- ====================
+-- Critical for preserving cash balance across restarts
+
+CREATE TABLE IF NOT EXISTS pos_sessions (
+  pos_id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,              -- Odoo session ID
+  opened_at INTEGER NOT NULL,
+  closed_at INTEGER,
+
+  -- Cash and card balances
+  cash_balance REAL NOT NULL DEFAULT 0,  -- Current cash balance
+  card_balance REAL NOT NULL DEFAULT 0,  -- Card balance (for reference)
+
+  -- Z-report data (for shift closure)
+  z_report_data TEXT,                    -- JSON with shift summary
+
+  -- Last update
+  last_updated INTEGER NOT NULL,
+
+  -- Status
+  status TEXT NOT NULL DEFAULT 'open',   -- open|closing|closed
+  CHECK (status IN ('open', 'closing', 'closed'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_status
+  ON pos_sessions(status);
+
+CREATE INDEX IF NOT EXISTS idx_session_updated
+  ON pos_sessions(last_updated);
+
+-- ====================
+-- Cash Transactions Table (OPTERP-104)
+-- ====================
+-- For reconciliation and money movement audit
+
+CREATE TABLE IF NOT EXISTS cash_transactions (
+  id TEXT PRIMARY KEY,                   -- UUIDv4
+  pos_id TEXT NOT NULL,
+  receipt_id TEXT,                       -- Link to receipts.id (if sale)
+  transaction_type TEXT NOT NULL,        -- sale|refund|cash_in|cash_out
+  amount REAL NOT NULL,
+  payment_method TEXT NOT NULL,          -- cash|card|mixed
+  timestamp INTEGER NOT NULL,
+
+  -- Sync with Odoo
+  synced_to_odoo BOOLEAN DEFAULT 0,
+  synced_at INTEGER,
+
+  FOREIGN KEY (receipt_id) REFERENCES receipts(id),
+  FOREIGN KEY (pos_id) REFERENCES pos_sessions(pos_id),
+  CHECK (transaction_type IN ('sale', 'refund', 'cash_in', 'cash_out')),
+  CHECK (payment_method IN ('cash', 'card', 'mixed'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_cash_tx_pos
+  ON cash_transactions(pos_id, timestamp);
+
+CREATE INDEX IF NOT EXISTS idx_cash_tx_synced
+  ON cash_transactions(synced_to_odoo);
+
+CREATE INDEX IF NOT EXISTS idx_cash_tx_type
+  ON cash_transactions(transaction_type);
+
+CREATE INDEX IF NOT EXISTS idx_cash_tx_receipt
+  ON cash_transactions(receipt_id);
+
+-- ====================
 -- Configuration Table
 -- ====================
 

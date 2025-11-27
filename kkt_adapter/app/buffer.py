@@ -615,6 +615,263 @@ def get_receipt_by_id(receipt_id: str) -> Optional[Receipt]:
 
 
 # ====================
+# Session State Persistence (OPTERP-104)
+# ====================
+
+def restore_session_state(pos_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Restore POS session state after restart (OPTERP-104)
+
+    Retrieves cash_balance, card_balance, and session metadata from SQLite
+    to recover in-memory state after KKT Adapter restart/crash.
+
+    Args:
+        pos_id: POS terminal ID (e.g., "POS-001")
+
+    Returns:
+        Dictionary with session state or None if no open session exists:
+        {
+            'session_id': str,
+            'cash_balance': float,
+            'card_balance': float,
+            'opened_at': int,
+            'last_updated': int,
+            'unsynced_transactions': int
+        }
+    """
+    conn = get_db()
+
+    with _db_lock:
+        # Find open session
+        cursor = conn.execute("""
+            SELECT
+                pos_id, session_id, opened_at, closed_at,
+                cash_balance, card_balance,
+                z_report_data, last_updated, status
+            FROM pos_sessions
+            WHERE pos_id = ? AND status = 'open'
+        """, (pos_id,))
+
+        row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        # Count unsynced transactions
+        cursor = conn.execute("""
+            SELECT COUNT(*) as count
+            FROM cash_transactions
+            WHERE pos_id = ? AND synced_to_odoo = 0
+        """, (pos_id,))
+
+        unsynced_row = cursor.fetchone()
+        unsynced_count = unsynced_row['count'] if unsynced_row else 0
+
+        return {
+            'session_id': row['session_id'],
+            'cash_balance': row['cash_balance'],
+            'card_balance': row['card_balance'],
+            'opened_at': row['opened_at'],
+            'last_updated': row['last_updated'],
+            'unsynced_transactions': unsynced_count,
+            'z_report_data': row['z_report_data']
+        }
+
+
+def reconcile_session(pos_id: str) -> Dict[str, Any]:
+    """
+    Reconcile session balance with transactions (OPTERP-104)
+
+    Calculates expected balance from cash_transactions table and compares
+    with actual cash_balance in pos_sessions. Used for integrity checks.
+
+    Args:
+        pos_id: POS terminal ID
+
+    Returns:
+        Dictionary with reconciliation result:
+        {
+            'expected_balance': float,
+            'actual_balance': float,
+            'difference': float,
+            'reconciled': bool
+        }
+    """
+    conn = get_db()
+
+    with _db_lock:
+        # Get current session balance
+        cursor = conn.execute("""
+            SELECT cash_balance
+            FROM pos_sessions
+            WHERE pos_id = ? AND status = 'open'
+        """, (pos_id,))
+
+        session_row = cursor.fetchone()
+
+        if session_row is None:
+            return {
+                'expected_balance': 0.0,
+                'actual_balance': 0.0,
+                'difference': 0.0,
+                'reconciled': False,
+                'error': 'No open session found'
+            }
+
+        actual_balance = session_row['cash_balance']
+
+        # Calculate expected balance from transactions
+        cursor = conn.execute("""
+            SELECT
+                SUM(CASE
+                    WHEN transaction_type = 'sale' AND payment_method = 'cash' THEN amount
+                    WHEN transaction_type = 'refund' AND payment_method = 'cash' THEN -amount
+                    WHEN transaction_type = 'cash_in' THEN amount
+                    WHEN transaction_type = 'cash_out' THEN -amount
+                    ELSE 0
+                END) as balance
+            FROM cash_transactions
+            WHERE pos_id = ?
+        """, (pos_id,))
+
+        calc_row = cursor.fetchone()
+        expected_balance = calc_row['balance'] if calc_row['balance'] is not None else 0.0
+
+        difference = abs(expected_balance - actual_balance)
+        tolerance = 0.01  # 1 kopek tolerance for floating point
+
+        return {
+            'expected_balance': expected_balance,
+            'actual_balance': actual_balance,
+            'difference': difference,
+            'reconciled': difference <= tolerance
+        }
+
+
+def update_session_balance(pos_id: str, cash_amount: float, card_amount: float) -> None:
+    """
+    Update session balance after transaction (OPTERP-104)
+
+    Args:
+        pos_id: POS terminal ID
+        cash_amount: Cash amount to add (negative for refunds/cash-out)
+        card_amount: Card amount to add (negative for refunds)
+    """
+    conn = get_db()
+
+    with _db_lock:
+        cursor = conn.execute("""
+            UPDATE pos_sessions
+            SET
+                cash_balance = cash_balance + ?,
+                card_balance = card_balance + ?,
+                last_updated = ?
+            WHERE pos_id = ? AND status = 'open'
+        """, (cash_amount, card_amount, int(time.time()), pos_id))
+
+        if cursor.rowcount == 0:
+            raise ValueError(f"No open session found for {pos_id}")
+
+        conn.commit()
+
+
+def log_cash_transaction(
+    pos_id: str,
+    receipt_id: Optional[str],
+    transaction_type: str,
+    amount: float,
+    payment_method: str
+) -> str:
+    """
+    Log cash transaction for audit trail (OPTERP-104)
+
+    Args:
+        pos_id: POS terminal ID
+        receipt_id: Optional receipt ID (for sale/refund)
+        transaction_type: sale|refund|cash_in|cash_out
+        amount: Transaction amount (always positive)
+        payment_method: cash|card|mixed
+
+    Returns:
+        Transaction ID (UUIDv4)
+    """
+    conn = get_db()
+    tx_id = str(uuid.uuid4())
+
+    with _db_lock:
+        conn.execute("""
+            INSERT INTO cash_transactions (
+                id, pos_id, receipt_id, transaction_type,
+                amount, payment_method, timestamp,
+                synced_to_odoo, synced_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL)
+        """, (
+            tx_id, pos_id, receipt_id, transaction_type,
+            amount, payment_method, int(time.time())
+        ))
+
+        conn.commit()
+
+    return tx_id
+
+
+def open_pos_session(pos_id: str, session_id: str) -> None:
+    """
+    Open new POS session (OPTERP-104)
+
+    Args:
+        pos_id: POS terminal ID
+        session_id: Odoo session ID
+    """
+    conn = get_db()
+    timestamp = int(time.time())
+
+    with _db_lock:
+        # Close any existing open session (failsafe)
+        conn.execute("""
+            UPDATE pos_sessions
+            SET status = 'closed', closed_at = ?
+            WHERE pos_id = ? AND status = 'open'
+        """, (timestamp, pos_id))
+
+        # Insert new session
+        conn.execute("""
+            INSERT OR REPLACE INTO pos_sessions (
+                pos_id, session_id, opened_at, closed_at,
+                cash_balance, card_balance, z_report_data,
+                last_updated, status
+            ) VALUES (?, ?, ?, NULL, 0, 0, NULL, ?, 'open')
+        """, (pos_id, session_id, timestamp, timestamp))
+
+        conn.commit()
+
+
+def close_pos_session(pos_id: str, z_report_data: Optional[str] = None) -> None:
+    """
+    Close POS session (OPTERP-104)
+
+    Args:
+        pos_id: POS terminal ID
+        z_report_data: Optional Z-report JSON data
+    """
+    conn = get_db()
+    timestamp = int(time.time())
+
+    with _db_lock:
+        conn.execute("""
+            UPDATE pos_sessions
+            SET
+                status = 'closed',
+                closed_at = ?,
+                z_report_data = ?,
+                last_updated = ?
+            WHERE pos_id = ? AND status = 'open'
+        """, (timestamp, z_report_data, timestamp, pos_id))
+
+        conn.commit()
+
+
+# ====================
 # Example Usage
 # ====================
 
