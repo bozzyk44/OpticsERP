@@ -47,6 +47,7 @@
             # JavaScript
             'optics_pos_ru54fz/static/src/js/offline_indicator.js',
             'optics_pos_ru54fz/static/src/js/kkt_adapter_client.js',
+            'optics_pos_ru54fz/static/src/js/refund_saga.js',
 
             # XML Templates
             'optics_pos_ru54fz/static/src/xml/offline_indicator.xml',

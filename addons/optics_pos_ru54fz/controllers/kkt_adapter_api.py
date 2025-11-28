@@ -14,6 +14,7 @@ Provides endpoints for buffer status, fiscal printing, and reports.
 Endpoints:
 - /pos/kkt/buffer_status — GET buffer status for offline indicator
 - /pos/kkt/print_receipt — POST fiscal receipt printing (2-phase)
+- /pos/kkt/check_refund — POST check if refund allowed (Saga pattern)
 - /pos/kkt/x_report — POST X-report
 - /pos/kkt/z_report — POST Z-report
 """
@@ -249,4 +250,79 @@ class KKTAdapterController(http.Controller):
             return {
                 'success': False,
                 'error': str(e),
+            }
+
+    @http.route('/pos/kkt/check_refund', type='json', auth='user', methods=['POST'])
+    def check_refund_allowed(self, original_fiscal_doc_id):
+        """
+        Check if refund is allowed (Saga pattern)
+
+        Args:
+            original_fiscal_doc_id (str): Fiscal document ID of original receipt
+
+        Returns:
+            dict: {
+                'allowed': True/False,
+                'reason': 'Reason if blocked',
+                'sync_status': 'pending'/'synced'/'not_found',
+            }
+        """
+        try:
+            kkt_adapter_url = self._get_kkt_adapter_url()
+
+            if not kkt_adapter_url:
+                return {
+                    'allowed': False,
+                    'reason': 'KKT adapter URL not configured',
+                    'sync_status': 'unknown',
+                }
+
+            # Call KKT adapter API to check buffer
+            response = requests.post(
+                f"{kkt_adapter_url}/v1/pos/refund",
+                json={'original_fiscal_doc_id': original_fiscal_doc_id},
+                timeout=5,
+            )
+
+            # HTTP 409 Conflict = refund blocked (original not synced)
+            if response.status_code == 409:
+                data = response.json()
+                return {
+                    'allowed': False,
+                    'reason': data.get('reason', 'Original receipt not synced to OFD'),
+                    'sync_status': 'pending',
+                }
+
+            # HTTP 200 OK = refund allowed
+            response.raise_for_status()
+            data = response.json()
+
+            return {
+                'allowed': True,
+                'reason': '',
+                'sync_status': data.get('sync_status', 'synced'),
+            }
+
+        except requests.Timeout:
+            _logger.error("KKT adapter timeout during refund check")
+            return {
+                'allowed': False,
+                'reason': 'Connection timeout (KKT adapter not responding)',
+                'sync_status': 'unknown',
+            }
+
+        except requests.RequestException as e:
+            _logger.exception(f"Failed to check refund: {e}")
+            return {
+                'allowed': False,
+                'reason': f'Connection error: {str(e)}',
+                'sync_status': 'unknown',
+            }
+
+        except Exception as e:
+            _logger.exception(f"Unexpected error during refund check: {e}")
+            return {
+                'allowed': False,
+                'reason': f'Unexpected error: {str(e)}',
+                'sync_status': 'unknown',
             }
