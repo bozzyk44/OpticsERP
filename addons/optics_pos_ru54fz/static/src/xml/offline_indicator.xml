@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Offline Indicator Template - POS UI Component
+
+Author: AI Agent
+Created: 2025-11-27
+Task: OPTERP-45
+Reference: CLAUDE.md §3.2 (optics_pos_ru54fz module)
+
+Purpose:
+OWL template for offline indicator widget in POS UI.
+Displays buffer status, network status, and circuit breaker state.
+-->
+<templates id="template" xml:space="preserve">
+
+    <!-- Main Offline Indicator Template -->
+    <t t-name="optics_pos_ru54fz.OfflineIndicator" owl="1">
+        <div class="offline-indicator" t-att-class="statusClass">
+            <!-- Loading State -->
+            <div t-if="state.loading" class="indicator-loading">
+                <i class="fa fa-spinner fa-spin"/>
+                <span>Loading...</span>
+            </div>
+
+            <!-- Error State -->
+            <div t-elif="state.error" class="indicator-error">
+                <i class="fa fa-exclamation-circle"/>
+                <span class="error-text" t-esc="state.error"/>
+                <button class="btn btn-sm btn-link" t-on-click="onRefresh">
+                    <i class="fa fa-refresh"/> Retry
+                </button>
+            </div>
+
+            <!-- Normal State -->
+            <div t-else="!state.loading and !state.error" class="indicator-content" t-on-click="showDetails">
+                <!-- Status Icon and Text -->
+                <div class="indicator-status">
+                    <i class="fa" t-att-class="statusIcon"/>
+                    <span class="status-text" t-esc="statusText"/>
+                </div>
+
+                <!-- Buffer Info -->
+                <div class="indicator-buffer">
+                    <i class="fa fa-database"/>
+                    <span class="buffer-text" t-esc="bufferStatusText"/>
+                </div>
+
+                <!-- Circuit Breaker Info -->
+                <div class="indicator-cb">
+                    <i class="fa fa-shield"/>
+                    <span class="cb-text" t-esc="cbStatusText"/>
+                </div>
+
+                <!-- Last Update Time -->
+                <div class="indicator-time">
+                    <i class="fa fa-clock-o"/>
+                    <span class="time-text" t-esc="'Updated: ' + lastUpdateTime"/>
+                </div>
+
+                <!-- Refresh Button -->
+                <button class="btn btn-sm btn-link indicator-refresh" t-on-click.stop="onRefresh">
+                    <i class="fa fa-refresh"/>
+                </button>
+            </div>
+        </div>
+    </t>
+
+</templates>
