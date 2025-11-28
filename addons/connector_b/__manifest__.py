@@ -34,6 +34,9 @@
         # Security
         'security/ir.model.access.csv',
 
+        # Data
+        'data/ir_sequence_data.xml',
+
         # Views
         'views/import_profile_views.xml',
         'views/import_job_views.xml',

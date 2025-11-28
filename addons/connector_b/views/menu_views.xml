@@ -13,10 +13,11 @@
               action="action_connector_import_profile"
               sequence="10"/>
 
-    <!-- Import Jobs Menu (placeholder for OPTERP-39) -->
+    <!-- Import Jobs Menu -->
     <menuitem id="menu_connector_import_jobs"
               name="Import Jobs"
               parent="menu_connector_root"
+              action="action_connector_import_job"
               sequence="20"/>
 
     <!-- Configuration Menu -->
