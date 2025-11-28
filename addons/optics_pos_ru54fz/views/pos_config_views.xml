@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+POS Config Views - KKT Adapter Configuration UI
+
+Author: AI Agent
+Created: 2025-11-27
+Task: OPTERP-46
+Reference: CLAUDE.md §3.2 (optics_pos_ru54fz module)
+
+Purpose:
+Extend pos.config form view to add KKT adapter configuration fields.
+Allows configuration of KKT adapter URL and connection testing.
+-->
+<odoo>
+
+    <!-- Extend POS Config Form View -->
+    <record id="view_pos_config_form_kkt_adapter" model="ir.ui.view">
+        <field name="name">pos.config.form.kkt.adapter</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Add KKT Adapter section after POS settings -->
+            <xpath expr="//notebook" position="inside">
+                <page string="KKT Adapter (54-ФЗ)" name="kkt_adapter">
+                    <group>
+                        <group name="kkt_adapter_config" string="KKT Adapter Configuration">
+                            <!-- Enable/Disable KKT Adapter -->
+                            <field name="kkt_adapter_enabled" widget="boolean_toggle"/>
+
+                            <!-- KKT Adapter URL -->
+                            <field name="kkt_adapter_url"
+                                   placeholder="http://localhost:8000"
+                                   invisible="not kkt_adapter_enabled"/>
+
+                            <!-- Connection Status (readonly) -->
+                            <field name="kkt_adapter_status"
+                                   readonly="1"
+                                   invisible="not kkt_adapter_enabled"/>
+
+                            <!-- Test Connection Button -->
+                            <button name="action_test_kkt_connection"
+                                    string="Test Connection"
+                                    type="object"
+                                    class="btn-primary"
+                                    invisible="not kkt_adapter_enabled"
+                                    icon="fa-plug"/>
+                        </group>
+
+                        <group name="kkt_adapter_help" string="Help">
+                            <!-- Help Text -->
+                            <div class="alert alert-info" role="alert" invisible="not kkt_adapter_enabled">
+                                <h4>KKT Adapter Configuration</h4>
+                                <ul>
+                                    <li><strong>Default URL:</strong> http://localhost:8000</li>
+                                    <li><strong>Format:</strong> http://host:port or https://host:port</li>
+                                    <li><strong>Example:</strong> http://192.168.1.100:8000</li>
+                                </ul>
+                                <p>
+                                    The KKT adapter must be running and accessible from this POS terminal.
+                                    Use the "Test Connection" button to verify connectivity.
+                                </p>
+                                <p>
+                                    <strong>Note:</strong> Each POS terminal should have its own KKT adapter instance.
+                                </p>
+                            </div>
+
+                            <div class="alert alert-warning" role="alert" invisible="kkt_adapter_enabled">
+                                <h4>KKT Adapter Disabled</h4>
+                                <p>
+                                    Fiscal printing is disabled for this POS.
+                                    Enable the toggle above to configure KKT adapter integration.
+                                </p>
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- Additional Settings Section -->
+                    <group name="kkt_adapter_advanced" string="Advanced Settings" invisible="not kkt_adapter_enabled">
+                        <group>
+                            <p class="text-muted">
+                                Advanced KKT adapter settings will be added here in future versions.
+                            </p>
+                            <!-- Future fields:
+                            - kkt_timeout (integer, default 10s)
+                            - kkt_retry_count (integer, default 3)
+                            - kkt_enable_debug_mode (boolean)
+                            -->
+                        </group>
+                    </group>
+
+                    <!-- Offline Buffer Settings (Future) -->
+                    <group name="offline_buffer_settings" string="Offline Buffer Settings" invisible="not kkt_adapter_enabled">
+                        <group>
+                            <p class="text-muted">
+                                Offline buffer settings (max size, alert thresholds) will be configured here.
+                            </p>
+                            <!-- Future fields:
+                            - buffer_max_size (integer, default 200)
+                            - buffer_alert_threshold_yellow (integer, default 50%)
+                            - buffer_alert_threshold_red (integer, default 80%)
+                            -->
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
