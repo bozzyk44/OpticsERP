@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Manufacturing Order Tree View -->
+    <record id="view_optics_manufacturing_order_tree" model="ir.ui.view">
+        <field name="name">optics.manufacturing.order.tree</field>
+        <field name="model">optics.manufacturing.order</field>
+        <field name="arch" type="xml">
+            <tree string="Manufacturing Orders" decoration-danger="is_late" decoration-muted="state=='cancelled'">
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="prescription_id"/>
+                <field name="lens_id"/>
+                <field name="date_order"/>
+                <field name="expected_delivery_date"/>
+                <field name="state" widget="badge" decoration-info="state=='draft'" decoration-warning="state in ('confirmed','production')" decoration-success="state=='ready'" decoration-primary="state=='delivered'" decoration-muted="state=='cancelled'"/>
+                <field name="is_late" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Manufacturing Order Form View -->
+    <record id="view_optics_manufacturing_order_form" model="ir.ui.view">
+        <field name="name">optics.manufacturing.order.form</field>
+        <field name="model">optics.manufacturing.order</field>
+        <field name="arch" type="xml">
+            <form string="Manufacturing Order">
+                <header>
+                    <button name="action_confirm" string="Confirm" type="object"
+                            class="oe_highlight"
+                            invisible="state != 'draft'"/>
+                    <button name="action_start_production" string="Start Production" type="object"
+                            class="oe_highlight"
+                            invisible="state != 'confirmed'"/>
+                    <button name="action_mark_ready" string="Mark Ready" type="object"
+                            class="oe_highlight"
+                            invisible="state != 'production'"/>
+                    <button name="action_deliver" string="Deliver" type="object"
+                            class="oe_highlight"
+                            invisible="state != 'ready'"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state in ('delivered', 'cancelled')"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" type="object"
+                            invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,production,ready,delivered"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options='{"terminology": "archive"}'/>
+                        </button>
+                    </div>
+
+                    <!-- Late Order Warning -->
+                    <div class="alert alert-danger" role="alert" invisible="not is_late">
+                        <strong>⚠️ Late Order!</strong> This order is past its expected delivery date.
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group name="customer_info" string="Customer Information">
+                            <field name="customer_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="date_order"/>
+                        </group>
+                        <group name="delivery_info" string="Delivery Information">
+                            <field name="expected_delivery_date" readonly="1"/>
+                            <field name="duration_days" readonly="1" invisible="state != 'delivered'"/>
+                            <field name="is_late" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group name="prescription_info" string="Prescription">
+                            <field name="prescription_id" options="{'no_create': True}"/>
+                        </group>
+                        <group name="lens_info" string="Lens Specification">
+                            <field name="lens_id" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+
+                    <group name="dates" string="Timeline">
+                        <group>
+                            <field name="date_confirmed" readonly="1"/>
+                            <field name="date_production_start" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="date_ready" readonly="1"/>
+                            <field name="date_delivered" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page name="notes" string="Notes">
+                            <group>
+                                <field name="notes" nolabel="1" placeholder="Additional notes and special instructions..."/>
+                            </group>
+                        </page>
+                        <page name="production_notes" string="Production Notes">
+                            <group>
+                                <field name="production_notes" nolabel="1" placeholder="Internal notes for production team..."/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Manufacturing Order Search View -->
+    <record id="view_optics_manufacturing_order_search" model="ir.ui.view">
+        <field name="name">optics.manufacturing.order.search</field>
+        <field name="model">optics.manufacturing.order</field>
+        <field name="arch" type="xml">
+            <search string="Search Manufacturing Orders">
+                <field name="name" string="Order Reference"/>
+                <field name="customer_id"/>
+                <field name="prescription_id"/>
+                <field name="lens_id"/>
+
+                <separator/>
+
+                <filter name="filter_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
+                <filter name="filter_production" string="In Production" domain="[('state', '=', 'production')]"/>
+                <filter name="filter_ready" string="Ready" domain="[('state', '=', 'ready')]"/>
+                <filter name="filter_delivered" string="Delivered" domain="[('state', '=', 'delivered')]"/>
+                <filter name="filter_cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+
+                <separator/>
+
+                <filter name="filter_late" string="Late Orders" domain="[('is_late', '=', True)]"/>
+                <filter name="filter_active" string="Active" domain="[('state', 'in', ['draft', 'confirmed', 'production', 'ready'])]"/>
+
+                <separator/>
+
+                <filter name="filter_archived" string="Archived" domain="[('active', '=', False)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_customer" string="Customer" context="{'group_by': 'customer_id'}"/>
+                    <filter name="group_lens" string="Lens" context="{'group_by': 'lens_id'}"/>
+                    <filter name="group_date_order" string="Order Date" context="{'group_by': 'date_order'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Manufacturing Order Action -->
+    <record id="action_optics_manufacturing_order" model="ir.actions.act_window">
+        <field name="name">Manufacturing Orders</field>
+        <field name="res_model">optics.manufacturing.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_filter_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Manufacturing Order
+            </p>
+            <p>
+                Manufacturing orders track the production process of optical lenses
+                from order confirmation through to delivery.
+            </p>
+        </field>
+    </record>
+
+</odoo>

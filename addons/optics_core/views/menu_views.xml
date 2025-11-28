@@ -27,10 +27,11 @@
               action="action_optics_lens_coating"
               sequence="10"/>
 
-    <!-- Manufacturing Orders Menu (placeholder for OPTERP-36) -->
+    <!-- Manufacturing Orders Menu -->
     <menuitem id="menu_optics_manufacturing"
               name="Manufacturing Orders"
               parent="menu_optics_root"
+              action="action_optics_manufacturing_order"
               sequence="30"/>
 
     <!-- Configuration Menu -->
