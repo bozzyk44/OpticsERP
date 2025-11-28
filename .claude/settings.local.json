@@ -37,7 +37,16 @@
       "Bash(git pull:*)",
       "Bash(git stash:*)",
       "Bash(git restore:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(chmod:*)",
+      "Bash(https://bozzyk44.atlassian.net/rest/api/3/issue)",
+      "Bash(\"https://bozzyk44.atlassian.net/rest/api/3/issue/OPTERP-10\" )",
+      "Bash(if [ -f .env ])",
+      "Bash(then echo \"✅ .env exists\")",
+      "Bash(else echo \"❌ .env not found\")",
+      "Bash(fi)",
+      "Bash(git show:*)",
+      "Bash(docker-compose ps:*)"
     ],
     "deny": [],
     "ask": []
