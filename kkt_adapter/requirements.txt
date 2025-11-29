@@ -7,6 +7,15 @@ python-multipart==0.0.6
 # Circuit Breaker
 pybreaker==1.0.1
 
+# Celery (Bulkhead Pattern - OPTERP-48)
+celery==5.3.4
+redis==5.0.1
+kombu==5.3.4
+flower==2.0.1
+
+# Distributed Locking
+python-redis-lock==4.0.0
+
 # Testing (for future unit tests)
 pytest==7.4.3
 pytest-cov==4.1.0

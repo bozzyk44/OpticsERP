@@ -22,6 +22,56 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Celery Worker - Bulkhead Pattern (4 queues: critical, high, default, low)
+  celery_worker:
+    build:
+      context: ./kkt_adapter
+      dockerfile: Dockerfile
+    container_name: opticserp_celery
+    command: celery -A app.celery_app worker --loglevel=info --queues=critical,high,default,low --concurrency=4
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    volumes:
+      - ./kkt_adapter/app:/app/app
+      - ./kkt_adapter/data:/app/data
+    networks:
+      - opticserp_network
+    depends_on:
+      - redis
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Celery Flower - Monitoring UI (optional)
+  celery_flower:
+    build:
+      context: ./kkt_adapter
+      dockerfile: Dockerfile
+    container_name: opticserp_flower
+    command: celery -A app.celery_app flower --port=5555
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    ports:
+      - "5555:5555"
+    networks:
+      - opticserp_network
+    depends_on:
+      - redis
+      - celery_worker
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   opticserp_network:
     driver: bridge
