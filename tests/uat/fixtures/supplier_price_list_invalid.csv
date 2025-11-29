@@ -1,0 +1,6 @@
+SKU,Product Name,Price,Stock,Category,Brand
+SKU001,Progressive Lens,5000.00,100,Lenses,Brand A
+SKU002,Invalid Price Product,INVALID,50,Lenses,Brand A
+,Missing SKU Product,2000.00,80,Frames,Brand B
+SKU004,Negative Stock,-10,Frames,Brand C
+SKU005,Missing Price,,100,Accessories,Generic
