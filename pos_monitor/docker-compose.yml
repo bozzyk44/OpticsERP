@@ -1,0 +1,50 @@
+# pos_monitor/docker-compose.yml
+# POS Monitor service configuration
+
+version: '3.8'
+
+services:
+  pos_monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pos_monitor
+    ports:
+      - "8001:8001"
+    volumes:
+      # Read-only access to buffer.db
+      - ../kkt_adapter/data:/app/data:ro
+      # Logs persistence
+      - ./logs:/app/logs
+    environment:
+      - BUFFER_DB_PATH=/app/data/buffer.db
+      - KKT_ADAPTER_URL=http://host.docker.internal:8000
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    networks:
+      - pos_network
+    depends_on:
+      - kkt_adapter
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health', timeout=2)"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # KKT Adapter (reference - should be defined in main docker-compose.yml)
+  kkt_adapter:
+    image: kkt_adapter:latest
+    container_name: kkt_adapter
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../kkt_adapter/data:/app/data
+      - ../kkt_adapter/config.toml:/app/config.toml
+    restart: unless-stopped
+    networks:
+      - pos_network
+
+networks:
+  pos_network:
+    driver: bridge

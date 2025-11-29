@@ -1,0 +1,18 @@
+# pos_monitor/requirements.txt
+# Backend dependencies for POS Monitor
+
+# FastAPI framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# WebSocket support
+websockets==12.0
+
+# Data validation
+pydantic==2.5.0
+
+# HTTP client for KKT Adapter health checks
+requests==2.31.0
+
+# Prometheus metrics (optional, for future)
+# prometheus-client==0.19.0
