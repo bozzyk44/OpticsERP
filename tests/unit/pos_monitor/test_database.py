@@ -1,7 +1,7 @@
 # tests/unit/pos_monitor/test_database.py
 """Unit tests for POS Monitor database module"""
 import pytest
-from pos_monitor.app.database import (
+from app.database import (
     get_cash_balance,
     get_buffer_status,
     get_sales_today,
@@ -125,8 +125,8 @@ def test_check_buffer_accessible(mock_buffer_db):
 def test_check_buffer_accessible_missing_db(monkeypatch):
     """Test buffer accessibility with missing database"""
     # Set non-existent path
-    monkeypatch.setattr('pos_monitor.app.database.BUFFER_DB_PATH', '/nonexistent/buffer.db')
-    monkeypatch.setattr('pos_monitor.app.config.BUFFER_DB_PATH', '/nonexistent/buffer.db')
+    monkeypatch.setattr('app.database.BUFFER_DB_PATH', '/nonexistent/buffer.db')
+    monkeypatch.setattr('app.config.BUFFER_DB_PATH', '/nonexistent/buffer.db')
 
     assert check_buffer_accessible() is False
 
@@ -136,7 +136,7 @@ def test_check_buffer_accessible_missing_db(monkeypatch):
 def test_get_buffer_percent_full_calculation(mock_buffer_db, monkeypatch):
     """Test percent full calculation with different capacities"""
     # Change capacity to 10 for easier testing
-    monkeypatch.setattr('pos_monitor.app.database.BUFFER_CAPACITY', 10)
+    monkeypatch.setattr('app.database.BUFFER_CAPACITY', 10)
 
     status = get_buffer_status()
 
@@ -148,7 +148,7 @@ def test_get_buffer_percent_full_calculation(mock_buffer_db, monkeypatch):
 @pytest.mark.pos_monitor
 def test_read_only_mode(mock_buffer_db):
     """Test that database is opened in read-only mode"""
-    from pos_monitor.app.database import get_db
+    from app.database import get_db
     import sqlite3
 
     # Attempt to write should fail in read-only mode

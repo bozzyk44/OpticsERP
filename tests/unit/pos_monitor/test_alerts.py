@@ -2,7 +2,7 @@
 """Unit tests for POS Monitor alerts module"""
 import pytest
 import sqlite3
-from pos_monitor.app.alerts import check_alerts, get_kkt_status
+from app.alerts import check_alerts, get_kkt_status
 
 
 @pytest.mark.unit
@@ -45,7 +45,7 @@ def test_check_alerts_buffer_warning(mock_buffer_db, monkeypatch):
             "last_sync": None
         }
 
-    monkeypatch.setattr('pos_monitor.app.alerts.get_buffer_status', mock_get_buffer_status)
+    monkeypatch.setattr('app.alerts.get_buffer_status', mock_get_buffer_status)
 
     # Mock KKT Adapter as healthy
     import requests
@@ -86,7 +86,7 @@ def test_check_alerts_buffer_critical(mock_buffer_db, monkeypatch):
             "last_sync": None
         }
 
-    monkeypatch.setattr('pos_monitor.app.alerts.get_buffer_status', mock_get_buffer_status)
+    monkeypatch.setattr('app.alerts.get_buffer_status', mock_get_buffer_status)
 
     # Mock KKT Adapter as healthy
     import requests
@@ -127,7 +127,7 @@ def test_check_alerts_dlq_warning(mock_buffer_db, monkeypatch):
             "last_sync": None
         }
 
-    monkeypatch.setattr('pos_monitor.app.alerts.get_buffer_status', mock_get_buffer_status)
+    monkeypatch.setattr('app.alerts.get_buffer_status', mock_get_buffer_status)
 
     # Mock KKT Adapter as healthy
     import requests
@@ -166,7 +166,7 @@ def test_check_alerts_kkt_adapter_offline(mock_kkt_adapter_offline, mock_buffer_
             "last_sync": None
         }
 
-    monkeypatch.setattr('pos_monitor.app.alerts.get_buffer_status', mock_get_buffer_status)
+    monkeypatch.setattr('app.alerts.get_buffer_status', mock_get_buffer_status)
 
     alerts = check_alerts()
 
@@ -191,7 +191,7 @@ def test_check_alerts_circuit_breaker_open(mock_kkt_adapter_online_cb_open, mock
             "last_sync": None
         }
 
-    monkeypatch.setattr('pos_monitor.app.alerts.get_buffer_status', mock_get_buffer_status)
+    monkeypatch.setattr('app.alerts.get_buffer_status', mock_get_buffer_status)
 
     alerts = check_alerts()
 

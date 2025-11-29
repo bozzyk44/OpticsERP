@@ -775,10 +775,10 @@ def test_uat_04_smoke_test_report_structure():
         'dateTime': '2025-11-29T22:00:00',
         'reportType': 2,
         'shiftNumber': 1,
-        'cashTotal': 4500.0,
-        'cardTotal': 5500.0,
-        'totalSales': 10000.0,
-        'totalRefunds': 500.0,
+        'cashTotal': 4250.0,  # Net after refunds
+        'cardTotal': 5250.0,  # Net after refunds
+        'totalSales': 10000.0,  # Gross sales
+        'totalRefunds': 500.0,  # Refunds (cashTotal + cardTotal = totalSales - totalRefunds)
         'operatorName': 'John Doe',
         'kktRegNumber': '1234567890123456'
     }

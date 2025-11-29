@@ -162,7 +162,7 @@ def test_api_docs_accessible(client):
 def test_status_endpoint_with_missing_db(client, monkeypatch):
     """Test /api/v1/status with missing database"""
     # Set non-existent DB path
-    monkeypatch.setattr('pos_monitor.app.database.BUFFER_DB_PATH', '/nonexistent/buffer.db')
+    monkeypatch.setattr('app.database.BUFFER_DB_PATH', '/nonexistent/buffer.db')
 
     response = client.get("/api/v1/status")
 
@@ -179,8 +179,8 @@ def test_status_endpoint_with_missing_db(client, monkeypatch):
 def test_health_endpoint_with_missing_db(client, monkeypatch):
     """Test /health with missing database (degraded state)"""
     # Set non-existent DB path
-    monkeypatch.setattr('pos_monitor.app.database.BUFFER_DB_PATH', '/nonexistent/buffer.db')
-    monkeypatch.setattr('pos_monitor.app.config.BUFFER_DB_PATH', '/nonexistent/buffer.db')
+    monkeypatch.setattr('app.database.BUFFER_DB_PATH', '/nonexistent/buffer.db')
+    monkeypatch.setattr('app.config.BUFFER_DB_PATH', '/nonexistent/buffer.db')
 
     response = client.get("/health")
 
