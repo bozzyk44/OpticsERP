@@ -21,19 +21,19 @@ import json
 from typing import Dict, Any, Optional
 from celery import Task
 
-from .celery_app import app
+from celery_app import app
 
 # Import buffer operations
 try:
-    from .buffer import (
+    from buffer import (
         get_pending_receipts,
         mark_synced,
         increment_retry_count,
         move_to_dlq,
         get_receipt_by_id,
     )
-    from .circuit_breaker import get_circuit_breaker
-    from .ofd_client import get_ofd_client, OFDClientError
+    from circuit_breaker import get_circuit_breaker
+    from ofd_client import get_ofd_client, OFDClientError
 except ImportError:
     # Fallback for standalone execution
     from buffer import (

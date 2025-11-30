@@ -39,8 +39,8 @@ from enum import Enum
 
 # Import dependencies
 try:
-    from .buffer import get_buffer_status
-    from .circuit_breaker import get_circuit_breaker
+    from buffer import get_buffer_status
+    from circuit_breaker import get_circuit_breaker
 except ImportError:
     from buffer import get_buffer_status
     from circuit_breaker import get_circuit_breaker

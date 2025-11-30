@@ -36,14 +36,6 @@
 
         # Data
         'data/ir_sequence_data.xml',
-
-        # Views
-        'views/import_profile_views.xml',
-        'views/import_job_views.xml',
-        'views/menu_views.xml',
-
-        # Wizards
-        'wizards/import_wizard_views.xml',
     ],
     'demo': [],
     'installable': True,

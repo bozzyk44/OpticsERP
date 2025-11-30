@@ -28,23 +28,23 @@ from typing import Optional
 
 # Import buffer operations
 try:
-    from .buffer import (
+    from buffer import (
         get_buffer_status,
         init_buffer_db,
         close_buffer_db,
         BufferFullError
     )
-    from .models import (
+    from models import (
         CreateReceiptRequest,
         CreateReceiptResponse,
         BufferStatusResponse,
         HealthCheckResponse
     )
-    from .circuit_breaker import get_circuit_breaker
-    from .sync_worker import start_sync_worker, stop_sync_worker, trigger_manual_sync, get_worker_status
-    from .kkt_driver import get_kkt_status
-    from .fiscal import process_fiscal_receipt  # OPTERP-18: Use fiscal module
-    from .heartbeat import start_heartbeat, stop_heartbeat, get_heartbeat_status  # OPTERP-24: Heartbeat
+    from circuit_breaker import get_circuit_breaker
+    from sync_worker import start_sync_worker, stop_sync_worker, trigger_manual_sync, get_worker_status
+    from kkt_driver import get_kkt_status
+    from fiscal import process_fiscal_receipt  # OPTERP-18: Use fiscal module
+    from heartbeat import start_heartbeat, stop_heartbeat, get_heartbeat_status  # OPTERP-24: Heartbeat
 except ImportError:
     # Handle direct execution
     from buffer import (
@@ -152,7 +152,7 @@ async def startup_event():
         logger.info("✅ Buffer database initialized")
 
         # ⭐ NEW (OPTERP-104): Restore POS sessions after restart
-        from .buffer import restore_session_state, reconcile_session
+        from buffer import restore_session_state, reconcile_session
 
         # List of registered POS terminals (TODO: load from config)
         registered_pos = ["POS-001", "POS-002"]  # Example

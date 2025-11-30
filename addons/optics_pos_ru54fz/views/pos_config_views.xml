@@ -21,7 +21,7 @@ Allows configuration of KKT adapter URL and connection testing.
         <field name="arch" type="xml">
 
             <!-- Add KKT Adapter section after POS settings -->
-            <xpath expr="//notebook" position="inside">
+            <xpath expr="//page[@name='hardware_proxy']" position="after">
                 <page string="KKT Adapter (54-ФЗ)" name="kkt_adapter">
                     <group>
                         <group name="kkt_adapter_config" string="KKT Adapter Configuration">

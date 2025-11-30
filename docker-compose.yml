@@ -1,4 +1,38 @@
 services:
+  # KKT Adapter - FastAPI REST API for fiscal receipts
+  kkt_adapter:
+    build:
+      context: ./kkt_adapter
+      dockerfile: Dockerfile
+    container_name: opticserp_kkt_adapter
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - BUFFER_DB_PATH=/app/data/buffer.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./kkt_adapter/app:/app
+      - ./kkt_adapter/data:/app/data
+    networks:
+      - opticserp_network
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import requests; requests.get(\"http://localhost:8000/health\", timeout=5)' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   # Redis - Message broker and distributed lock store
   redis:
     image: redis:7-alpine
@@ -28,18 +62,20 @@ services:
       context: ./kkt_adapter
       dockerfile: Dockerfile
     container_name: opticserp_celery
-    command: celery -A app.celery_app worker --loglevel=info --queues=critical,high,default,low --concurrency=4
+    command: celery -A celery_app worker --loglevel=info --queues=critical,high,default,low --concurrency=4
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
+      - BUFFER_DB_PATH=/app/data/buffer.db
     volumes:
-      - ./kkt_adapter/app:/app/app
+      - ./kkt_adapter/app:/app
       - ./kkt_adapter/data:/app/data
     networks:
       - opticserp_network
     depends_on:
       - redis
+      - kkt_adapter
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -53,19 +89,85 @@ services:
       context: ./kkt_adapter
       dockerfile: Dockerfile
     container_name: opticserp_flower
-    command: celery -A app.celery_app flower --port=5555
+    command: celery -A celery_app flower --port=5555
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
+      - BUFFER_DB_PATH=/app/data/buffer.db
     ports:
       - "5555:5555"
+    volumes:
+      - ./kkt_adapter/app:/app
+      - ./kkt_adapter/data:/app/data
     networks:
       - opticserp_network
     depends_on:
       - redis
+      - kkt_adapter
       - celery_worker
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # PostgreSQL - Database for Odoo
+  postgres:
+    image: postgres:15-alpine
+    container_name: opticserp_postgres
+    environment:
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_DB=opticserp
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - opticserp_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Odoo 17 - ERP/POS System
+  odoo:
+    image: odoo:17
+    container_name: opticserp_odoo
+    environment:
+      - HOST=postgres
+      - PORT=5432
+      - USER=odoo
+      - PASSWORD=odoo
+    ports:
+      - "8069:8069"
+      - "8072:8072"
+    volumes:
+      - ./odoo.conf:/etc/odoo/odoo.conf
+      - ./addons:/mnt/extra-addons
+      - odoo_web_data:/var/lib/odoo
+    networks:
+      - opticserp_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8069/web/database/selector || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     logging:
       driver: "json-file"
       options:
@@ -78,4 +180,8 @@ networks:
 
 volumes:
   redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+  odoo_web_data:
     driver: local

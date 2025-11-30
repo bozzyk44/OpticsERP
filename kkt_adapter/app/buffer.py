@@ -31,7 +31,7 @@ from pathlib import Path
 
 # Import HLC - handle both package and direct execution
 try:
-    from .hlc import HybridTimestamp, generate_hlc
+    from hlc import HybridTimestamp, generate_hlc
 except ImportError:
     from hlc import HybridTimestamp, generate_hlc
 

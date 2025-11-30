@@ -31,6 +31,7 @@ class OpticsManufacturingOrder(models.Model):
 
     _name = 'optics.manufacturing.order'
     _description = 'Optical Manufacturing Order'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'date_order desc, id desc'
     _rec_name = 'name'
 
@@ -159,7 +160,7 @@ class OpticsManufacturingOrder(models.Model):
     is_late = fields.Boolean(
         string='Is Late',
         compute='_compute_is_late',
-        store=False,
+        store=True,
         help='True if order is past expected delivery date'
     )
 

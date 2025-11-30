@@ -33,9 +33,6 @@
         'views/lens_views.xml',
         'views/manufacturing_order_views.xml',
         'views/menu_views.xml',
-
-        # Reports
-        'reports/order_label_template.xml',
     ],
     'demo': [],
     'installable': True,

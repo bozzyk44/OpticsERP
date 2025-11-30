@@ -32,15 +32,6 @@
     'data': [
         # Security
         'security/ir.model.access.csv',
-
-        # Views
-        'views/pos_session_views.xml',
-        'views/pos_config_views.xml',
-        'views/offline_buffer_views.xml',
-
-        # Reports
-        'reports/x_report_template.xml',
-        'reports/z_report_template.xml',
     ],
     'assets': {
         'point_of_sale.assets': [

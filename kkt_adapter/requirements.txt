@@ -16,6 +16,9 @@ flower==2.0.1
 # Distributed Locking
 python-redis-lock==4.0.0
 
+# HTTP Client
+requests==2.31.0
+
 # Testing (for future unit tests)
 pytest==7.4.3
 pytest-cov==4.1.0

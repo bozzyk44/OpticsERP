@@ -36,15 +36,15 @@ from datetime import datetime
 
 # Import Phase 1 components
 try:
-    from .buffer import (
+    from buffer import (
         insert_receipt,
         update_receipt_fiscal_doc,
         get_receipt_by_id,
         BufferFullError
     )
-    from .kkt_driver import print_receipt
-    from .circuit_breaker import get_circuit_breaker
-    from .sync_worker import get_worker_status
+    from kkt_driver import print_receipt
+    from circuit_breaker import get_circuit_breaker
+    from sync_worker import get_worker_status
 except ImportError:
     # Handle direct execution
     from buffer import (
