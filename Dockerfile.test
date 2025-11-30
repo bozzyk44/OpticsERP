@@ -1,0 +1,37 @@
+# Dockerfile for Test Runner
+# Purpose: Container for running pytest integration tests
+#
+# Build: docker build -f Dockerfile.test -t opticserp-test-runner:latest .
+# Run:   docker run --network=opticserp_test_network opticserp-test-runner:latest
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt /app/
+COPY requirements-test.txt /app/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-test.txt
+
+# Copy project files
+COPY . /app/
+
+# Set environment variables
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    KKT_ADAPTER_URL=http://kkt_adapter:8000 \
+    MOCK_OFD_URL=http://mock_ofd:9000 \
+    MOCK_ODOO_URL=http://mock_odoo:8070
+
+# Default command (can be overridden)
+CMD ["pytest", "tests/integration", "-v", "--tb=short"]

@@ -1,22 +1,234 @@
-# Docker Compose for Testing Environment
-# Usage: docker-compose -f docker-compose.test.yml up -d
+# Docker Compose Configuration for Testing with Mock Services
+# Purpose: Enable E2E testing without production dependencies
+#
+# Usage:
+#   docker-compose -f docker-compose.test.yml up -d
+#   docker-compose -f docker-compose.test.yml down
+#
+# Services:
+#   - Mock OFD Server (port 9000) - Simulates OFD API
+#   - Mock Odoo Server (port 8070) - Simulates Odoo API
+#   - KKT Adapter (port 8000) - Under test
+#   - Redis (port 6379) - Required for KKT Adapter
+#
+# Network Topology:
+#   kkt_adapter -> mock_ofd (OFD sync)
+#   kkt_adapter -> mock_odoo (Heartbeat)
+#   kkt_adapter -> redis (Distributed lock)
+
+version: '3.8'
 
 services:
-  # Redis - Required for POC-5 (distributed lock)
+  # ====================
+  # Mock OFD Server
+  # ====================
+  # Simulates OFD (Operator Fiscal Data) API for Phase 2 fiscalization testing
+  mock_ofd:
+    build:
+      context: ./tests/integration
+      dockerfile: Dockerfile.mock_ofd
+    container_name: opticserp_mock_ofd
+    environment:
+      - FLASK_ENV=development
+      - OFD_PORT=9000
+      - OFD_HOST=0.0.0.0
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "9000:9000"
+    networks:
+      - test_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/ofd/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ====================
+  # Mock Odoo Server
+  # ====================
+  # Simulates Odoo API for heartbeat and POS session management testing
+  mock_odoo:
+    build:
+      context: ./tests/integration
+      dockerfile: Dockerfile.mock_odoo
+    container_name: opticserp_mock_odoo
+    environment:
+      - FLASK_ENV=development
+      - ODOO_PORT=8070
+      - ODOO_HOST=0.0.0.0
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8070:8070"
+    networks:
+      - test_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8070/api/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ====================
+  # Redis (Required Dependency)
+  # ====================
+  # Message broker and distributed lock store for KKT Adapter
   redis:
     image: redis:7-alpine
     container_name: opticserp_test_redis
+    command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
-    command: redis-server --appendonly no  # Faster for tests
+      - "6380:6379"  # Use different port to avoid conflict with dev instance
+    volumes:
+      - test_redis_data:/data
     networks:
       - test_network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 2s
-      retries: 3
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ====================
+  # KKT Adapter (System Under Test)
+  # ====================
+  # FastAPI service with mock KKT driver and OFD client (HTTP mode)
+  kkt_adapter:
+    build:
+      context: ./kkt_adapter
+      dockerfile: Dockerfile
+    container_name: opticserp_test_kkt_adapter
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      # Redis connection
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+
+      # Buffer configuration (test mode - smaller capacity)
+      - BUFFER_DB_PATH=/app/data/buffer.db
+      - BUFFER_MAX_SIZE=100
+      - BUFFER_ALERT_THRESHOLD=0.8
+      - BUFFER_BLOCK_THRESHOLD=1.0
+
+      # Mock OFD configuration (HTTP mode to mock_ofd)
+      - OFD_MODE=http  # vs 'mock' (in-memory)
+      - OFD_API_URL=http://mock_ofd:9000
+      - OFD_TIMEOUT=5
+      - OFD_RETRY_ATTEMPTS=2
+      - OFD_RETRY_DELAY=1
+
+      # Mock Odoo configuration
+      - ODOO_API_URL=http://mock_odoo:8070
+      - ODOO_HEARTBEAT_INTERVAL=10
+
+      # Circuit Breaker (test mode - faster response)
+      - CIRCUIT_BREAKER_THRESHOLD=3
+      - CIRCUIT_BREAKER_TIMEOUT=10
+      - CIRCUIT_BREAKER_RECOVERY_TIMEOUT=30
+
+      # Sync Worker (test mode - faster sync)
+      - SYNC_INTERVAL=5
+      - SYNC_BATCH_SIZE=10
+      - SYNC_WORKERS=2
+
+      # KKT Driver (mock mode)
+      - KKT_MODE=mock
+      - KKT_PRINT_DELAY_MIN=0.1
+      - KKT_PRINT_DELAY_MAX=0.2
+
+      # Logging
+      - LOG_LEVEL=DEBUG
+      - PYTHONUNBUFFERED=1
+
+    ports:
+      - "8001:8000"  # Map to 8001 to avoid conflict with dev instance
+    volumes:
+      - ./kkt_adapter/app:/app
+      - ./kkt_adapter/data:/app/data
+      - test_kkt_data:/app/data
+    networks:
+      - test_network
+    depends_on:
+      redis:
+        condition: service_healthy
+      mock_ofd:
+        condition: service_healthy
+      mock_odoo:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ====================
+  # Test Runner (Optional)
+  # ====================
+  # Container for running pytest integration tests against the stack
+  test_runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: opticserp_test_runner
+    command: tail -f /dev/null  # Keep container alive for manual test execution
+    environment:
+      - KKT_ADAPTER_URL=http://kkt_adapter:8000
+      - MOCK_OFD_URL=http://mock_ofd:9000
+      - MOCK_ODOO_URL=http://mock_odoo:8070
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - .:/app
+      - ./tests:/app/tests
+    networks:
+      - test_network
+    depends_on:
+      kkt_adapter:
+        condition: service_healthy
+      mock_ofd:
+        condition: service_healthy
+      mock_odoo:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
 networks:
   test_network:
     driver: bridge
+    name: opticserp_test_network
+
+volumes:
+  test_redis_data:
+    driver: local
+    name: opticserp_test_redis_data
+  test_kkt_data:
+    driver: local
+    name: opticserp_test_kkt_data
