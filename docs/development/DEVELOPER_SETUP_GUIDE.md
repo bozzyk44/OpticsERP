@@ -309,7 +309,20 @@ CIRCUIT_BREAKER_THRESHOLD=3      # Fail after 3 errors
 # Mock Services
 # ===========================================
 MOCK_OFD_URL=http://mock_ofd:9000
-MOCK_ODOO_URL=http://mock_odoo_api:8070
+
+# ===========================================
+# Odoo Heartbeat Mode Selection
+# ===========================================
+# MODE 1: Mock Odoo API (default for KKT development)
+COMPOSE_PROFILES=mock
+HEARTBEAT_URL=http://mock_odoo_api:8070/api/v1/kkt/heartbeat
+
+# MODE 2: Real Odoo (for E2E testing)
+# COMPOSE_PROFILES=
+# HEARTBEAT_URL=http://odoo:8069/api/v1/kkt/heartbeat
+
+HEARTBEAT_INTERVAL=30           # Heartbeat interval (seconds)
+HEARTBEAT_TIMEOUT=5             # HTTP timeout
 
 # ===========================================
 # Logging
@@ -358,7 +371,89 @@ kkt_adapter_timeout = 10
 session_timeout = 86400
 ```
 
-### 5.3. Настройка Mock OFD поведения
+### 5.3. Выбор режима Odoo (Mock vs Real)
+
+KKT Adapter поддерживает два режима работы с Odoo:
+
+**MODE 1: Mock Odoo API** (по умолчанию)
+- Легковесный Flask сервер
+- Эмулирует heartbeat endpoint
+- Не требует базы данных
+- Быстрый старт (~2 секунды)
+- **Используйте для:** разработки KKT Adapter, юнит-тестов
+
+**MODE 2: Real Odoo**
+- Полноценный Odoo 17
+- Требует PostgreSQL
+- Можно тестировать кастомные модули
+- Медленный старт (~60 секунд)
+- **Используйте для:** E2E тестирования, интеграционных тестов
+
+**Как переключиться:**
+
+**Включить Mock Odoo API** (MODE 1):
+```bash
+# В .env раскомментировать:
+COMPOSE_PROFILES=mock
+HEARTBEAT_URL=http://mock_odoo_api:8070/api/v1/kkt/heartbeat
+
+# И закомментировать MODE 2:
+# COMPOSE_PROFILES=
+# HEARTBEAT_URL=http://odoo:8069/api/v1/kkt/heartbeat
+
+# Перезапустить:
+docker-compose -f docker-compose.dev.yml down
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+**Включить Real Odoo** (MODE 2):
+```bash
+# В .env закомментировать MODE 1:
+# COMPOSE_PROFILES=mock
+# HEARTBEAT_URL=http://mock_odoo_api:8070/api/v1/kkt/heartbeat
+
+# И раскомментировать:
+COMPOSE_PROFILES=
+HEARTBEAT_URL=http://odoo:8069/api/v1/kkt/heartbeat
+
+# Перезапустить:
+docker-compose -f docker-compose.dev.yml down
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+**Проверка текущего режима:**
+```bash
+# Проверить какие сервисы запущены
+docker-compose -f docker-compose.dev.yml ps | grep -E "odoo|mock"
+
+# MODE 1: должен быть только mock_odoo_api_dev
+# MODE 2: должен быть только odoo_dev
+```
+
+**Troubleshooting:**
+
+*Mock Odoo API не стартует в MODE 1:*
+```bash
+# Проверить COMPOSE_PROFILES в .env
+grep COMPOSE_PROFILES .env
+# Должно быть: COMPOSE_PROFILES=mock
+
+# Перезапустить явно с профилем:
+COMPOSE_PROFILES=mock docker-compose -f docker-compose.dev.yml up -d
+```
+
+*Real Odoo не подключается к heartbeat:*
+```bash
+# Проверить HEARTBEAT_URL
+docker exec opticserp_kkt_adapter_dev env | grep HEARTBEAT_URL
+# Должно быть: HEARTBEAT_URL=http://odoo:8069/api/v1/kkt/heartbeat
+
+# Проверить что Odoo API endpoint работает:
+curl http://localhost:8069/api/v1/kkt/heartbeat
+# (должен вернуть ошибку или 404, но не connection refused)
+```
+
+### 5.4. Настройка Mock OFD поведения
 
 **Scenario 1: Успешная обработка всех запросов (по умолчанию)**
 
@@ -399,7 +494,7 @@ curl -X POST http://localhost:9000/ofd/v1/admin/set-success
 MOCK_OFD_RESPONSE_DELAY=15  # 15s delay (> timeout)
 ```
 
-### 5.4. Включение мониторинга
+### 5.5. Включение мониторинга
 
 ```bash
 # Запустить с Prometheus + Grafana

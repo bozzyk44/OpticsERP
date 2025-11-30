@@ -54,7 +54,8 @@
       "Bash(else echo \"JIRA_API_TOKEN: ❌ Not set\")",
       "Bash(do if [ -f \"$dir/i18n/ru.po\" ])",
       "Bash(then mv \"$dir/i18n/ru.po\" \"$dir/i18n/ru.po.backup\")",
-      "WebSearch"
+      "WebSearch",
+      "Bash(COMPOSE_PROFILES=mock docker-compose:*)"
     ],
     "deny": [],
     "ask": []

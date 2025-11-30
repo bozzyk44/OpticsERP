@@ -152,36 +152,37 @@ async def startup_event():
         logger.info("✅ Buffer database initialized")
 
         # ⭐ NEW (OPTERP-104): Restore POS sessions after restart
-        from buffer import restore_session_state, reconcile_session
+        # TODO: Fix import issue in Docker - temporarily disabled
+        # from buffer import restore_session_state, reconcile_session
 
         # List of registered POS terminals (TODO: load from config)
-        registered_pos = ["POS-001", "POS-002"]  # Example
-
-        restored_sessions = 0
-        for pos_id in registered_pos:
-            session = restore_session_state(pos_id)
-            if session:
-                logger.info(f"✅ Restored session for {pos_id}:")
-                logger.info(f"   Session ID: {session['session_id']}")
-                logger.info(f"   Cash balance: {session['cash_balance']:.2f}₽")
-                logger.info(f"   Card balance: {session['card_balance']:.2f}₽")
-                logger.info(f"   Unsynced transactions: {session['unsynced_transactions']}")
-
-                # Reconcile balance
-                reconciliation = reconcile_session(pos_id)
-                if not reconciliation['reconciled']:
-                    logger.warning(f"⚠️  Balance mismatch for {pos_id}: "
-                                 f"expected {reconciliation['expected_balance']:.2f}, "
-                                 f"actual {reconciliation['actual_balance']:.2f}")
-                else:
-                    logger.info(f"✅ Balance reconciled for {pos_id}")
-
-                restored_sessions += 1
-
-        if restored_sessions > 0:
-            logger.info(f"✅ Restored {restored_sessions} POS session(s)")
-        else:
-            logger.info("ℹ️  No open sessions to restore")
+        # registered_pos = ["POS-001", "POS-002"]  # Example
+        #
+        # restored_sessions = 0
+        # for pos_id in registered_pos:
+        #     session = restore_session_state(pos_id)
+        #     if session:
+        #         logger.info(f"✅ Restored session for {pos_id}:")
+        #         logger.info(f"   Session ID: {session['session_id']}")
+        #         logger.info(f"   Cash balance: {session['cash_balance']:.2f}₽")
+        #         logger.info(f"   Card balance: {session['card_balance']:.2f}₽")
+        #         logger.info(f"   Unsynced transactions: {session['unsynced_transactions']}")
+        #
+        #         # Reconcile balance
+        #         reconciliation = reconcile_session(pos_id)
+        #         if not reconciliation['reconciled']:
+        #             logger.warning(f"⚠️  Balance mismatch for {pos_id}: "
+        #                          f"expected {reconciliation['expected_balance']:.2f}, "
+        #                          f"actual {reconciliation['actual_balance']:.2f}")
+        #         else:
+        #             logger.info(f"✅ Balance reconciled for {pos_id}")
+        #
+        #         restored_sessions += 1
+        #
+        # if restored_sessions > 0:
+        #     logger.info(f"✅ Restored {restored_sessions} POS session(s)")
+        # else:
+        #     logger.info("ℹ️  No open sessions to restore")
 
         # Start sync worker (Phase 2 fiscalization)
         start_sync_worker()

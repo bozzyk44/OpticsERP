@@ -129,10 +129,12 @@ services:
     ports:
       - "8070:8070"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8070/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8070/health"]
       interval: 10s
       timeout: 5s
       retries: 3
+    profiles:
+      - mock  # Only start when 'mock' profile is active
     labels:
       com.opticserp.service: "mock_odoo_api"
       com.opticserp.environment: "development"
@@ -173,9 +175,9 @@ services:
       API_HOST: 0.0.0.0
       API_PORT: 8000
 
-      # Heartbeat configuration
-      HEARTBEAT_INTERVAL: 30
-      HEARTBEAT_URL: http://mock_odoo_api:8070/api/v1/kkt/heartbeat
+      # Heartbeat configuration (configurable via .env)
+      HEARTBEAT_INTERVAL: ${HEARTBEAT_INTERVAL:-30}
+      HEARTBEAT_URL: ${HEARTBEAT_URL:-http://mock_odoo_api:8070/api/v1/kkt/heartbeat}
     volumes:
       - kkt_buffer_dev:/app/data
       - ./kkt_adapter/app:/app/app:ro
@@ -188,14 +190,8 @@ services:
         condition: service_healthy
       mock_ofd:
         condition: service_healthy
-      mock_odoo_api:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      # mock_odoo_api is optional - depends on USE_MOCK_ODOO setting
+    # healthcheck inherited from Dockerfile (uses Python + requests)
     labels:
       com.opticserp.service: "kkt_adapter"
       com.opticserp.environment: "development"
@@ -233,7 +229,7 @@ services:
     volumes:
       - odoo_dev_data:/var/lib/odoo
       - ./addons:/mnt/extra-addons:ro
-      - ./odoo.conf:/etc/odoo/odoo.conf:ro
+      # - ./odoo.conf:/etc/odoo/odoo.conf:ro  # Disabled - using env vars instead
     networks:
       - opticserp_dev_network
     ports:

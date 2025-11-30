@@ -33,6 +33,7 @@ Hysteresis Logic:
 import asyncio
 import logging
 import httpx
+import os
 from typing import Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -69,10 +70,10 @@ _current_state = HeartbeatState.UNKNOWN
 _consecutive_successes = 0
 _consecutive_failures = 0
 
-# Configuration
-HEARTBEAT_INTERVAL_SECONDS = 30  # Send every 30s
-HEARTBEAT_TIMEOUT_SECONDS = 5    # HTTP timeout
-ODOO_HEARTBEAT_URL = "http://localhost:8069/api/v1/kkt/heartbeat"
+# Configuration (from environment variables)
+HEARTBEAT_INTERVAL_SECONDS = int(os.getenv("HEARTBEAT_INTERVAL", "30"))  # Send every 30s
+HEARTBEAT_TIMEOUT_SECONDS = int(os.getenv("HEARTBEAT_TIMEOUT", "5"))     # HTTP timeout
+ODOO_HEARTBEAT_URL = os.getenv("HEARTBEAT_URL", "http://localhost:8069/api/v1/kkt/heartbeat")
 HYSTERESIS_SUCCESS_THRESHOLD = 2  # 2 successes → ONLINE
 HYSTERESIS_FAILURE_THRESHOLD = 3  # 3 failures → OFFLINE
 
