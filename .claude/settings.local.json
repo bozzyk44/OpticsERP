@@ -48,7 +48,10 @@
       "Bash(git show:*)",
       "Bash(docker-compose ps:*)",
       "Bash(git mv:*)",
-      "Bash(docker-compose:*)"
+      "Bash(docker-compose:*)",
+      "Bash(if [ -n \"$JIRA_API_TOKEN\" ])",
+      "Bash(then echo \"JIRA_API_TOKEN: ✅ Set\")",
+      "Bash(else echo \"JIRA_API_TOKEN: ❌ Not set\")"
     ],
     "deny": [],
     "ask": []
