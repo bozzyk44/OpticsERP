@@ -1,0 +1,323 @@
+# Docker Compose Development Configuration
+# ===========================================
+# Purpose: Development environment with integrated mock services
+#
+# Services Stack:
+#   Production-like:
+#     - Odoo 17 (with mock POS module)
+#     - PostgreSQL 15
+#     - Redis
+#     - KKT Adapter
+#   Mock Services:
+#     - Mock OFD Server (simulates ОФД API)
+#     - Mock Odoo API (for heartbeat testing)
+#
+# Usage:
+#   docker-compose -f docker-compose.dev.yml up -d
+#   docker-compose -f docker-compose.dev.yml down -v
+#
+# Key Features:
+#   - No real fiscal hardware required
+#   - Fast feedback loop (5s sync interval)
+#   - Full E2E testing capability
+#   - Isolated development network
+#
+# Last Updated: 2025-11-30
+# ===========================================
+
+version: '3.8'
+
+networks:
+  opticserp_dev_network:
+    driver: bridge
+    name: opticserp_dev_network
+
+volumes:
+  postgres_dev_data:
+    name: opticserp_postgres_dev
+  odoo_dev_data:
+    name: opticserp_odoo_dev
+  kkt_buffer_dev:
+    name: opticserp_kkt_buffer_dev
+  redis_dev_data:
+    name: opticserp_redis_dev
+
+services:
+  # ===========================================
+  # Core Infrastructure
+  # ===========================================
+
+  postgres:
+    image: postgres:15
+    container_name: opticserp_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-opticserp_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-odoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - opticserp_dev_network
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts with production
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: opticserp_redis_dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - opticserp_dev_network
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ===========================================
+  # Mock Services (Development Only)
+  # ===========================================
+
+  mock_ofd:
+    build:
+      context: ./tests/integration
+      dockerfile: Dockerfile.mock_ofd
+    container_name: opticserp_mock_ofd_dev
+    restart: unless-stopped
+    environment:
+      OFD_PORT: 9000
+      OFD_HOST: 0.0.0.0
+      FLASK_ENV: development
+      LOG_LEVEL: INFO
+    networks:
+      - opticserp_dev_network
+    ports:
+      - "9000:9000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/ofd/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      com.opticserp.service: "mock_ofd"
+      com.opticserp.environment: "development"
+
+  mock_odoo_api:
+    build:
+      context: ./tests/integration
+      dockerfile: Dockerfile.mock_odoo
+    container_name: opticserp_mock_odoo_api_dev
+    restart: unless-stopped
+    environment:
+      ODOO_PORT: 8070
+      ODOO_HOST: 0.0.0.0
+      FLASK_ENV: development
+      LOG_LEVEL: INFO
+    networks:
+      - opticserp_dev_network
+    ports:
+      - "8070:8070"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8070/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      com.opticserp.service: "mock_odoo_api"
+      com.opticserp.environment: "development"
+
+  # ===========================================
+  # KKT Adapter (Mock Mode)
+  # ===========================================
+
+  kkt_adapter:
+    build:
+      context: ./kkt_adapter
+      dockerfile: Dockerfile
+    container_name: opticserp_kkt_adapter_dev
+    restart: unless-stopped
+    environment:
+      # Mock mode configuration
+      KKT_MODE: mock
+      OFD_MODE: http
+
+      # Mock service URLs
+      MOCK_OFD_URL: http://mock_ofd:9000
+      MOCK_ODOO_URL: http://mock_odoo_api:8070
+
+      # Development-specific settings (faster sync, smaller buffers)
+      BUFFER_MAX_SIZE: 100
+      SYNC_INTERVAL: 5
+      CIRCUIT_BREAKER_THRESHOLD: 3
+      CIRCUIT_BREAKER_RECOVERY_TIMEOUT: 30
+
+      # Redis configuration
+      REDIS_URL: redis://redis:6379/0
+
+      # Logging
+      LOG_LEVEL: DEBUG
+      PYTHONUNBUFFERED: 1
+
+      # API configuration
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+
+      # Heartbeat configuration
+      HEARTBEAT_INTERVAL: 30
+      HEARTBEAT_URL: http://mock_odoo_api:8070/api/v1/kkt/heartbeat
+    volumes:
+      - kkt_buffer_dev:/app/data
+      - ./kkt_adapter/app:/app/app:ro
+    networks:
+      - opticserp_dev_network
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      mock_ofd:
+        condition: service_healthy
+      mock_odoo_api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      com.opticserp.service: "kkt_adapter"
+      com.opticserp.environment: "development"
+
+  # ===========================================
+  # Odoo Application
+  # ===========================================
+
+  odoo:
+    image: odoo:17.0
+    container_name: opticserp_odoo_dev
+    restart: unless-stopped
+    environment:
+      # Database configuration
+      HOST: postgres
+      PORT: 5432
+      USER: ${POSTGRES_USER:-odoo}
+      PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+
+      # Odoo configuration
+      ODOO_DB_NAME: ${POSTGRES_DB:-opticserp_dev}
+      ODOO_DB_FILTER: ^opticserp_dev$
+
+      # Development mode
+      ODOO_WORKERS: 0  # 0 = development mode with auto-reload
+      ODOO_DEV_MODE: all
+      ODOO_LOG_LEVEL: debug
+
+      # KKT Adapter integration
+      KKT_ADAPTER_URL: http://kkt_adapter:8000
+      KKT_ADAPTER_TIMEOUT: 10
+
+      # Session configuration
+      ODOO_SESSION_TIMEOUT: 86400  # 24 hours for development
+    volumes:
+      - odoo_dev_data:/var/lib/odoo
+      - ./addons:/mnt/extra-addons:ro
+      - ./odoo.conf:/etc/odoo/odoo.conf:ro
+    networks:
+      - opticserp_dev_network
+    ports:
+      - "8069:8069"
+      - "8072:8072"  # Longpolling
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kkt_adapter:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8069/web/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    labels:
+      com.opticserp.service: "odoo"
+      com.opticserp.environment: "development"
+
+  # ===========================================
+  # Monitoring (Optional for development)
+  # ===========================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: opticserp_prometheus_dev
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    volumes:
+      - ./monitoring/prometheus.dev.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - opticserp_dev_network
+    ports:
+      - "9091:9090"  # Different port to avoid conflicts
+    profiles:
+      - monitoring
+    labels:
+      com.opticserp.service: "prometheus"
+      com.opticserp.environment: "development"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: opticserp_grafana_dev
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SERVER_ROOT_URL: http://localhost:3001
+      GF_INSTALL_PLUGINS: ""
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - opticserp_dev_network
+    ports:
+      - "3001:3000"  # Different port to avoid conflicts
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+    labels:
+      com.opticserp.service: "grafana"
+      com.opticserp.environment: "development"
+
+# ===========================================
+# Health Check Summary
+# ===========================================
+# After startup, verify all services are healthy:
+#   docker-compose -f docker-compose.dev.yml ps
+#
+# Expected state: All services "Up (healthy)"
+#
+# Service URLs:
+#   - Odoo:         http://localhost:8069
+#   - KKT Adapter:  http://localhost:8000/v1/health
+#   - Mock OFD:     http://localhost:9000/ofd/v1/health
+#   - Mock Odoo:    http://localhost:8070/api/v1/health
+#   - Prometheus:   http://localhost:9091 (if monitoring enabled)
+#   - Grafana:      http://localhost:3001 (if monitoring enabled)
+#
+# ===========================================

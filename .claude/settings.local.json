@@ -53,7 +53,8 @@
       "Bash(then echo \"JIRA_API_TOKEN: ✅ Set\")",
       "Bash(else echo \"JIRA_API_TOKEN: ❌ Not set\")",
       "Bash(do if [ -f \"$dir/i18n/ru.po\" ])",
-      "Bash(then mv \"$dir/i18n/ru.po\" \"$dir/i18n/ru.po.backup\")"
+      "Bash(then mv \"$dir/i18n/ru.po\" \"$dir/i18n/ru.po.backup\")",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
