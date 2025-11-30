@@ -51,7 +51,9 @@
       "Bash(docker-compose:*)",
       "Bash(if [ -n \"$JIRA_API_TOKEN\" ])",
       "Bash(then echo \"JIRA_API_TOKEN: ✅ Set\")",
-      "Bash(else echo \"JIRA_API_TOKEN: ❌ Not set\")"
+      "Bash(else echo \"JIRA_API_TOKEN: ❌ Not set\")",
+      "Bash(do if [ -f \"$dir/i18n/ru.po\" ])",
+      "Bash(then mv \"$dir/i18n/ru.po\" \"$dir/i18n/ru.po.backup\")"
     ],
     "deny": [],
     "ask": []

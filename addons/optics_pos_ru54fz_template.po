@@ -78,7 +78,7 @@ msgstr ""
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_config__kkt_adapter_url
 msgid "KKT Adapter URL"
-msgstr "URL адаптера ККТ"
+msgstr ""
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_config__kkt_adapter_status
@@ -152,7 +152,7 @@ msgstr ""
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields.selection,name:optics_pos_ru54fz.selection__pos_order__fiscal_sync_status__synced
 msgid "Synced"
-msgstr "Синхронизировано"
+msgstr ""
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_config__kkt_adapter_url

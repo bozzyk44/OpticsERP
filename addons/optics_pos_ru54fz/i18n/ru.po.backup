@@ -1,0 +1,302 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# * optics_pos_ru54fz
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-30 00:00+0000\n"
+"PO-Revision-Date: 2025-11-30 00:00+0000\n"
+"Last-Translator: Claude AI <noreply@anthropic.com>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model,name:optics_pos_ru54fz.model_pos_session
+msgid "Point of Sale Session"
+msgstr "Смена кассы"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model,name:optics_pos_ru54fz.model_pos_order
+msgid "Point of Sale Orders"
+msgstr "Заказы точки продаж"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_order__fiscal_doc_number
+msgid "Fiscal Document Number"
+msgstr "Номер фискального документа"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_order__fiscal_sign
+msgid "Fiscal Sign"
+msgstr "Фискальный признак"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_order__fn_number
+msgid "Fiscal Drive Number"
+msgstr "Номер фискального накопителя"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_order__kkt_reg_number
+msgid "KKT Registration Number"
+msgstr "Регистрационный номер ККТ"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_order__ofd_status
+msgid "OFD Status"
+msgstr "Статус ОФД"
+
+#. module: optics_pos_ru54fz
+#: selection:pos.order,ofd_status:0
+msgid "Pending"
+msgstr "Ожидание"
+
+#. module: optics_pos_ru54fz
+#: selection:pos.order,ofd_status:0
+msgid "Synced"
+msgstr "Синхронизировано"
+
+#. module: optics_pos_ru54fz
+#: selection:pos.order,ofd_status:0
+msgid "Failed"
+msgstr "Ошибка"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_config__kkt_adapter_url
+msgid "KKT Adapter URL"
+msgstr "URL адаптера ККТ"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_config__kkt_adapter_url
+msgid "URL of KKT Adapter service (e.g., http://localhost:8000)"
+msgstr "URL сервиса адаптера ККТ (например, http://localhost:8000)"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_session__x_report_printed
+msgid "X-Report Printed"
+msgstr "X-отчёт напечатан"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_session__z_report_printed
+msgid "Z-Report Printed"
+msgstr "Z-отчёт напечатан"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_session__z_report_number
+msgid "Z-Report Number"
+msgstr "Номер Z-отчёта"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_config_form_inherit
+msgid "Fiscal Settings (54-ФЗ)"
+msgstr "Фискальные настройки (54-ФЗ)"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_session_form_inherit
+msgid "Fiscal Reports"
+msgstr "Фискальные отчёты"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_session_form_inherit
+msgid "Print X-Report"
+msgstr "Печать X-отчёта"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_session_form_inherit
+msgid "Print Z-Report"
+msgstr "Печать Z-отчёта"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_order_form_inherit
+msgid "Fiscal Information"
+msgstr "Фискальная информация"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_session.py
+#, python-format
+msgid "X-Report"
+msgstr "X-отчёт"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_session.py
+#, python-format
+msgid "Z-Report"
+msgstr "Z-отчёт"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_session.py
+#, python-format
+msgid "Mid-shift report without closing session"
+msgstr "Промежуточный отчёт без закрытия смены"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_session.py
+#, python-format
+msgid "End-of-shift report and session closure"
+msgstr "Отчёт о закрытии смены"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_order.py
+#, python-format
+msgid "Cannot refund order: original receipt not synced with OFD"
+msgstr "Невозможно выполнить возврат: оригинальный чек не синхронизирован с ОФД"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_order.py
+#, python-format
+msgid "Refund processing error"
+msgstr "Ошибка обработки возврата"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py
+#, python-format
+msgid "KKT Adapter URL is required for fiscal operations"
+msgstr "URL адаптера ККТ обязателен для фискальных операций"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py
+#, python-format
+msgid "Invalid KKT Adapter URL format"
+msgstr "Неверный формат URL адаптера ККТ"
+
+# POS UI Translations
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_payment_screen
+msgid "Payment"
+msgstr "Оплата"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_payment_screen
+msgid "Cash"
+msgstr "Наличные"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_payment_screen
+msgid "Card"
+msgstr "Карта"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_payment_screen
+msgid "Total"
+msgstr "Итого"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_payment_screen
+msgid "Change"
+msgstr "Сдача"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_receipt_screen
+msgid "Print Receipt"
+msgstr "Печать чека"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_receipt_screen
+msgid "Email Receipt"
+msgstr "Отправить чек по email"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_receipt_screen
+msgid "SMS Receipt"
+msgstr "Отправить чек по SMS"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_main_screen
+msgid "New Order"
+msgstr "Новый заказ"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_main_screen
+msgid "Product"
+msgstr "Товар"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_main_screen
+msgid "Price"
+msgstr "Цена"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_main_screen
+msgid "Quantity"
+msgstr "Количество"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_main_screen
+msgid "Discount"
+msgstr "Скидка"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_main_screen
+msgid "Customer"
+msgstr "Клиент"
+
+#. module: optics_pos_ru54fz
+#: model:ir.ui.view,arch_db:optics_pos_ru54fz.view_pos_main_screen
+msgid "Search Products..."
+msgstr "Поиск товаров..."
+
+# Offline Mode Translations
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js
+#, python-format
+msgid "Online"
+msgstr "Онлайн"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js
+#, python-format
+msgid "Offline"
+msgstr "Офлайн"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js
+#, python-format
+msgid "Buffer"
+msgstr "Буфер"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js
+#, python-format
+msgid "Receipts pending sync"
+msgstr "Чеков в очереди"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js
+#, python-format
+msgid "Circuit Breaker"
+msgstr "Circuit Breaker"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js
+#, python-format
+msgid "Status"
+msgstr "Статус"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js
+#, python-format
+msgid "Network Status"
+msgstr "Статус сети"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js
+#, python-format
+msgid "Working offline - receipts will sync when connection restored"
+msgstr "Работа офлайн - чеки синхронизируются при восстановлении связи"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js
+#, python-format
+msgid "Warning: Buffer capacity at %s%%"
+msgstr "Внимание: заполнение буфера %s%%"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js
+#, python-format
+msgid "Critical: Buffer full, cannot accept new receipts"
+msgstr "Критично: буфер заполнен, новые чеки не принимаются"
