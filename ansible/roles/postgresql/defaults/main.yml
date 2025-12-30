@@ -1,6 +1,10 @@
 ---
 # Default variables for PostgreSQL role
 
+# Note: For MVP, using PostgreSQL from Ubuntu repos (version 12 on Ubuntu 20.04)
+# Version auto-detected after installation
+# Can upgrade to PostgreSQL 15+ from pgdg repo later if needed
+
 postgresql_databases:
   - name: odoo_production
     encoding: UTF8
