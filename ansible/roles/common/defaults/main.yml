@@ -17,6 +17,7 @@ common_packages:
   - unzip
   - rsync
   - chrony
+  - acl
   - python3-pip
   - python3-dev
   - python3-venv
