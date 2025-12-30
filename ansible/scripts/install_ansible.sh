@@ -120,20 +120,56 @@ echo "  Python Dependencies Check"
 echo "=========================================="
 echo ""
 
-# Required Python packages for Ansible modules
-PYTHON_PACKAGES=(
-    "docker"
-    "psycopg2-binary"
-)
+# Check and install Python packages needed for Ansible modules
+check_and_install_python_package() {
+    local package=$1
+    local import_name=${package//-/_}
+    local apt_package=$2
 
-for package in "${PYTHON_PACKAGES[@]}"; do
-    if python3 -c "import ${package//-/_}" &> /dev/null; then
+    if python3 -c "import ${import_name}" &> /dev/null; then
         echo -e "${GREEN}✓${NC} Python package installed: $package"
-    else
-        echo -e "${YELLOW}⚠${NC} Installing Python package: $package"
-        pip3 install "$package" || pip install "$package"
+        return 0
     fi
-done
+
+    echo -e "${YELLOW}⚠${NC} Installing Python package: $package"
+
+    # Try apt first (Debian/Ubuntu with PEP 668)
+    if [[ "$OSTYPE" == "linux-gnu"* ]] && command -v apt-get &> /dev/null; then
+        if [ -n "$apt_package" ]; then
+            echo "  → Trying apt install $apt_package..."
+            if sudo apt-get install -y "$apt_package" &> /dev/null; then
+                echo -e "${GREEN}✓${NC} Installed via apt: $apt_package"
+                return 0
+            fi
+        fi
+    fi
+
+    # Try pip with --break-system-packages (for PEP 668 systems)
+    echo "  → Trying pip install..."
+    if pip3 install "$package" --break-system-packages &> /dev/null 2>&1; then
+        echo -e "${GREEN}✓${NC} Installed via pip: $package"
+        return 0
+    elif pip3 install "$package" &> /dev/null 2>&1; then
+        echo -e "${GREEN}✓${NC} Installed via pip: $package"
+        return 0
+    elif pip install "$package" &> /dev/null 2>&1; then
+        echo -e "${GREEN}✓${NC} Installed via pip: $package"
+        return 0
+    fi
+
+    echo -e "${YELLOW}⚠${NC} Could not install $package automatically"
+    echo "  Please install manually:"
+    if [ -n "$apt_package" ]; then
+        echo "    sudo apt install $apt_package"
+    fi
+    echo "    OR: pip3 install $package --break-system-packages"
+    return 1
+}
+
+# Required Python packages for Ansible modules
+# Format: "pip_package apt_package"
+check_and_install_python_package "docker" "python3-docker"
+check_and_install_python_package "psycopg2" "python3-psycopg2"
 
 echo ""
 echo "=========================================="
