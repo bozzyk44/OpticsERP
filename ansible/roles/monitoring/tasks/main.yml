@@ -73,11 +73,13 @@
   notify: restart monitoring
 
 - name: Start monitoring services
-  docker_compose:
-    project_src: "{{ monitoring_dir }}"
-    state: present
+  command: docker compose up -d
+  args:
+    chdir: "{{ monitoring_dir }}"
   become: yes
   become_user: "{{ deploy_user }}"
+  register: docker_compose_output
+  changed_when: "'Creating' in docker_compose_output.stdout or 'Starting' in docker_compose_output.stdout"
 
 - name: Wait for Prometheus to be ready
   uri:
