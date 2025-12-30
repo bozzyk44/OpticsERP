@@ -31,6 +31,13 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 echo -e "${GREEN}✓${NC} .env file exists"
 
+# Fix line endings (Windows CRLF -> Unix LF) if needed
+if file "$ENV_FILE" | grep -q "CRLF"; then
+    echo -e "${YELLOW}⚠${NC} Converting .env from Windows (CRLF) to Unix (LF) format..."
+    sed -i 's/\r$//' "$ENV_FILE"
+    echo -e "${GREEN}✓${NC} Line endings fixed"
+fi
+
 # Load .env
 # shellcheck disable=SC1090
 source "$ENV_FILE"
