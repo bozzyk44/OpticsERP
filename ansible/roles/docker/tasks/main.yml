@@ -66,12 +66,6 @@
     enabled: yes
     state: started
 
-- name: Install Docker Compose (standalone)
-  get_url:
-    url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_version }}/docker-compose-linux-x86_64"
-    dest: /usr/local/bin/docker-compose
-    mode: '0755'
-
 - name: Verify Docker installation
   command: docker --version
   register: docker_version
@@ -82,7 +76,7 @@
     msg: "Docker installed: {{ docker_version.stdout }}"
 
 - name: Verify Docker Compose installation
-  command: docker-compose --version
+  command: docker compose version
   register: docker_compose_version_output
   changed_when: false
 
