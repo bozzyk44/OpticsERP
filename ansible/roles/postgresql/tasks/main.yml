@@ -21,14 +21,18 @@
     state: started
     enabled: yes
 
-- name: Get installed PostgreSQL version
-  shell: psql --version | grep -oP '\d+' | head -1
+- name: Find PostgreSQL config directory
+  shell: ls -d /etc/postgresql/*/ | head -1 | grep -oP '\d+' || echo "12"
   register: pg_installed_version
   changed_when: false
 
 - name: Set PostgreSQL version fact
   set_fact:
-    pg_version: "{{ pg_installed_version.stdout }}"
+    pg_version: "{{ pg_installed_version.stdout | trim }}"
+
+- name: Display detected PostgreSQL version
+  debug:
+    msg: "Detected PostgreSQL version: {{ pg_version }}"
 
 - name: Configure PostgreSQL - postgresql.conf
   template:
