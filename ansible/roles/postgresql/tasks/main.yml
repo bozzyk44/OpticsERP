@@ -1,0 +1,98 @@
+---
+# PostgreSQL role - Install and configure PostgreSQL
+
+- name: Add PostgreSQL GPG key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add PostgreSQL repository
+  apt_repository:
+    repo: "deb http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+    state: present
+    filename: pgdg
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install PostgreSQL
+  apt:
+    name:
+      - "postgresql-{{ postgresql_version }}"
+      - "postgresql-contrib-{{ postgresql_version }}"
+      - postgresql-client
+      - python3-psycopg2
+    state: present
+
+- name: Ensure PostgreSQL is running
+  systemd:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: Configure PostgreSQL - postgresql.conf
+  template:
+    src: postgresql.conf.j2
+    dest: "/etc/postgresql/{{ postgresql_version }}/main/postgresql.conf"
+    owner: postgres
+    group: postgres
+    mode: '0644'
+  notify: restart postgresql
+
+- name: Configure PostgreSQL - pg_hba.conf
+  template:
+    src: pg_hba.conf.j2
+    dest: "/etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf"
+    owner: postgres
+    group: postgres
+    mode: '0640'
+  notify: restart postgresql
+
+- name: Create PostgreSQL databases
+  postgresql_db:
+    name: "{{ item.name }}"
+    encoding: "{{ item.encoding }}"
+    lc_collate: "{{ item.lc_collate }}"
+    lc_ctype: "{{ item.lc_ctype }}"
+    state: present
+  become: yes
+  become_user: postgres
+  loop: "{{ postgresql_databases }}"
+
+- name: Create PostgreSQL users
+  postgresql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    db: "{{ item.db }}"
+    priv: "{{ item.priv }}"
+    state: present
+  become: yes
+  become_user: postgres
+  loop: "{{ postgresql_users }}"
+  no_log: true
+
+- name: Create backup directory
+  file:
+    path: "{{ backup_path }}/postgresql"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0750'
+
+- name: Setup daily backup script
+  template:
+    src: pg_backup.sh.j2
+    dest: /usr/local/bin/pg_backup.sh
+    mode: '0750'
+    owner: postgres
+    group: postgres
+
+- name: Setup backup cron job
+  cron:
+    name: "PostgreSQL daily backup"
+    minute: "0"
+    hour: "3"
+    user: postgres
+    job: "/usr/local/bin/pg_backup.sh"
+    state: present

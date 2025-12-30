@@ -1,0 +1,26 @@
+---
+# Default variables for PostgreSQL role
+
+postgresql_databases:
+  - name: odoo_production
+    encoding: UTF8
+    lc_collate: en_US.UTF-8
+    lc_ctype: en_US.UTF-8
+
+postgresql_users:
+  - name: odoo
+    password: "{{ lookup('env', 'POSTGRES_PASSWORD') | default('changeme', true) }}"
+    db: odoo_production
+    priv: "ALL"
+
+postgresql_listen_addresses: "*"
+postgresql_max_connections: 200
+postgresql_shared_buffers: "256MB"
+postgresql_effective_cache_size: "1GB"
+postgresql_work_mem: "16MB"
+postgresql_maintenance_work_mem: "128MB"
+
+# WAL settings for backup
+postgresql_wal_level: "replica"
+postgresql_max_wal_senders: 3
+postgresql_wal_keep_size: "128MB"

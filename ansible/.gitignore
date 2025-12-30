@@ -1,0 +1,32 @@
+# Ansible gitignore
+
+# Environment files with secrets
+.env
+*.env
+
+# Ansible retry files (deprecated but just in case)
+*.retry
+
+# Fact cache
+/tmp/ansible_facts
+
+# Vault password files
+.vault_pass
+vault_pass.txt
+
+# Host variables with sensitive data
+host_vars/*/vault.yml
+
+# SSH keys
+*.pem
+*.key
+
+# Logs
+*.log
+
+# Backup files
+*~
+*.bak
+
+# macOS
+.DS_Store

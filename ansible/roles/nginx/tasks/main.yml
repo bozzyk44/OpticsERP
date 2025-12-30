@@ -1,0 +1,80 @@
+---
+# Nginx role - Install and configure Nginx
+
+- name: Install Nginx
+  apt:
+    name:
+      - nginx
+      - nginx-extras
+    state: present
+
+- name: Remove default nginx site
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/nginx/sites-enabled/default
+    - /etc/nginx/sites-available/default
+  notify: restart nginx
+
+- name: Create nginx configuration directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /etc/nginx/sites-available
+    - /etc/nginx/sites-enabled
+    - /etc/nginx/snippets
+
+- name: Configure nginx.conf
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    mode: '0644'
+    validate: 'nginx -t -c %s'
+  notify: restart nginx
+
+- name: Create SSL snippet
+  template:
+    src: ssl-params.conf.j2
+    dest: /etc/nginx/snippets/ssl-params.conf
+    mode: '0644'
+  notify: restart nginx
+
+- name: Create proxy snippet
+  template:
+    src: proxy-params.conf.j2
+    dest: /etc/nginx/snippets/proxy-params.conf
+    mode: '0644'
+  notify: restart nginx
+
+- name: Configure virtual hosts
+  template:
+    src: vhost.conf.j2
+    dest: "/etc/nginx/sites-available/{{ item.server_name }}.conf"
+    mode: '0644'
+  loop: "{{ nginx_vhosts }}"
+  notify: restart nginx
+
+- name: Enable virtual hosts
+  file:
+    src: "/etc/nginx/sites-available/{{ item.server_name }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ item.server_name }}.conf"
+    state: link
+  loop: "{{ nginx_vhosts }}"
+  notify: restart nginx
+
+- name: Test nginx configuration
+  command: nginx -t
+  changed_when: false
+
+- name: Enable and start nginx
+  systemd:
+    name: nginx
+    enabled: yes
+    state: started
+
+- name: Display nginx status
+  debug:
+    msg: "✅ Nginx configured successfully for {{ nginx_vhosts | length }} virtual host(s)"
