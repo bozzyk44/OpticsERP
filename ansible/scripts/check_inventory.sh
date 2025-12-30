@@ -79,7 +79,7 @@ echo ""
 
 ansible all -i "$INVENTORY_FILE" -m setup \
     -a "filter=ansible_distribution,ansible_distribution_version,ansible_memtotal_mb,ansible_processor_vcpus" \
-    --become || true
+    || true
 
 echo ""
 echo -e "${GREEN}✓${NC} Inventory validation complete"
