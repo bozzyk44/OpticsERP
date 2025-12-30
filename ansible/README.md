@@ -2,6 +2,43 @@
 
 Автоматизация развертывания инфраструктуры OpticsERP.
 
+## ⚠️ Важно: WSL для Windows
+
+**КРИТИЧНО для Windows пользователей:**
+
+Ansible **НЕ работает нативно на Windows**. Используйте WSL (Windows Subsystem for Linux).
+
+### Установка WSL:
+
+```powershell
+# В PowerShell от имени администратора
+wsl --install -d Ubuntu-20.04
+# Перезагрузить Windows
+```
+
+### Установка Ansible в WSL:
+
+```bash
+# В WSL терминале
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y python3 python3-pip python3-venv
+pip3 install ansible-core==2.16.3 ansible==9.2.0
+
+# Проверка
+ansible --version
+```
+
+### Доступ к проекту:
+
+```bash
+# Проект в D:\OpticsERP доступен в WSL как:
+cd /mnt/d/OpticsERP/ansible
+```
+
+**Все команды ниже выполняются ТОЛЬКО в WSL терминале!**
+
+---
+
 ## 🚀 Quick Start
 
 ```bash

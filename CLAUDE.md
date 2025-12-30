@@ -100,6 +100,61 @@ WebFetch(url: "https://bozzyk44.atlassian.net/browse/OPTERP-31")
 - Диаграммы для сложных концепций обязательны
 - Запрещено хранить docs в корне проекта
 
+## 2.1. Ansible и WSL (КРИТИЧНО для Windows)
+
+**КРИТИЧНО:** Ansible НЕ поддерживается нативно на Windows! Используйте WSL.
+
+### Требования для Windows разработчиков:
+
+**WSL (Windows Subsystem for Linux):**
+- **ОБЯЗАТЕЛЬНО** для запуска Ansible на Windows
+- Установка: `wsl --install -d Ubuntu-20.04`
+- После установки: перезагрузка Windows
+
+**Доступ к проекту из WSL:**
+```bash
+# В WSL терминале
+cd /mnt/d/OpticsERP/ansible
+```
+
+**Установка Ansible в WSL:**
+```bash
+# Обновить систему
+sudo apt update && sudo apt upgrade -y
+
+# Установить Python и pip
+sudo apt install -y python3 python3-pip python3-venv
+
+# Установить Ansible
+pip3 install ansible-core==2.16.3 ansible==9.2.0
+
+# Проверить установку
+ansible --version
+```
+
+**Workflow с WSL:**
+```bash
+# 1. Открыть WSL терминал (не Git Bash!)
+wsl
+
+# 2. Перейти в директорию проекта
+cd /mnt/d/OpticsERP/ansible
+
+# 3. Запустить deployment
+bash scripts/deploy-wrapper.sh
+```
+
+**Альтернативы WSL:**
+- **Docker:** Запуск Ansible из Docker контейнера
+- **Linux VM:** Использование виртуальной машины
+- **Удалённый Linux:** SSH на Linux машину
+
+**Важно:**
+- ❌ Git Bash на Windows НЕ поддерживает Ansible
+- ❌ PowerShell на Windows НЕ поддерживает Ansible
+- ✅ WSL - официально рекомендованный способ
+- ✅ Все Ansible команды ТОЛЬКО через WSL
+
 ## 3. Управление портами (КРИТИЧНО)
 
 **Правило:** ВСЕГДА использовать стандартные порты. НИКОГДА не менять.

@@ -55,7 +55,12 @@
       "Bash(do if [ -f \"$dir/i18n/ru.po\" ])",
       "Bash(then mv \"$dir/i18n/ru.po\" \"$dir/i18n/ru.po.backup\")",
       "WebSearch",
-      "Bash(COMPOSE_PROFILES=mock docker-compose:*)"
+      "Bash(COMPOSE_PROFILES=mock docker-compose:*)",
+      "Bash(bash:*)",
+      "Bash(ls:*)",
+      "Bash(ssh bozzyk44@194.87.235.33 \"apt-cache madison postgresql | head -5\")",
+      "Bash(ssh bozzyk44@194.87.235.33 \"sudo apt-get update && sudo apt-get install -y acl && echo ''ACL installed successfully''\")",
+      "Bash(ansible:*)"
     ],
     "deny": [],
     "ask": []

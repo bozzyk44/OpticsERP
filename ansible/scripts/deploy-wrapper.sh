@@ -17,6 +17,41 @@ ENVIRONMENT="${1:-production}"
 SKIP_CHECKS="${2:-false}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# WSL/Linux check (Ansible requires Unix-like environment)
+if [[ ! -f /proc/version ]] || [[ ! $(grep -i "linux" /proc/version 2>/dev/null) ]]; then
+    echo ""
+    echo "==========================================="
+    echo -e "  ${RED}ERROR: Not running in WSL/Linux${NC}"
+    echo "==========================================="
+    echo ""
+    echo "Ansible requires WSL (Windows Subsystem for Linux) on Windows."
+    echo ""
+    echo "To install WSL:"
+    echo "  1. Open PowerShell as Administrator"
+    echo "  2. Run: wsl --install -d Ubuntu-20.04"
+    echo "  3. Restart Windows"
+    echo "  4. Open WSL terminal and navigate to:"
+    echo "     cd /mnt/d/OpticsERP/ansible"
+    echo "  5. Run this script again from WSL"
+    echo ""
+    echo "See CLAUDE.md section 2.1 for detailed instructions."
+    echo ""
+    exit 1
+fi
+
+# Check if running in Git Bash (which doesn't support Ansible properly)
+if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
+    echo ""
+    echo "==========================================="
+    echo -e "  ${RED}ERROR: Running in Git Bash${NC}"
+    echo "==========================================="
+    echo ""
+    echo "Ansible does NOT work in Git Bash on Windows."
+    echo "Please use WSL instead (see instructions above)."
+    echo ""
+    exit 1
+fi
+
 echo ""
 echo "==========================================="
 echo -e "  ${BOLD}OpticsERP Master Deployment${NC}"

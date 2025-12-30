@@ -13,8 +13,10 @@ groups:
           severity: critical
           priority: P1
         annotations:
+{% raw %}
           summary: "KKT buffer full on {{ $labels.instance }}"
           description: "Buffer is at {{ $value }}% capacity. Sales may fail!"
+{% endraw %}
 
       # P1: Fiscal memory full
       - alert: FiscalMemoryFull
@@ -24,8 +26,10 @@ groups:
           severity: critical
           priority: P1
         annotations:
+{% raw %}
           summary: "Fiscal memory almost full on {{ $labels.instance }}"
           description: "Only {{ $value }} days left in fiscal memory. Replacement needed urgently!"
+{% endraw %}
 
       # P2: Buffer warning
       - alert: KKTBufferWarning
@@ -35,8 +39,10 @@ groups:
           severity: warning
           priority: P2
         annotations:
+{% raw %}
           summary: "KKT buffer high on {{ $labels.instance }}"
           description: "Buffer is at {{ $value }}% capacity"
+{% endraw %}
 
       # P2: Circuit breaker open
       - alert: CircuitBreakerOpen
@@ -46,8 +52,10 @@ groups:
           severity: warning
           priority: P2
         annotations:
+{% raw %}
           summary: "Circuit breaker OPEN on {{ $labels.instance }}"
           description: "OFD connection failed repeatedly. System in offline mode."
+{% endraw %}
 
       # Service down
       - alert: ServiceDown
@@ -57,8 +65,10 @@ groups:
           severity: critical
           priority: P1
         annotations:
+{% raw %}
           summary: "Service {{ $labels.job }} down on {{ $labels.instance }}"
           description: "Service has been down for more than 2 minutes"
+{% endraw %}
 
       # High CPU usage
       - alert: HighCPUUsage
@@ -68,8 +78,10 @@ groups:
           severity: warning
           priority: P2
         annotations:
+{% raw %}
           summary: "High CPU usage on {{ $labels.instance }}"
           description: "CPU usage is {{ $value }}%"
+{% endraw %}
 
       # High memory usage
       - alert: HighMemoryUsage
@@ -79,8 +91,10 @@ groups:
           severity: warning
           priority: P2
         annotations:
+{% raw %}
           summary: "High memory usage on {{ $labels.instance }}"
           description: "Memory usage is {{ $value }}%"
+{% endraw %}
 
       # Disk space low
       - alert: DiskSpaceLow
@@ -90,5 +104,7 @@ groups:
           severity: warning
           priority: P2
         annotations:
+{% raw %}
           summary: "Low disk space on {{ $labels.instance }}"
           description: "Disk usage is {{ $value }}%"
+{% endraw %}
