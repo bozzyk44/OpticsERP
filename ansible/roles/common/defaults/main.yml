@@ -16,7 +16,6 @@ common_packages:
   - net-tools
   - unzip
   - rsync
-  - ntp
   - chrony
   - python3-pip
   - python3-dev
