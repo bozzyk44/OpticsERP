@@ -85,16 +85,12 @@
     msg: "Docker Compose installed: {{ docker_compose_version_output.stdout }}"
 
 - name: Test Docker with hello-world
-  docker_container:
-    name: hello-world-test
-    image: hello-world
-    state: started
-    detach: false
-    cleanup: yes
+  command: docker run --rm hello-world
   register: docker_test
   changed_when: false
+  failed_when: docker_test.rc != 0
 
 - name: Docker is working
   debug:
     msg: "✅ Docker test passed successfully"
-  when: docker_test is succeeded
+  when: docker_test.rc == 0
