@@ -12,13 +12,18 @@
     autoremove: yes
     autoclean: yes
 
-- name: Remove conflicting time daemons (ntp conflicts with chrony)
+- name: Remove ntp package (conflicts with chrony)
   apt:
-    name:
-      - ntp
-      - systemd-timesyncd
+    name: ntp
     state: absent
     purge: yes
+  ignore_errors: yes
+
+- name: Stop and disable systemd-timesyncd (conflicts with chrony)
+  systemd:
+    name: systemd-timesyncd
+    enabled: no
+    state: stopped
   ignore_errors: yes
 
 - name: Install common packages
@@ -39,11 +44,16 @@
   command: localectl set-locale LANG={{ locale }}
   changed_when: false
 
+- name: Create deploy group
+  group:
+    name: "{{ deploy_group }}"
+    state: present
+
 - name: Create deploy user
   user:
     name: "{{ deploy_user }}"
     group: "{{ deploy_group }}"
-    groups: sudo,docker
+    groups: sudo
     shell: /bin/bash
     create_home: yes
     home: "{{ deploy_home }}"
