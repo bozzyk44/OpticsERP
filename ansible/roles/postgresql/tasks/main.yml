@@ -1,56 +1,108 @@
 ---
-# PostgreSQL role - Install and configure PostgreSQL
+# PostgreSQL role - Deploy PostgreSQL 15 in Docker
 
-# For MVP: Use PostgreSQL from Ubuntu repos (version 12 on Ubuntu 20.04)
-# This is simpler and avoids external repository issues
-# Can upgrade to PostgreSQL 15+ later if needed
+- name: Remove broken PostgreSQL repository files FIRST
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/apt/sources.list.d/pgdg.list
+    - /etc/apt/sources.list.d/pgdg.list.save
+    - /usr/share/keyrings/postgresql-keyring.gpg
+    - /usr/share/keyrings/postgresql-archive-keyring.gpg
+    - /etc/apt/trusted.gpg.d/postgresql.gpg
+  ignore_errors: yes
 
-- name: Install PostgreSQL from Ubuntu repos
+- name: Update apt cache after removing broken repositories
+  apt:
+    update_cache: yes
+  ignore_errors: yes
+
+- name: Install acl package (required for Ansible become operations)
+  apt:
+    name: acl
+    state: present
+
+- name: Stop and remove old PostgreSQL 12 if exists
+  systemd:
+    name: postgresql
+    state: stopped
+    enabled: no
+  ignore_errors: yes
+
+- name: Remove old PostgreSQL packages
   apt:
     name:
       - postgresql
-      - postgresql-contrib
-      - postgresql-client
-      - python3-psycopg2
+      - postgresql-12
+      - postgresql-contrib-12
+      - postgresql-client-12
+    state: absent
+    purge: yes
+  ignore_errors: yes
+
+- name: Install python3-psycopg2 for Ansible PostgreSQL modules
+  apt:
+    name: python3-psycopg2
     state: present
-    update_cache: yes
 
-- name: Ensure PostgreSQL is running
-  systemd:
-    name: postgresql
-    state: started
-    enabled: yes
+- name: Create PostgreSQL directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0755'
+  loop:
+    - "{{ postgresql_base_dir }}"
+    - "{{ postgresql_data_dir }}"
+    - "{{ postgresql_config_dir }}"
 
-- name: Find PostgreSQL config directory
-  shell: ls -d /etc/postgresql/*/ | head -1 | grep -oP '\d+' || echo "12"
-  register: pg_installed_version
-  changed_when: false
-
-- name: Set PostgreSQL version fact
-  set_fact:
-    pg_version: "{{ pg_installed_version.stdout | trim }}"
-
-- name: Display detected PostgreSQL version
-  debug:
-    msg: "Detected PostgreSQL version: {{ pg_version }}"
-
-- name: Configure PostgreSQL - postgresql.conf
+- name: Deploy PostgreSQL configuration
   template:
     src: postgresql.conf.j2
-    dest: "/etc/postgresql/{{ pg_version }}/main/postgresql.conf"
-    owner: postgres
-    group: postgres
+    dest: "{{ postgresql_config_dir }}/postgresql.conf"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
     mode: '0644'
-  notify: restart postgresql
 
-- name: Configure PostgreSQL - pg_hba.conf
+- name: Deploy pg_hba.conf
   template:
     src: pg_hba.conf.j2
-    dest: "/etc/postgresql/{{ pg_version }}/main/pg_hba.conf"
-    owner: postgres
-    group: postgres
-    mode: '0640'
-  notify: restart postgresql
+    dest: "{{ postgresql_config_dir }}/pg_hba.conf"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0644'
+
+- name: Deploy PostgreSQL docker-compose file
+  template:
+    src: docker-compose.postgresql.yml.j2
+    dest: "{{ postgresql_base_dir }}/docker-compose.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0644'
+
+- name: Pull PostgreSQL Docker image
+  command: docker pull postgres:15-alpine
+  become: yes
+  become_user: "{{ deploy_user }}"
+
+- name: Start PostgreSQL container
+  command: docker compose up -d
+  args:
+    chdir: "{{ postgresql_base_dir }}"
+  environment:
+    POSTGRES_PASSWORD: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+  become: yes
+  become_user: "{{ deploy_user }}"
+  register: docker_compose_output
+  changed_when: "'Creating' in docker_compose_output.stdout or 'Starting' in docker_compose_output.stdout or 'Recreating' in docker_compose_output.stdout"
+
+- name: Wait for PostgreSQL to be ready
+  wait_for:
+    port: "{{ postgresql_port }}"
+    delay: 5
+    timeout: 60
 
 - name: Create PostgreSQL databases
   postgresql_db:
@@ -59,8 +111,10 @@
     lc_collate: "{{ item.lc_collate }}"
     lc_ctype: "{{ item.lc_ctype }}"
     state: present
-  become: yes
-  become_user: postgres
+    login_host: localhost
+    login_port: "{{ postgresql_port }}"
+    login_user: postgres
+    login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
   loop: "{{ postgresql_databases }}"
 
 - name: Create PostgreSQL users
@@ -70,32 +124,22 @@
     db: "{{ item.db }}"
     priv: "{{ item.priv }}"
     state: present
-  become: yes
-  become_user: postgres
+    login_host: localhost
+    login_port: "{{ postgresql_port }}"
+    login_user: postgres
+    login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
   loop: "{{ postgresql_users }}"
   no_log: true
 
-- name: Create backup directory
-  file:
-    path: "{{ backup_path }}/postgresql"
-    state: directory
-    owner: postgres
-    group: postgres
-    mode: '0750'
+- name: Display PostgreSQL container status
+  command: docker compose ps
+  args:
+    chdir: "{{ postgresql_base_dir }}"
+  become: yes
+  become_user: "{{ deploy_user }}"
+  register: pg_status
+  changed_when: false
 
-- name: Setup daily backup script
-  template:
-    src: pg_backup.sh.j2
-    dest: /usr/local/bin/pg_backup.sh
-    mode: '0750'
-    owner: postgres
-    group: postgres
-
-- name: Setup backup cron job
-  cron:
-    name: "PostgreSQL daily backup"
-    minute: "0"
-    hour: "3"
-    user: postgres
-    job: "/usr/local/bin/pg_backup.sh"
-    state: present
+- name: Show PostgreSQL status
+  debug:
+    msg: "{{ pg_status.stdout_lines }}"

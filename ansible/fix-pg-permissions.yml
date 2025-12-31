@@ -1,0 +1,23 @@
+---
+- name: Fix PostgreSQL schema permissions for Odoo
+  hosts: odoo_servers
+  become: true
+
+  tasks:
+    - name: Grant ALL on schema public to odoo user
+      postgresql_query:
+        login_host: localhost
+        login_port: 5432
+        login_user: postgres
+        login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+        db: odoo_production
+        query: "GRANT ALL ON SCHEMA public TO odoo"
+
+    - name: Grant ownership of schema public to odoo user
+      postgresql_query:
+        login_host: localhost
+        login_port: 5432
+        login_user: postgres
+        login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+        db: odoo_production
+        query: "ALTER SCHEMA public OWNER TO odoo"

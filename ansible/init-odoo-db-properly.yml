@@ -1,0 +1,28 @@
+---
+- name: Initialize Odoo database properly
+  hosts: odoo_servers
+  become: true
+
+  tasks:
+    - name: Stop Odoo container
+      shell: cd /opt/opticserp && docker compose stop odoo
+
+    - name: Initialize Odoo database with base modules
+      shell: |
+        docker run --rm --network host \
+          -v /etc/opticserp/odoo.conf:/etc/odoo/odoo.conf:ro \
+          -v /opt/opticserp/addons:/mnt/extra-addons:ro \
+          -v /opt/opticserp/data:/var/lib/odoo \
+          odoo:17.0 \
+          odoo -c /etc/odoo/odoo.conf -d odoo_production -i base --stop-after-init --without-demo=all
+      args:
+        chdir: /opt/opticserp
+      register: odoo_init
+      changed_when: "'Modules loaded' in odoo_init.stdout or 'Modules installed' in odoo_init.stdout"
+
+    - name: Display initialization output
+      debug:
+        var: odoo_init.stdout_lines
+
+    - name: Start Odoo container
+      shell: cd /opt/opticserp && docker compose start odoo

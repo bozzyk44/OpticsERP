@@ -1,22 +1,20 @@
 ---
 # Default variables for PostgreSQL role
 
-# Note: For MVP, using PostgreSQL from Ubuntu repos (version 12 on Ubuntu 20.04)
-# Version auto-detected after installation
-# Can upgrade to PostgreSQL 15+ from pgdg repo later if needed
+# PostgreSQL 15 deployed via Docker
+# Version is hardcoded to 15 for consistency
 
-postgresql_databases:
-  - name: odoo_production
-    encoding: UTF8
-    lc_collate: en_US.UTF-8
-    lc_ctype: en_US.UTF-8
+# PostgreSQL deployment paths
+postgresql_base_dir: "/opt/postgresql"
+postgresql_data_dir: "{{ postgresql_base_dir }}/data"
+postgresql_config_dir: "/etc/postgresql"
+postgresql_port: 5432
+backup_path: "/var/backups"
 
-postgresql_users:
-  - name: odoo
-    password: "{{ lookup('env', 'POSTGRES_PASSWORD') | default('changeme', true) }}"
-    db: odoo_production
-    priv: "ALL"
+# Timezone
+timezone: "UTC"
 
+# PostgreSQL configuration parameters
 postgresql_listen_addresses: "*"
 postgresql_max_connections: 200
 postgresql_shared_buffers: "256MB"
@@ -28,3 +26,15 @@ postgresql_maintenance_work_mem: "128MB"
 postgresql_wal_level: "replica"
 postgresql_max_wal_senders: 3
 postgresql_wal_keep_size: "128MB"
+
+postgresql_databases:
+  - name: odoo_production
+    encoding: UTF8
+    lc_collate: en_US.utf8
+    lc_ctype: en_US.utf8
+
+postgresql_users:
+  - name: odoo
+    password: "{{ lookup('env', 'POSTGRES_PASSWORD') | default('changeme', true) }}"
+    db: odoo_production
+    priv: "ALL"
