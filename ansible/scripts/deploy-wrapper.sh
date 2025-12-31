@@ -115,20 +115,33 @@ confirm
 
 bash "$SCRIPT_DIR/deploy.sh" "$ENVIRONMENT" "full"
 
-# Step 5: Wait for services to stabilize
-print_step "5" "Service Stabilization"
-echo "Waiting 30 seconds for services to stabilize..."
+# Step 5: Wait for infrastructure to stabilize
+print_step "5" "Infrastructure Stabilization"
+echo "Waiting 30 seconds for infrastructure services to stabilize..."
 sleep 30
 
-# Step 6: Start applications
-print_step "6" "Application Startup"
-echo "Starting OpticsERP applications..."
+# Step 6: Deploy Odoo application
+print_step "6" "Odoo Application Deployment"
+echo "This will deploy:"
+echo "  - Odoo 17 (ERP/POS)"
+echo "  - KKT Adapter (FastAPI)"
+echo "  - Celery Worker (4 queues)"
+echo "  - Celery Flower (monitoring)"
+echo "  - Custom addons (optics_core, optics_pos_ru54fz, connector_b, ru_accounting_extras)"
+echo ""
 confirm
 
-bash "$SCRIPT_DIR/start_app.sh" "$ENVIRONMENT" "all"
+cd "$(dirname "$SCRIPT_DIR")" || exit 1
+source .env
+ansible-playbook -i "inventories/$ENVIRONMENT/hosts.yml" deploy-odoo.yml
 
-# Step 7: Final health check
-print_step "7" "Final Health Check"
+# Step 7: Wait for applications to stabilize
+print_step "7" "Application Stabilization"
+echo "Waiting 30 seconds for applications to stabilize..."
+sleep 30
+
+# Step 8: Final health check
+print_step "8" "Final Health Check"
 bash "$SCRIPT_DIR/health_check.sh" "$ENVIRONMENT"
 
 # Summary
@@ -137,12 +150,27 @@ echo "==========================================="
 echo -e "  ${GREEN}${BOLD}✓ DEPLOYMENT COMPLETE!${NC}"
 echo "==========================================="
 echo ""
+echo "Services deployed:"
+echo ""
+echo "Infrastructure:"
+echo "  - PostgreSQL 15 on port 5432"
+echo "  - Redis 7.2 on port 6379"
+echo "  - Prometheus: http://YOUR_SERVER:9090"
+echo "  - Grafana: http://YOUR_SERVER:3000"
+echo ""
+echo "Applications:"
+echo "  - Odoo 17: http://YOUR_SERVER:8069"
+echo "  - KKT Adapter: http://YOUR_SERVER:8000"
+echo "  - Celery Flower: http://YOUR_SERVER:5555"
+echo ""
 echo "Next steps:"
-echo "  1. Open Grafana: http://YOUR_SERVER:3000"
-echo "  2. Import dashboards from docs/monitoring/"
-echo "  3. Configure alerts in Prometheus"
-echo "  4. Test POS functionality"
-echo "  5. Setup backup verification"
+echo "  1. Open Odoo: http://YOUR_SERVER:8069"
+echo "  2. Create database or login"
+echo "  3. Install custom modules: optics_core, optics_pos_ru54fz, connector_b, ru_accounting_extras"
+echo "  4. Open Grafana: http://YOUR_SERVER:3000"
+echo "  5. Import dashboards from docs/monitoring/"
+echo "  6. Test POS functionality with KKT Adapter"
+echo "  7. Setup backup verification"
 echo ""
 echo "Documentation: docs/deployment/ansible-guide.md"
 echo ""
