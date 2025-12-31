@@ -85,6 +85,7 @@
   stat:
     path: "{{ playbook_dir }}/../kkt_adapter"
   delegate_to: localhost
+  become: no
   register: kkt_adapter_source
 
 - name: Copy KKT Adapter application code
