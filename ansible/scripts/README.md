@@ -36,8 +36,8 @@ chmod +x *.sh
 1. ✅ Проверку и установку Ansible
 2. ✅ Валидацию inventory
 3. ✅ Проверку secrets (.env)
-4. ✅ Развертывание инфраструктуры
-5. ✅ Запуск приложений
+4. ✅ Развертывание инфраструктуры (PostgreSQL, Redis, Nginx, Prometheus, Grafana)
+5. ✅ Развертывание Odoo приложения (Odoo 17, KKT Adapter, Celery, Flower)
 6. ✅ Health check
 
 ### 2. Пошаговое развертывание
@@ -61,10 +61,13 @@ vim ../.env  # ← Edit passwords
 # Шаг 4: Развернуть инфраструктуру
 ./deploy.sh production full
 
-# Шаг 5: Запустить приложения
-./start_app.sh production all
+# Шаг 5: Развернуть Odoo приложение
+cd ..
+source .env
+ansible-playbook -i inventories/production/hosts.yml deploy-odoo.yml
 
 # Шаг 6: Проверить здоровье системы
+cd scripts
 ./health_check.sh production
 ```
 
@@ -88,9 +91,11 @@ vim ../.env  # ← Edit passwords
 1. Проверяет и устанавливает Ansible
 2. Валидирует inventory
 3. Проверяет secrets
-4. Развертывает всю инфраструктуру
-5. Запускает приложения
-6. Проводит health check
+4. Развертывает инфраструктуру (PostgreSQL, Redis, Nginx, Prometheus, Grafana)
+5. Ожидает стабилизации инфраструктуры (30s)
+6. Развертывает Odoo приложение (Odoo 17, KKT Adapter, Celery Worker, Celery Flower)
+7. Ожидает стабилизации приложений (30s)
+8. Проводит health check
 
 ---
 
@@ -116,15 +121,17 @@ check     - Dry-run, проверка без изменений
 ./deploy.sh production infra            # Только инфраструктура
 ```
 
-**Что развертывает:**
+**Что развертывает (инфраструктура):**
 - ✅ Системные пакеты и зависимости
-- ✅ Docker + Docker Compose
+- ✅ Docker + Docker Compose v2
 - ✅ PostgreSQL 15
 - ✅ Redis 7.2
 - ✅ Nginx
 - ✅ Prometheus + Grafana
 - ✅ UFW firewall + fail2ban
 - ✅ SSH hardening
+
+**Примечание:** Odoo приложение развертывается отдельным playbook `deploy-odoo.yml`
 
 ---
 
@@ -139,7 +146,7 @@ check     - Dry-run, проверка без изменений
 # Components
 all         - Все компоненты (default)
 odoo        - Только Odoo
-kkt-adapter - Только KKT Adapter
+kkt-adapter - KKT Adapter + Celery stack
 monitoring  - Только Prometheus + Grafana
 status      - Показать статус
 logs        - Показать логи
@@ -147,12 +154,16 @@ restart     - Перезапустить все
 stop        - Остановить все
 
 # Примеры
-./start_app.sh production all           # Запустить всё
-./start_app.sh production odoo          # Только Odoo
-./start_app.sh production status        # Статус сервисов
-./start_app.sh production logs odoo 100 # 100 строк логов Odoo
-./start_app.sh production restart       # Перезапуск
-./start_app.sh production stop          # Остановка
+./start_app.sh production all                # Запустить всё
+./start_app.sh production odoo               # Только Odoo
+./start_app.sh production kkt-adapter        # KKT + Celery + Flower
+./start_app.sh production status             # Статус сервисов
+./start_app.sh production logs odoo 100      # 100 строк логов Odoo
+./start_app.sh production logs kkt-adapter   # Логи KKT Adapter
+./start_app.sh production logs celery 50     # 50 строк логов Celery
+./start_app.sh production logs flower 50     # Логи Flower
+./start_app.sh production restart            # Перезапуск
+./start_app.sh production stop               # Остановка
 ```
 
 ---
@@ -227,8 +238,8 @@ stop        - Остановить все
 
 **Проверяет:**
 - ✅ System services (docker, nginx, postgresql, redis, chrony)
-- ✅ Network ports (5432, 6379, 8069, 8000, 9090, 3000, 80)
-- ✅ Docker containers (prometheus, grafana)
+- ✅ Network ports (5432, 6379, 8069, 8072, 8000, 5555, 9090, 3000, 80)
+- ✅ Docker containers (odoo, kkt_adapter, celery_worker, celery_flower, prometheus, grafana)
 - ✅ Database connectivity (PostgreSQL, Redis)
 - ✅ NTP sync status
 
@@ -274,6 +285,8 @@ vim ../.env
 # Посмотреть логи
 ./start_app.sh production logs odoo 200
 ./start_app.sh production logs kkt-adapter 100
+./start_app.sh production logs celery 100
+./start_app.sh production logs flower 50
 
 # Health check
 ./health_check.sh production
@@ -361,7 +374,8 @@ source ../.env
 - [CLAUDE.md](../../CLAUDE.md) - §10, §11
 
 **Ansible playbooks:**
-- `../site.yml` - Главный playbook
+- `../site.yml` - Главный playbook (инфраструктура)
+- `../deploy-odoo.yml` - Odoo приложение
 - `../prepare-server.yml` - Базовая подготовка
 
 **Inventories:**
@@ -370,9 +384,76 @@ source ../.env
 
 **Roles:**
 - `../roles/common/` - Базовая система
-- `../roles/docker/` - Docker
-- `../roles/postgresql/` - PostgreSQL
-- `../roles/redis/` - Redis
-- `../roles/nginx/` - Nginx
+- `../roles/docker/` - Docker + Docker Compose v2
+- `../roles/postgresql/` - PostgreSQL 15
+- `../roles/redis/` - Redis 7.2
+- `../roles/nginx/` - Nginx reverse proxy
 - `../roles/monitoring/` - Prometheus + Grafana
-- `../roles/security/` - Security hardening
+- `../roles/security/` - Security hardening (UFW, fail2ban, SSH)
+- `../roles/odoo/` - Odoo 17 + KKT Adapter + Celery stack
+
+## 🏗️ Архитектура развертывания
+
+### Docker Compose v2 Stack
+
+Все приложения развертываются в единый `docker-compose.yml` на сервере:
+
+```
+/opt/opticserp/
+├── docker-compose.yml          # Единый compose файл для всех сервисов
+├── addons/                     # Кастомные Odoo модули
+│   ├── optics_core/
+│   ├── optics_pos_ru54fz/
+│   ├── connector_b/
+│   └── ru_accounting_extras/
+├── kkt_adapter/                # KKT Adapter код
+│   ├── app/
+│   ├── data/buffer.db
+│   ├── Dockerfile
+│   └── requirements.txt
+└── data/                       # Odoo filestore
+```
+
+### Сервисы в Docker Compose:
+
+| Сервис | Контейнер | Порты | Назначение |
+|--------|-----------|-------|------------|
+| `odoo` | opticserp_odoo | 8069, 8072 | Odoo 17 ERP/POS |
+| `kkt_adapter` | opticserp_kkt_adapter | 8000 | FastAPI для фискализации |
+| `celery_worker` | opticserp_celery | - | Celery Worker (4 очереди) |
+| `celery_flower` | opticserp_flower | 5555 | Celery monitoring UI |
+
+### Сетевая архитектура:
+
+- **Режим:** Bridge network (не host mode)
+- **Доступ к хосту:** Через `host.docker.internal` (extra_hosts)
+- **PostgreSQL:** На хосте (localhost:5432), доступен через host.docker.internal
+- **Redis:** На хосте (localhost:6379), доступен через host.docker.internal
+
+### Команды Docker Compose v2:
+
+```bash
+# ✅ Правильно (v2)
+docker compose up -d
+docker compose ps
+docker compose logs odoo
+docker compose restart
+
+# ❌ Неправильно (устаревший v1)
+docker-compose up -d      # Не используется
+```
+
+## 📊 Порты и URL сервисов
+
+После развертывания доступны следующие сервисы:
+
+| Сервис | URL | Порт | Описание |
+|--------|-----|------|----------|
+| Odoo | http://SERVER:8069 | 8069 | Web UI Odoo |
+| Odoo Longpolling | http://SERVER:8072 | 8072 | Websockets |
+| KKT Adapter | http://SERVER:8000 | 8000 | REST API |
+| Celery Flower | http://SERVER:5555 | 5555 | Celery мониторинг |
+| Prometheus | http://SERVER:9090 | 9090 | Метрики |
+| Grafana | http://SERVER:3000 | 3000 | Дашборды |
+| PostgreSQL | SERVER:5432 | 5432 | База данных |
+| Redis | SERVER:6379 | 6379 | Cache/Broker |
