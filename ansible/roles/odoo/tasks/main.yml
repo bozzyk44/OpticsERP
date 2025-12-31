@@ -46,6 +46,7 @@
     dest: "{{ odoo_addons_dir }}/{{ item }}/"
     delete: yes
     recursive: yes
+    rsync_path: "sudo rsync"
     rsync_opts:
       - "--exclude=*.pyc"
       - "--exclude=__pycache__"
@@ -92,6 +93,7 @@
     dest: "{{ odoo_base_dir }}/kkt_adapter/"
     delete: yes
     recursive: yes
+    rsync_path: "sudo rsync"
     rsync_opts:
       - "--exclude=*.pyc"
       - "--exclude=__pycache__"
