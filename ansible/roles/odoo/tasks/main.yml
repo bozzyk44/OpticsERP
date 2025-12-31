@@ -127,7 +127,7 @@
   changed_when: "'Downloaded newer image' in docker_pull_result.stdout or 'Pulled' in docker_pull_result.stdout"
 
 - name: Start Odoo and KKT services
-  command: docker compose up -d --build
+  command: docker compose up -d
   args:
     chdir: "{{ odoo_base_dir }}"
   environment:
