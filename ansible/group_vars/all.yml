@@ -51,8 +51,12 @@ allowed_tcp_ports:
   - 22    # SSH
   - 80    # HTTP
   - 443   # HTTPS
-  - 8069  # Odoo (внутренний, через Nginx)
-  - 8000  # KKT Adapter (внутренний)
+  - 8069  # Odoo HTTP
+  - 8072  # Odoo Longpolling
+  - 8000  # KKT Adapter
+  - 5555  # Celery Flower (monitoring)
+  - 9090  # Prometheus
+  - 3000  # Grafana
 
 # SSL/TLS
 ssl_certificate_path: /etc/ssl/certs

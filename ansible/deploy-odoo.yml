@@ -1,0 +1,67 @@
+---
+# Playbook for deploying Odoo application only
+# Usage: ansible-playbook -i inventories/production/hosts.yml deploy-odoo.yml
+#
+# Before running:
+#   source .env
+#
+# This playbook:
+# - Syncs custom addons to server
+# - Syncs KKT Adapter code
+# - Updates configuration files
+# - Restarts Odoo and related services
+
+- name: Deploy Odoo application
+  hosts: odoo_servers
+  become: true
+
+  pre_tasks:
+    - name: Verify environment variables
+      assert:
+        that:
+          - lookup('env', 'POSTGRES_PASSWORD') | length > 0
+          - lookup('env', 'REDIS_PASSWORD') | length > 0
+          - lookup('env', 'ODOO_ADMIN_PASSWORD') | length > 0
+        fail_msg: "Required environment variables not set. Run: source .env"
+        success_msg: "✅ All required environment variables are set"
+
+    - name: Display deployment info
+      debug:
+        msg: |
+          🚀 Deploying Odoo to: {{ ansible_host }}
+          Database: {{ odoo_db_name | default('odoo_production') }}
+          Odoo version: {{ odoo_version | default('17') }}
+
+          Services to be deployed:
+          - Odoo (port {{ odoo_http_port | default(8069) }})
+          - KKT Adapter (port {{ kkt_adapter_port | default(8000) }})
+          - Celery Worker
+          - Celery Flower (port {{ celery_flower_port | default(5555) }})
+
+  roles:
+    - odoo
+
+  post_tasks:
+    - name: Show Odoo access information
+      debug:
+        msg: |
+          ✅ Odoo deployment completed successfully!
+
+          Access URLs:
+          - Odoo: http://{{ ansible_host }}:{{ odoo_http_port | default(8069) }}
+          - KKT Adapter: http://{{ ansible_host }}:{{ kkt_adapter_port | default(8000) }}
+          - Celery Flower: http://{{ ansible_host }}:{{ celery_flower_port | default(5555) }}
+
+          Next steps:
+          1. Open Odoo in browser: http://{{ ansible_host }}:{{ odoo_http_port | default(8069) }}
+          2. Create database or login
+          3. Install custom modules:
+             - optics_core
+             - optics_pos_ru54fz
+             - connector_b
+             - ru_accounting_extras
+
+          Logs: {{ odoo_logfile | default('/var/log/opticserp/odoo.log') }}
+
+          Check container status:
+          docker ps --filter name=opticserp

@@ -47,6 +47,7 @@ REQUIRED_VARS=(
     "POSTGRES_PASSWORD"
     "REDIS_PASSWORD"
     "GRAFANA_PASSWORD"
+    "ODOO_ADMIN_PASSWORD"
 )
 
 # Check each required variable

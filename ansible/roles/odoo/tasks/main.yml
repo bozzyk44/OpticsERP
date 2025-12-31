@@ -1,0 +1,167 @@
+---
+# Odoo role - Deploy Odoo 17 with custom addons
+
+- name: Create Odoo base directory
+  file:
+    path: "{{ odoo_base_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0755'
+
+- name: Create Odoo subdirectories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0755'
+  loop:
+    - "{{ odoo_addons_dir }}"
+    - "{{ odoo_data_dir }}"
+    - "{{ odoo_base_dir }}/kkt_adapter"
+    - "{{ odoo_base_dir }}/kkt_adapter/app"
+    - "{{ odoo_base_dir }}/kkt_adapter/data"
+
+- name: Create Odoo log directory
+  file:
+    path: /var/log/opticserp
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0755'
+
+- name: Create Odoo log file
+  file:
+    path: "{{ odoo_logfile }}"
+    state: touch
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0644'
+  changed_when: false
+
+- name: Copy custom addons to server
+  synchronize:
+    src: "{{ playbook_dir }}/../addons/{{ item }}/"
+    dest: "{{ odoo_addons_dir }}/{{ item }}/"
+    delete: yes
+    recursive: yes
+    rsync_opts:
+      - "--exclude=*.pyc"
+      - "--exclude=__pycache__"
+      - "--exclude=*.log"
+  loop: "{{ custom_addons }}"
+  delegate_to: localhost
+
+- name: Set permissions on addons
+  file:
+    path: "{{ odoo_addons_dir }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0755'
+    recurse: yes
+
+- name: Copy Odoo configuration
+  template:
+    src: odoo.conf.j2
+    dest: "{{ odoo_config_dir }}/odoo.conf"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0640'
+  notify: restart odoo
+
+- name: Copy docker-compose file
+  template:
+    src: docker-compose.odoo.yml.j2
+    dest: "{{ odoo_base_dir }}/docker-compose.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0644'
+  notify: restart odoo
+
+- name: Check if KKT Adapter source exists locally
+  stat:
+    path: "{{ playbook_dir }}/../kkt_adapter"
+  delegate_to: localhost
+  register: kkt_adapter_source
+
+- name: Copy KKT Adapter application code
+  synchronize:
+    src: "{{ playbook_dir }}/../kkt_adapter/"
+    dest: "{{ odoo_base_dir }}/kkt_adapter/"
+    delete: yes
+    recursive: yes
+    rsync_opts:
+      - "--exclude=*.pyc"
+      - "--exclude=__pycache__"
+      - "--exclude=data/buffer.db"
+      - "--exclude=*.log"
+  delegate_to: localhost
+  when: kkt_adapter_source.stat.exists
+
+- name: Set permissions on KKT Adapter
+  file:
+    path: "{{ odoo_base_dir }}/kkt_adapter"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0755'
+    recurse: yes
+  when: kkt_adapter_source.stat.exists
+
+- name: Ensure SQLite buffer database directory exists
+  file:
+    path: "{{ odoo_base_dir }}/kkt_adapter/data"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0755'
+
+- name: Pull Odoo Docker image
+  command: docker pull odoo:{{ odoo_version }}
+  register: docker_pull_result
+  changed_when: "'Downloaded newer image' in docker_pull_result.stdout or 'Pulled' in docker_pull_result.stdout"
+
+- name: Start Odoo and KKT services
+  command: docker compose up -d
+  args:
+    chdir: "{{ odoo_base_dir }}"
+  environment:
+    POSTGRES_PASSWORD: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+    REDIS_PASSWORD: "{{ lookup('env', 'REDIS_PASSWORD') }}"
+    ODOO_ADMIN_PASSWORD: "{{ odoo_admin_password }}"
+  become: yes
+  become_user: "{{ deploy_user }}"
+  register: docker_compose_output
+  changed_when: "'Creating' in docker_compose_output.stdout or 'Starting' in docker_compose_output.stdout or 'Recreating' in docker_compose_output.stdout"
+
+- name: Wait for Odoo to be ready
+  uri:
+    url: "http://localhost:{{ odoo_http_port }}/web/health"
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 30
+  delay: 10
+  ignore_errors: yes
+
+- name: Check Odoo container status
+  command: docker ps --filter name=opticserp_odoo --format "{% raw %}{{.Status}}{% endraw %}"
+  register: odoo_container_status
+  changed_when: false
+
+- name: Display Odoo status
+  debug:
+    msg: |
+      ✅ Odoo deployment completed!
+      Odoo URL: http://{{ ansible_host }}:{{ odoo_http_port }}
+      Longpolling: http://{{ ansible_host }}:{{ odoo_longpolling_port }}
+      KKT Adapter: http://{{ ansible_host }}:{{ kkt_adapter_port }}
+      {% if celery_flower_enabled %}Celery Flower: http://{{ ansible_host }}:{{ celery_flower_port }}{% endif %}
+
+      Container status: {{ odoo_container_status.stdout }}
+
+      Default credentials (change immediately!):
+      Database: {{ odoo_db_name }}
+      Admin password: {{ odoo_admin_password }}
+
+      Log file: {{ odoo_logfile }}

@@ -1,0 +1,37 @@
+---
+# Handlers for Odoo role
+
+- name: restart odoo
+  command: docker compose restart odoo
+  args:
+    chdir: "{{ odoo_base_dir }}"
+  environment:
+    POSTGRES_PASSWORD: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+    REDIS_PASSWORD: "{{ lookup('env', 'REDIS_PASSWORD') }}"
+    ODOO_ADMIN_PASSWORD: "{{ odoo_admin_password }}"
+  become: yes
+  become_user: "{{ deploy_user }}"
+  listen: restart odoo
+
+- name: restart kkt_adapter
+  command: docker compose restart kkt_adapter
+  args:
+    chdir: "{{ odoo_base_dir }}"
+  environment:
+    POSTGRES_PASSWORD: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+    REDIS_PASSWORD: "{{ lookup('env', 'REDIS_PASSWORD') }}"
+  become: yes
+  become_user: "{{ deploy_user }}"
+  listen: restart kkt_adapter
+
+- name: restart all services
+  command: docker compose restart
+  args:
+    chdir: "{{ odoo_base_dir }}"
+  environment:
+    POSTGRES_PASSWORD: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+    REDIS_PASSWORD: "{{ lookup('env', 'REDIS_PASSWORD') }}"
+    ODOO_ADMIN_PASSWORD: "{{ odoo_admin_password }}"
+  become: yes
+  become_user: "{{ deploy_user }}"
+  listen: restart all services

@@ -41,3 +41,9 @@
     - docker
     - monitoring
     - nginx
+
+- name: Deploy Odoo application
+  hosts: odoo_servers
+  become: true
+  roles:
+    - odoo

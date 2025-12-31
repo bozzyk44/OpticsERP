@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # Odoo 17 - ERP/POS System
+  odoo:
+    image: odoo:{{ odoo_version }}
+    container_name: opticserp_odoo
+    command: odoo --config /etc/odoo/odoo.conf
+    environment:
+      - HOST={{ odoo_db_host }}
+      - PORT={{ odoo_db_port }}
+      - USER={{ odoo_db_user }}
+      - PASSWORD={{ lookup('env', 'POSTGRES_PASSWORD') }}
+    ports:
+      - "{{ odoo_http_port }}:8069"
+      - "{{ odoo_longpolling_port }}:8072"
+    volumes:
+      - {{ odoo_config_dir }}/odoo.conf:/etc/odoo/odoo.conf:ro
+      - {{ odoo_addons_dir }}:/mnt/extra-addons:ro
+      - {{ odoo_data_dir }}:/var/lib/odoo
+    network_mode: "host"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8069/web/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # KKT Adapter - FastAPI REST API for fiscal receipts
+  kkt_adapter:
+    build:
+      context: {{ odoo_base_dir }}/kkt_adapter
+      dockerfile: Dockerfile
+    container_name: opticserp_kkt_adapter
+    command: uvicorn main:app --host 0.0.0.0 --port {{ kkt_adapter_port }} --workers 2
+    environment:
+      - REDIS_HOST={{ redis_host }}
+      - REDIS_PORT={{ redis_port }}
+      - REDIS_PASSWORD={{ lookup('env', 'REDIS_PASSWORD') }}
+      - REDIS_DB=0
+      - BUFFER_DB_PATH=/app/data/buffer.db
+      - POSTGRES_HOST={{ odoo_db_host }}
+      - POSTGRES_PORT={{ odoo_db_port }}
+      - POSTGRES_DB={{ odoo_db_name }}
+      - POSTGRES_USER={{ odoo_db_user }}
+      - POSTGRES_PASSWORD={{ lookup('env', 'POSTGRES_PASSWORD') }}
+    ports:
+      - "{{ kkt_adapter_port }}:{{ kkt_adapter_port }}"
+    volumes:
+      - {{ odoo_base_dir }}/kkt_adapter/app:/app:ro
+      - {{ odoo_base_dir }}/kkt_adapter/data:/app/data
+    network_mode: "host"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:{{ kkt_adapter_port }}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # Celery Worker - Bulkhead Pattern (4 queues)
+  celery_worker:
+    build:
+      context: {{ odoo_base_dir }}/kkt_adapter
+      dockerfile: Dockerfile
+    container_name: opticserp_celery
+    command: celery -A celery_app worker --loglevel=info --queues=critical,high,default,low --concurrency=4
+    environment:
+      - REDIS_HOST={{ redis_host }}
+      - REDIS_PORT={{ redis_port }}
+      - REDIS_PASSWORD={{ lookup('env', 'REDIS_PASSWORD') }}
+      - REDIS_DB=0
+      - BUFFER_DB_PATH=/app/data/buffer.db
+    volumes:
+      - {{ odoo_base_dir }}/kkt_adapter/app:/app:ro
+      - {{ odoo_base_dir }}/kkt_adapter/data:/app/data
+    network_mode: "host"
+    depends_on:
+      - kkt_adapter
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+{% if celery_flower_enabled %}
+  # Celery Flower - Monitoring UI
+  celery_flower:
+    build:
+      context: {{ odoo_base_dir }}/kkt_adapter
+      dockerfile: Dockerfile
+    container_name: opticserp_flower
+    command: celery -A celery_app flower --port={{ celery_flower_port }} --url_prefix=flower
+    environment:
+      - REDIS_HOST={{ redis_host }}
+      - REDIS_PORT={{ redis_port }}
+      - REDIS_PASSWORD={{ lookup('env', 'REDIS_PASSWORD') }}
+      - REDIS_DB=0
+      - BUFFER_DB_PATH=/app/data/buffer.db
+    ports:
+      - "{{ celery_flower_port }}:{{ celery_flower_port }}"
+    volumes:
+      - {{ odoo_base_dir }}/kkt_adapter/app:/app:ro
+      - {{ odoo_base_dir }}/kkt_adapter/data:/app/data
+    network_mode: "host"
+    depends_on:
+      - celery_worker
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+{% endif %}
