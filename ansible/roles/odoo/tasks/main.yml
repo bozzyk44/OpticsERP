@@ -52,6 +52,7 @@
       - "--exclude=*.log"
   loop: "{{ custom_addons }}"
   delegate_to: localhost
+  become: no
 
 - name: Set permissions on addons
   file:
@@ -97,6 +98,7 @@
       - "--exclude=data/buffer.db"
       - "--exclude=*.log"
   delegate_to: localhost
+  become: no
   when: kkt_adapter_source.stat.exists
 
 - name: Set permissions on KKT Adapter
