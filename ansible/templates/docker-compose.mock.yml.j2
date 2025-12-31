@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Mock OFD Server - Simulates ОФД API
+  mock_ofd:
+    image: opticserp-mock-ofd
+    container_name: opticserp_mock_ofd
+    restart: unless-stopped
+    environment:
+      - OFD_PORT=9000
+      - OFD_HOST=0.0.0.0
+      - LOG_LEVEL=INFO
+    network_mode: "host"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/ofd/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      com.opticserp.service: "mock_ofd"
+      com.opticserp.environment: "production_testing"
+
+  # Mock Odoo API - For heartbeat testing (optional)
+  mock_odoo_api:
+    image: opticserp-mock-odoo
+    container_name: opticserp_mock_odoo_api
+    restart: unless-stopped
+    environment:
+      - ODOO_PORT=8070
+      - ODOO_HOST=0.0.0.0
+      - LOG_LEVEL=INFO
+    network_mode: "host"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8070/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      com.opticserp.service: "mock_odoo_api"
+      com.opticserp.environment: "production_testing"

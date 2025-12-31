@@ -1,0 +1,99 @@
+---
+- name: Deploy Mock OFD and KKT services
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    mock_services_dir: "/opt/opticserp/mock_services"
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+
+  tasks:
+    - name: Create mock services directory
+      file:
+        path: "{{ mock_services_dir }}"
+        state: directory
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0755'
+
+    - name: Copy mock server files
+      synchronize:
+        src: "{{ playbook_dir }}/../tests/integration/{{ item }}"
+        dest: "{{ mock_services_dir }}/{{ item }}"
+        rsync_path: "sudo rsync"
+      loop:
+        - mock_ofd_server.py
+        - mock_ofd_standalone.py
+        - mock_odoo_server.py
+        - mock_odoo_standalone.py
+      delegate_to: localhost
+      become: no
+
+    - name: Copy mock requirements
+      synchronize:
+        src: "{{ playbook_dir }}/../tests/integration/requirements-mock.txt"
+        dest: "{{ mock_services_dir }}/requirements-mock.txt"
+        rsync_path: "sudo rsync"
+      delegate_to: localhost
+      become: no
+
+    - name: Copy mock Dockerfiles
+      synchronize:
+        src: "{{ playbook_dir }}/../tests/integration/{{ item }}"
+        dest: "{{ mock_services_dir }}/{{ item }}"
+        rsync_path: "sudo rsync"
+      loop:
+        - Dockerfile.mock_ofd
+        - Dockerfile.mock_odoo
+      delegate_to: localhost
+      become: no
+
+    - name: Set permissions on mock services
+      file:
+        path: "{{ mock_services_dir }}"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        recurse: yes
+
+    - name: Create docker-compose.mock.yml
+      template:
+        src: docker-compose.mock.yml.j2
+        dest: "{{ odoo_base_dir }}/docker-compose.mock.yml"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0644'
+
+    - name: Build mock OFD image
+      shell: docker build -f {{ mock_services_dir }}/Dockerfile.mock_ofd -t opticserp-mock-ofd {{ mock_services_dir }}
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Build mock Odoo API image
+      shell: docker build -f {{ mock_services_dir }}/Dockerfile.mock_odoo -t opticserp-mock-odoo {{ mock_services_dir }}
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Start mock services
+      shell: docker compose -f docker-compose.mock.yml up -d
+      args:
+        chdir: "{{ odoo_base_dir }}"
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Wait for mock services to be healthy
+      pause:
+        seconds: 10
+
+    - name: Check mock services status
+      shell: docker compose -f docker-compose.mock.yml ps
+      args:
+        chdir: "{{ odoo_base_dir }}"
+      become: yes
+      become_user: "{{ deploy_user }}"
+      register: mock_status
+      changed_when: false
+
+    - name: Display mock services status
+      debug:
+        msg: "{{ mock_status.stdout_lines }}"
