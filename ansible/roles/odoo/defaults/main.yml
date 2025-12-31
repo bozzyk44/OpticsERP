@@ -11,7 +11,8 @@ odoo_data_dir: "{{ odoo_base_dir }}/data"
 odoo_config_dir: "/etc/opticserp"
 
 # Database configuration (using existing PostgreSQL on server)
-odoo_db_host: "localhost"
+# Using host.docker.internal for bridge network (Docker Compose resolves to host)
+odoo_db_host: "host.docker.internal"
 odoo_db_port: 5432
 odoo_db_name: "odoo_production"
 odoo_db_user: "odoo"
@@ -24,7 +25,8 @@ odoo_workers: 4
 odoo_max_cron_threads: 2
 
 # Redis configuration (using existing Redis on server)
-redis_host: "localhost"
+# Using host.docker.internal for bridge network
+redis_host: "host.docker.internal"
 redis_port: 6379
 
 # KKT Adapter configuration

@@ -127,7 +127,7 @@
   changed_when: "'Downloaded newer image' in docker_pull_result.stdout or 'Pulled' in docker_pull_result.stdout"
 
 - name: Start Odoo and KKT services
-  command: docker compose up -d
+  command: docker compose up -d --build
   args:
     chdir: "{{ odoo_base_dir }}"
   environment:
@@ -138,6 +138,8 @@
   become_user: "{{ deploy_user }}"
   register: docker_compose_output
   changed_when: "'Creating' in docker_compose_output.stdout or 'Starting' in docker_compose_output.stdout or 'Recreating' in docker_compose_output.stdout"
+  async: 600
+  poll: 10
 
 - name: Wait for Odoo to be ready
   uri:
