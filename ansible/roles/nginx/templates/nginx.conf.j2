@@ -81,6 +81,14 @@ http {
     proxy_read_timeout 60s;
 
     ##
+    # WebSocket Support
+    ##
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        ''      close;
+    }
+
+    ##
     # Virtual Host Configs
     ##
     include /etc/nginx/conf.d/*.conf;

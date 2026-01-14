@@ -69,7 +69,7 @@
     dest: "{{ odoo_config_dir }}/odoo.conf"
     owner: "{{ deploy_user }}"
     group: "{{ deploy_group }}"
-    mode: '0640'
+    mode: '0644'
   notify: restart odoo
 
 - name: Copy docker-compose file
@@ -155,6 +155,30 @@
   command: docker ps --filter name=opticserp_odoo --format "{% raw %}{{.Status}}{% endraw %}"
   register: odoo_container_status
   changed_when: false
+
+- name: Update Odoo custom modules
+  command: >
+    docker exec opticserp_odoo odoo
+    -c /etc/odoo/odoo.conf
+    -d {{ odoo_db_name }}
+    -u {{ custom_addons | join(',') }}
+    --stop-after-init
+  register: odoo_update_result
+  changed_when: "'Modules updated' in odoo_update_result.stdout or 'Module' in odoo_update_result.stdout"
+  failed_when: odoo_update_result.rc != 0 and 'database' not in odoo_update_result.stderr | lower
+  ignore_errors: yes
+  when: custom_addons is defined and custom_addons | length > 0
+
+- name: Display module update status
+  debug:
+    msg: |
+      {% if odoo_update_result.rc == 0 %}
+      ✅ Modules updated successfully: {{ custom_addons | join(', ') }}
+      {% else %}
+      ⚠️ Module update skipped or failed. Database may not exist yet.
+      Please create database and install modules manually via UI.
+      {% endif %}
+  when: custom_addons is defined and custom_addons | length > 0
 
 - name: Display Odoo status
   debug:
