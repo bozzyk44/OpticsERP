@@ -23,6 +23,7 @@
 import { Component, useState, onWillStart, onWillUnmount } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import { _t } from "@web/core/l10n/translation";
 
 /**
  * Offline Indicator Component
@@ -170,28 +171,28 @@ export class OfflineIndicator extends Component {
         const { networkStatus, bufferPercent, cbState } = this.state;
 
         if (networkStatus === 'offline') {
-            return 'Offline';
+            return _t('Offline');
         }
 
         if (bufferPercent > 80 || cbState === 'OPEN') {
-            return 'Critical';
+            return _t('Critical');
         }
 
         if (bufferPercent >= 50 || cbState === 'HALF_OPEN') {
-            return 'Warning';
+            return _t('Warning');
         }
 
-        return 'Online';
+        return _t('Online');
     }
 
     /**
      * Get buffer status text
      *
-     * Returns: '15 receipts (12%)'
+     * Returns: 'Receipt count: 15 (12%)'
      */
     get bufferStatusText() {
         const { bufferCount, bufferPercent } = this.state;
-        return `${bufferCount} receipts (${Math.round(bufferPercent)}%)`;
+        return `${_t('Receipt count')}: ${bufferCount} (${Math.round(bufferPercent)}%)`;
     }
 
     /**
@@ -203,13 +204,13 @@ export class OfflineIndicator extends Component {
         const { cbState } = this.state;
 
         if (cbState === 'CLOSED') {
-            return 'CB: CLOSED';
+            return _t('CB: CLOSED');
         } else if (cbState === 'OPEN') {
-            return 'CB: OPEN';
+            return _t('CB: OPEN');
         } else if (cbState === 'HALF_OPEN') {
-            return 'CB: HALF_OPEN';
+            return _t('CB: HALF_OPEN');
         } else {
-            return 'CB: Unknown';
+            return _t('CB: Unknown');
         }
     }
 
@@ -220,7 +221,7 @@ export class OfflineIndicator extends Component {
      */
     get lastUpdateTime() {
         if (!this.state.lastUpdate) {
-            return 'Never';
+            return _t('Never');
         }
 
         const date = this.state.lastUpdate;

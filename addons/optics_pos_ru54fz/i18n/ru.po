@@ -18,62 +18,62 @@ msgstr ""
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_config__kkt_adapter_status
 msgid "Connection Status"
-msgstr ""
+msgstr "Статус подключения"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__create_uid
 msgid "Created by"
-msgstr ""
+msgstr "Создано пользователем"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__create_date
 msgid "Created on"
-msgstr ""
+msgstr "Дата создания"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_order__fiscal_sync_date
 msgid "Date when receipt was synced to OFD"
-msgstr ""
+msgstr "Дата синхронизации чека с ОФД"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__display_name
 msgid "Display Name"
-msgstr ""
+msgstr "Отображаемое имя"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_config__kkt_adapter_enabled
 msgid "Enable KKT Adapter"
-msgstr ""
+msgstr "Включить адаптер ККТ"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_config__kkt_adapter_enabled
 msgid "Enable integration with KKT adapter for fiscal printing"
-msgstr ""
+msgstr "Включить интеграцию с адаптером ККТ для фискальной печати"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_order__fiscal_doc_id
 msgid "Fiscal Document ID"
-msgstr ""
+msgstr "ID фискального документа"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_order__fiscal_sync_date
 msgid "Fiscal Sync Date"
-msgstr ""
+msgstr "Дата фискальной синхронизации"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_order__fiscal_sync_status
 msgid "Fiscal Sync Status"
-msgstr ""
+msgstr "Статус фискальной синхронизации"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_order__fiscal_doc_id
 msgid "Fiscal document ID (HLC timestamp) from KKT adapter"
-msgstr ""
+msgstr "ID фискального документа (HLC timestamp) из адаптера ККТ"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__id
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_config__kkt_adapter_url
@@ -83,39 +83,39 @@ msgstr "URL адаптера ККТ"
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_config__kkt_adapter_status
 msgid "KKT adapter connection status"
-msgstr ""
+msgstr "Статус подключения адаптера ККТ"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__write_uid
 msgid "Last Updated by"
-msgstr ""
+msgstr "Последнее обновление пользователем"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__write_date
 msgid "Last Updated on"
-msgstr ""
+msgstr "Дата последнего обновления"
 
 #. module: optics_pos_ru54fz
 #. odoo-javascript
 #: code:addons/optics_pos_ru54fz/static/src/xml/offline_indicator.xml:0
 #, python-format
 msgid "Loading..."
-msgstr ""
+msgstr "Загрузка..."
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields.selection,name:optics_pos_ru54fz.selection__pos_order__fiscal_sync_status__not_required
 msgid "Not Required"
-msgstr ""
+msgstr "Не требуется"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model,name:optics_pos_ru54fz.model_pos_offline_buffer_status
 msgid "POS Offline Buffer Status"
-msgstr ""
+msgstr "Статус офлайн-буфера кассы"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields.selection,name:optics_pos_ru54fz.selection__pos_order__fiscal_sync_status__pending
 msgid "Pending Sync"
-msgstr ""
+msgstr "Ожидание синхронизации"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model,name:optics_pos_ru54fz.model_pos_config
@@ -137,17 +137,17 @@ msgstr "Сессия в торговой точке"
 #: code:addons/optics_pos_ru54fz/static/src/xml/offline_indicator.xml:0
 #, python-format
 msgid "Retry"
-msgstr ""
+msgstr "Повторить"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_order__fiscal_sync_status
 msgid "Status of fiscal receipt sync to OFD"
-msgstr ""
+msgstr "Статус синхронизации фискального чека с ОФД"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields.selection,name:optics_pos_ru54fz.selection__pos_order__fiscal_sync_status__failed
 msgid "Sync Failed"
-msgstr ""
+msgstr "Синхронизация не удалась"
 
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields.selection,name:optics_pos_ru54fz.selection__pos_order__fiscal_sync_status__synced
@@ -157,4 +157,208 @@ msgstr "Синхронизировано"
 #. module: optics_pos_ru54fz
 #: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_config__kkt_adapter_url
 msgid "URL of KKT adapter service (e.g., http://localhost:8000)"
+msgstr "URL сервиса адаптера ККТ (например, http://localhost:8000)"
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js:0
+#, python-format
+msgid "Offline"
+msgstr "Офлайн"
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js:0
+#, python-format
+msgid "Critical"
+msgstr "Критично"
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js:0
+#, python-format
+msgid "Warning"
+msgstr "Предупреждение"
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js:0
+#, python-format
+msgid "Online"
+msgstr "Онлайн"
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js:0
+#, python-format
+msgid "Receipt count"
+msgstr "Количество чеков"
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js:0
+#, python-format
+msgid "CB: CLOSED"
+msgstr "CB: закрыт"
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js:0
+#, python-format
+msgid "CB: OPEN"
+msgstr "CB: открыт"
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js:0
+#, python-format
+msgid "CB: HALF_OPEN"
+msgstr "CB: полуоткрыт"
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js:0
+#, python-format
+msgid "CB: Unknown"
+msgstr "CB: неизвестен"
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/js/offline_indicator.js:0
+#, python-format
+msgid "Never"
+msgstr "Никогда"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid ""
+"Invalid KKT adapter URL format. Expected: http://host:port or https://host:"
+"port\n"
+"Example: http://localhost:8000"
 msgstr ""
+"Неверный формат URL адаптера ККТ. Ожидается: http://host:port или https://"
+"host:port\n"
+"Пример: http://localhost:8000"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid "KKT Adapter Disabled"
+msgstr "Адаптер ККТ отключен"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid "KKT adapter integration is disabled for this POS."
+msgstr "Интеграция адаптера ККТ отключена для этой кассы."
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid "URL Not Configured"
+msgstr "URL не настроен"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid "Please configure KKT adapter URL first."
+msgstr "Сначала настройте URL адаптера ККТ."
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid "Connection Successful"
+msgstr "Соединение успешно установлено"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid ""
+"Connected to KKT adapter at %(url)s\n"
+"Status: %(status)s"
+msgstr ""
+"Подключено к адаптеру ККТ на %(url)s\n"
+"Статус: %(status)s"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid "Connection Timeout"
+msgstr "Превышено время ожидания"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid "KKT adapter at %(url)s is not responding (timeout 5s)."
+msgstr "Адаптер ККТ на %(url)s не отвечает (тайм-аут 5с)."
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid "Connection Failed"
+msgstr "Ошибка соединения"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid ""
+"Failed to connect to KKT adapter:\n"
+"%(error)s"
+msgstr ""
+"Ошибка подключения к адаптеру ККТ:\n"
+"%(error)s"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid "Error"
+msgstr "Ошибка"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_config.py:0
+#, python-format
+msgid ""
+"Unexpected error:\n"
+"%(error)s"
+msgstr ""
+"Непредвиденная ошибка:\n"
+"%(error)s"
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_order.py:0
+#, python-format
+msgid ""
+"Cannot process refund: Original order not found.\n"
+"Please ensure the original sale exists in the system."
+msgstr ""
+"Невозможно обработать возврат: исходный заказ не найден.\n"
+"Убедитесь, что исходная продажа существует в системе."
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_order.py:0
+#, python-format
+msgid ""
+"Refund blocked: Original receipt not synced to OFD yet.\n"
+"\n"
+"Original Order: %(ref)s\n"
+"Fiscal Document ID: %(doc_id)s\n"
+"Sync Status: Pending\n"
+"\n"
+"Please wait for the original receipt to sync before processing refund.\n"
+"Check the offline buffer status in the cash register indicator."
+msgstr ""
+"Возврат заблокирован: исходный чек еще не синхронизирован с ОФД.\n"
+"\n"
+"Исходный заказ: %(ref)s\n"
+"ID фискального документа: %(doc_id)s\n"
+"Статус синхронизации: Ожидание\n"
+"\n"
+"Пожалуйста, дождитесь синхронизации исходного чека перед обработкой возврата.\n"
+"Проверьте статус офлайн-буфера в индикаторе кассы."
+
+#. module: optics_pos_ru54fz
+#: code:addons/optics_pos_ru54fz/models/pos_order.py:0
+#, python-format
+msgid "No fiscal document ID available for this order."
+msgstr "ID фискального документа недоступен для этого заказа."

@@ -82,11 +82,11 @@ class PosConfig(models.Model):
                 url_pattern = r'^https?://[\w\.\-]+(:\d+)?(/.*)?$'
 
                 if not re.match(url_pattern, url):
-                    raise ValidationError(
+                    raise ValidationError(_(
                         "Invalid KKT adapter URL format. "
                         "Expected: http://host:port or https://host:port\n"
-                        f"Example: http://localhost:8000"
-                    )
+                        "Example: http://localhost:8000"
+                    ))
 
     # ==================
     # Business Methods
@@ -101,8 +101,8 @@ class PosConfig(models.Model):
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': 'KKT Adapter Disabled',
-                    'message': 'KKT adapter integration is disabled for this POS.',
+                    'title': _('KKT Adapter Disabled'),
+                    'message': _('KKT adapter integration is disabled for this POS.'),
                     'type': 'warning',
                     'sticky': False,
                 }
@@ -113,8 +113,8 @@ class PosConfig(models.Model):
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': 'URL Not Configured',
-                    'message': 'Please configure KKT adapter URL first.',
+                    'title': _('URL Not Configured'),
+                    'message': _('Please configure KKT adapter URL first.'),
                     'type': 'danger',
                     'sticky': False,
                 }
@@ -135,8 +135,11 @@ class PosConfig(models.Model):
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': 'Connection Successful',
-                    'message': f'Connected to KKT adapter at {url}\nStatus: {data.get("status", "OK")}',
+                    'title': _('Connection Successful'),
+                    'message': _('Connected to KKT adapter at %(url)s\nStatus: %(status)s') % {
+                        'url': url,
+                        'status': data.get("status", "OK")
+                    },
                     'type': 'success',
                     'sticky': False,
                 }
@@ -147,8 +150,10 @@ class PosConfig(models.Model):
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': 'Connection Timeout',
-                    'message': f'KKT adapter at {self.kkt_adapter_url} is not responding (timeout 5s).',
+                    'title': _('Connection Timeout'),
+                    'message': _('KKT adapter at %(url)s is not responding (timeout 5s).') % {
+                        'url': self.kkt_adapter_url
+                    },
                     'type': 'danger',
                     'sticky': True,
                 }
@@ -159,8 +164,10 @@ class PosConfig(models.Model):
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': 'Connection Failed',
-                    'message': f'Failed to connect to KKT adapter:\n{str(e)}',
+                    'title': _('Connection Failed'),
+                    'message': _('Failed to connect to KKT adapter:\n%(error)s') % {
+                        'error': str(e)
+                    },
                     'type': 'danger',
                     'sticky': True,
                 }
@@ -171,8 +178,10 @@ class PosConfig(models.Model):
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': 'Error',
-                    'message': f'Unexpected error:\n{str(e)}',
+                    'title': _('Error'),
+                    'message': _('Unexpected error:\n%(error)s') % {
+                        'error': str(e)
+                    },
                     'type': 'danger',
                     'sticky': True,
                 }

@@ -1,0 +1,254 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# * ru_accounting_extras
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-30 00:00+0000\n"
+"PO-Revision-Date: 2025-11-30 00:00+0000\n"
+"Last-Translator: Claude AI <noreply@anthropic.com>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#. module: ru_accounting_extras
+#: model:ir.module.category,name:ru_accounting_extras.module_category_ru_accounting
+msgid "Russian Accounting Extras"
+msgstr "Дополнения российского учёта"
+
+#. module: ru_accounting_extras
+#: model:ir.module.category,description:ru_accounting_extras.module_category_ru_accounting
+msgid "Cash accounts by location, GP reports, profit by location"
+msgstr "Кассовые счета по точкам, отчёты ВП, прибыль по точкам"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.menu,name:ru_accounting_extras.menu_ru_accounting_root
+msgid "Russian Accounting"
+msgstr "Российский учёт"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.menu,name:ru_accounting_extras.menu_cash_accounts
+msgid "Cash Accounts"
+msgstr "Кассовые счета"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.menu,name:ru_accounting_extras.menu_cash_transfers
+msgid "Cash Transfers"
+msgstr "Переводы между счетами"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.menu,name:ru_accounting_extras.menu_reports
+msgid "Reports"
+msgstr "Отчёты"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.menu,name:ru_accounting_extras.menu_gp_report
+msgid "Gross Profit Report"
+msgstr "Отчёт валовой прибыли"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.menu,name:ru_accounting_extras.menu_profit_by_location
+msgid "Profit by Location"
+msgstr "Прибыль по точкам"
+
+#. module: ru_accounting_extras
+#: model:ir.model,name:ru_accounting_extras.model_account_cash_transfer
+msgid "Cash Transfer"
+msgstr "Перевод между счетами"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_account_cash_transfer__name
+msgid "Reference"
+msgstr "Номер"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_account_cash_transfer__date
+msgid "Transfer Date"
+msgstr "Дата перевода"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_account_cash_transfer__amount
+msgid "Amount"
+msgstr "Сумма"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_account_cash_transfer__from_account_id
+msgid "From Account"
+msgstr "Со счёта"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_account_cash_transfer__to_account_id
+msgid "To Account"
+msgstr "На счёт"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_account_cash_transfer__location_id
+msgid "Location"
+msgstr "Точка"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_account_cash_transfer__state
+msgid "State"
+msgstr "Состояние"
+
+#. module: ru_accounting_extras
+#: selection:account.cash.transfer,state:0
+msgid "Draft"
+msgstr "Черновик"
+
+#. module: ru_accounting_extras
+#: selection:account.cash.transfer,state:0
+msgid "Posted"
+msgstr "Проведено"
+
+#. module: ru_accounting_extras
+#: selection:account.cash.transfer,state:0
+msgid "Cancelled"
+msgstr "Отменено"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_account_cash_transfer__notes
+msgid "Notes"
+msgstr "Примечания"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_account_cash_transfer__move_id
+msgid "Journal Entry"
+msgstr "Проводка"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.view_cash_transfer_form
+msgid "Cash Transfer"
+msgstr "Перевод между счетами"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.view_cash_transfer_form
+msgid "Post"
+msgstr "Провести"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.view_cash_transfer_form
+msgid "Cancel"
+msgstr "Отменить"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.view_cash_transfer_form
+msgid "Set to Draft"
+msgstr "Вернуть в черновик"
+
+#. module: ru_accounting_extras
+#: code:addons/ru_accounting_extras/models/cash_transfer.py
+#, python-format
+msgid "Amount must be positive"
+msgstr "Сумма должна быть положительной"
+
+#. module: ru_accounting_extras
+#: code:addons/ru_accounting_extras/models/cash_transfer.py
+#, python-format
+msgid "From and To accounts must be different"
+msgstr "Счета отправления и получения должны быть разными"
+
+#. module: ru_accounting_extras
+#: code:addons/ru_accounting_extras/models/cash_transfer.py
+#, python-format
+msgid "Cash Transfer: %s"
+msgstr "Перевод между счетами: %s"
+
+#. module: ru_accounting_extras
+#: model:ir.actions.report,name:ru_accounting_extras.action_report_gp
+msgid "Gross Profit Report"
+msgstr "Отчёт валовой прибыли"
+
+#. module: ru_accounting_extras
+#: model:ir.actions.report,name:ru_accounting_extras.action_report_profit_by_location
+msgid "Profit by Location"
+msgstr "Прибыль по точкам"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_gp_document
+msgid "Gross Profit Report"
+msgstr "Отчёт валовой прибыли"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_gp_document
+msgid "Period"
+msgstr "Период"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_gp_document
+msgid "Sales"
+msgstr "Продажи"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_gp_document
+msgid "Cost"
+msgstr "Себестоимость"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_gp_document
+msgid "Gross Profit"
+msgstr "Валовая прибыль"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_gp_document
+msgid "GP Margin %"
+msgstr "Наценка ВП %"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_profit_by_location_document
+msgid "Profit by Location"
+msgstr "Прибыль по точкам"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_profit_by_location_document
+msgid "Location"
+msgstr "Точка"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_profit_by_location_document
+msgid "Revenue"
+msgstr "Выручка"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_profit_by_location_document
+msgid "Expenses"
+msgstr "Расходы"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_profit_by_location_document
+msgid "Net Profit"
+msgstr "Чистая прибыль"
+
+#. module: ru_accounting_extras
+#: model:ir.ui.view,arch_db:ru_accounting_extras.report_profit_by_location_document
+msgid "Total"
+msgstr "Итого"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_sale_order__gross_profit
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_pos_order__gross_profit
+msgid "Gross Profit"
+msgstr "Валовая прибыль"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_sale_order__gp_margin
+#: model:ir.model.fields,field_description:ru_accounting_extras.field_pos_order__gp_margin
+msgid "GP Margin %"
+msgstr "Наценка ВП %"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,help:ru_accounting_extras.field_sale_order__gross_profit
+#: model:ir.model.fields,help:ru_accounting_extras.field_pos_order__gross_profit
+msgid "Gross Profit (Sales - Cost)"
+msgstr "Валовая прибыль (Продажи - Себестоимость)"
+
+#. module: ru_accounting_extras
+#: model:ir.model.fields,help:ru_accounting_extras.field_sale_order__gp_margin
+#: model:ir.model.fields,help:ru_accounting_extras.field_pos_order__gp_margin
+msgid "Gross Profit Margin percentage"
+msgstr "Процент наценки валовой прибыли"

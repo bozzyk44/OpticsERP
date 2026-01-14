@@ -97,22 +97,25 @@ class PosOrder(models.Model):
         if not original_order:
             # No original order found, cannot validate
             _logger.warning(f"Refund {self.pos_reference}: No original order found")
-            raise UserError(
+            raise UserError(_(
                 "Cannot process refund: Original order not found.\n"
                 "Please ensure the original sale exists in the system."
-            )
+            ))
 
         # Check fiscal sync status
         if original_order.fiscal_sync_status == 'pending':
             # Original receipt not synced yet - BLOCK REFUND
-            raise UserError(
+            raise UserError(_(
                 "Refund blocked: Original receipt not synced to OFD yet.\n\n"
-                f"Original Order: {original_order.pos_reference}\n"
-                f"Fiscal Document ID: {original_order.fiscal_doc_id or 'N/A'}\n"
-                f"Sync Status: Pending\n\n"
+                "Original Order: %(ref)s\n"
+                "Fiscal Document ID: %(doc_id)s\n"
+                "Sync Status: Pending\n\n"
                 "Please wait for the original receipt to sync before processing refund.\n"
-                "Check the offline buffer status in the POS indicator."
-            )
+                "Check the offline buffer status in the cash register indicator."
+            ) % {
+                'ref': original_order.pos_reference,
+                'doc_id': original_order.fiscal_doc_id or 'N/A'
+            })
 
         if original_order.fiscal_sync_status == 'failed':
             # Original receipt sync failed - WARN but allow (manual resolution needed)
@@ -220,7 +223,7 @@ class PosOrder(models.Model):
         self.ensure_one()
 
         if not self.fiscal_doc_id:
-            raise UserError("No fiscal document ID available for this order.")
+            raise UserError(_("No fiscal document ID available for this order."))
 
         # TODO: Open modal or external link to KKT adapter UI
         # For now, show notification
