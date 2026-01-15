@@ -1,6 +1,11 @@
 ---
-# Main playbook for OpticsERP server preparation
+# Main orchestration playbook for OpticsERP
 # Usage: ansible-playbook -i inventories/production/hosts.yml site.yml
+#
+# NOTE: For complete production deployment from scratch, use:
+#       ansible-playbook -i inventories/production/hosts.yml deploy-production.yml
+#
+# This playbook is for updating existing infrastructure or selective deployment.
 
 - name: Prepare all servers - Common setup
   hosts: all
@@ -47,3 +52,72 @@
   become: true
   roles:
     - odoo
+
+# ==============================================================================
+# CRITICAL: WebSocket Configuration
+# ==============================================================================
+# This section MUST run after Odoo deployment to prevent "Connection Lost" errors
+# It configures Nginx and Odoo for proper WebSocket support
+# ==============================================================================
+
+- name: Configure Odoo WebSocket Support
+  hosts: odoo_servers
+  become: true
+  tags: ['websocket']
+
+  tasks:
+    - name: Check if WebSocket configuration needed
+      stat:
+        path: /etc/nginx/sites-available/{{ ansible_host }}.conf
+      register: nginx_config_check
+
+    - name: Apply WebSocket configuration
+      include_tasks: configure-odoo-websocket.yml
+      when: nginx_config_check.stat.exists
+      tags: ['websocket-config']
+
+    - name: Display WebSocket info
+      debug:
+        msg: |
+          ✅ WebSocket configuration applied
+
+          To verify:
+          1. Check Nginx: grep "location /websocket" /etc/nginx/sites-available/{{ ansible_host }}.conf
+          2. Check Odoo: grep websocket_url /etc/opticserp/odoo.conf
+          3. Test in browser: http://{{ ansible_host }}
+
+          Documentation: ansible/WEBSOCKET_CONFIG_README.md
+      when: nginx_config_check.stat.exists
+
+# ==============================================================================
+# Post-deployment verification
+# ==============================================================================
+
+- name: Verify deployment
+  hosts: odoo_servers
+  become: true
+  tags: ['verify', 'always']
+
+  tasks:
+    - name: Check critical services
+      systemd:
+        name: "{{ item }}"
+      register: service_status
+      loop:
+        - nginx
+        - docker
+      failed_when: service_status.status.ActiveState != 'active'
+
+    - name: Check Docker containers
+      shell: docker ps --format 'table {{.Names}}\t{{.Status}}'
+      register: containers
+
+    - name: Display status
+      debug:
+        msg: |
+          ═══════════════════════════════════════════════════════
+          Services Status:
+          {{ containers.stdout }}
+
+          Next: Verify Odoo at http://{{ ansible_host }}
+          ═══════════════════════════════════════════════════════

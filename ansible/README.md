@@ -41,6 +41,8 @@ cd /mnt/d/OpticsERP/ansible
 
 ## 🚀 Quick Start
 
+### Полное развертывание с нуля (РЕКОМЕНДУЕТСЯ)
+
 ```bash
 # 1. Настроить inventory
 cp inventories/production/hosts.yml.example inventories/production/hosts.yml
@@ -49,23 +51,69 @@ vim inventories/production/hosts.yml
 # 2. Проверить подключение
 ansible all -i inventories/production/hosts.yml -m ping
 
-# 3. Подготовить сервер
-ansible-playbook -i inventories/production/hosts.yml prepare-server.yml
-
-# 4. Полное развертывание
-ansible-playbook -i inventories/production/hosts.yml site.yml
+# 3. Полное развертывание (включая WebSocket конфигурацию)
+ansible-playbook -i inventories/production/hosts.yml deploy-production.yml
 ```
+
+**Этот playbook автоматически:**
+- ✅ Устанавливает все зависимости (Docker, PostgreSQL, Redis, Nginx)
+- ✅ Настраивает WebSocket для Odoo (критично!)
+- ✅ Устанавливает кастомные модули
+- ✅ Проверяет корректность развертывания
+
+### Обновление существующей инфраструктуры
+
+```bash
+# Только для обновления существующих серверов
+ansible-playbook -i inventories/production/hosts.yml site.yml
+
+# Применить только WebSocket конфигурацию
+ansible-playbook -i inventories/production/hosts.yml site.yml --tags websocket
+```
+
+### Загрузка тестовых данных (опционально)
+
+```bash
+# Загрузить тестовые данные для разработки/тестирования
+ansible-playbook -i inventories/production/hosts.yml load-test-data.yml
+```
+
+**Тестовые данные включают:**
+- 4 тестовых пользователя (менеджер, 2 кассира, оптик)
+- 5 клиентов
+- 3 поставщика
+- ~20 продуктов (линзы, оправы, аксессуары)
+- 5 рецептов
+- 4 заказа на изготовление
+- 5 заказов продаж
+
+**Важно:**
+- ⚠️ Playbook запросит подтверждение перед загрузкой
+- 💾 Автоматически создаст backup базы данных
+- ✅ Проверит установку модуля optics_core
+- 🔒 Только для development/staging окружений!
+
+**Тестовые учетные данные:**
+- manager@optics.ru / manager123
+- cashier1@optics.ru / cashier123
+- cashier2@optics.ru / cashier123
+- optician@optics.ru / optician123
 
 ## 📁 Структура
 
 ```
 ansible/
 ├── site.yml                      # Главный playbook
+├── deploy-production.yml         # ⭐ Master deployment playbook
+├── load-test-data.yml            # Загрузка тестовых данных
 ├── prepare-server.yml            # Базовая подготовка
 ├── inventories/
 │   ├── production/hosts.yml     # Production серверы
 │   └── staging/hosts.yml        # Staging серверы
 ├── group_vars/all.yml           # Общие переменные
+├── test_data/                   # Тестовые данные
+│   ├── sample_data.sql          # SQL с тестовыми данными
+│   └── README.md                # Документация тестовых данных
 └── roles/                       # Ansible роли
     ├── common/                  # Система (Python, NTP, пользователи)
     ├── docker/                  # Docker + Docker Compose
@@ -78,7 +126,16 @@ ansible/
 
 ## 📖 Документация
 
-Полная документация: [docs/deployment/ansible-guide.md](../docs/deployment/ansible-guide.md)
+**Основная документация:**
+- [Ansible Guide](../docs/deployment/ansible-guide.md) - Полное руководство по Ansible
+- **[WebSocket Configuration](WEBSOCKET_CONFIG_README.md)** ⭐ **ВАЖНО** - Настройка WebSocket для устранения "Connection Lost"
+- [Playbooks Index](PLAYBOOKS_INDEX.md) - Индекс всех playbooks с описанием
+
+**Deployment Playbooks:**
+- `deploy-production.yml` ⭐ **Рекомендуется** - Полное развертывание с WebSocket
+- `site.yml` - Обновление существующей инфраструктуры
+- `configure-odoo-websocket.yml` - Только WebSocket конфигурация
+- `load-test-data.yml` - Загрузка тестовых данных (dev/staging only)
 
 ## 🔑 Переменные окружения
 
@@ -156,6 +213,11 @@ ansible odoo_servers -i inventories/production/hosts.yml -m systemd \
 3. **NTP:** Chrony критичен для HLC - не отключайте
 4. **Firewall:** Security роль автоматически открывает SSH перед включением UFW
 5. **Staging first:** Тестируйте на staging перед production
+6. **⭐ WebSocket:** `deploy-production.yml` ОБЯЗАТЕЛЬНО включает WebSocket конфигурацию
+   - Без этого Odoo будет показывать "Connection Lost" errors
+   - Если деплоили без WebSocket: `ansible-playbook site.yml --tags websocket`
+   - Проверка: `grep websocket_url /etc/opticserp/odoo.conf`
+7. **System Redis:** Автоматически отключается для предотвращения конфликта портов
 
 ## 📞 Support
 

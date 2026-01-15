@@ -1,0 +1,47 @@
+---
+# Start and configure PostgreSQL 15
+- name: Start PostgreSQL 15 and configure for Docker
+  hosts: odoo_servers
+  become: true
+
+  tasks:
+    - name: Stop PostgreSQL 12 (broken cluster)
+      systemd:
+        name: postgresql@12-main
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
+    - name: Configure PostgreSQL 15 to listen on all addresses
+      lineinfile:
+        path: /etc/postgresql/15/main/postgresql.conf
+        regexp: '^#?listen_addresses\s*='
+        line: "listen_addresses = '*'"
+        backup: yes
+
+    - name: Allow Docker bridge network in PostgreSQL 15 pg_hba.conf
+      lineinfile:
+        path: /etc/postgresql/15/main/pg_hba.conf
+        line: "host    all             all             172.17.0.0/16           scram-sha-256"
+        backup: yes
+
+    - name: Start PostgreSQL 15
+      systemd:
+        name: postgresql@15-main
+        state: started
+        enabled: yes
+
+    - name: Wait for PostgreSQL to be ready
+      wait_for:
+        port: 5432
+        delay: 2
+        timeout: 30
+
+    - name: Check PostgreSQL is listening
+      shell: netstat -tlnp | grep 5432
+      register: postgres_listen
+      changed_when: false
+
+    - name: Display PostgreSQL status
+      debug:
+        msg: "{{ postgres_listen.stdout_lines }}"

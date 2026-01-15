@@ -172,10 +172,26 @@ def get_ofd_client() -> OFDClient:
     Get global OFD client instance
 
     Returns singleton instance of OFDClient.
+    Configuration is read from environment variables:
+    - OFD_BASE_URL: Base URL for OFD API (default: http://localhost:9000)
+    - OFD_MOCK_MODE: If 'true', use internal mock (default: true)
+    - OFD_TIMEOUT: HTTP request timeout in seconds (default: 10)
     """
+    import os
     global _ofd_client
     if _ofd_client is None:
-        _ofd_client = OFDClient()
+        # Read configuration from environment variables
+        base_url = os.getenv('OFD_BASE_URL', 'http://localhost:9000')
+        mock_mode = os.getenv('OFD_MOCK_MODE', 'true').lower() == 'true'
+        timeout = int(os.getenv('OFD_TIMEOUT', '10'))
+
+        logger.info(f"Initializing OFD Client: base_url={base_url}, mock_mode={mock_mode}, timeout={timeout}s")
+
+        _ofd_client = OFDClient(
+            base_url=base_url,
+            mock_mode=mock_mode,
+            timeout=timeout
+        )
     return _ofd_client
 
 

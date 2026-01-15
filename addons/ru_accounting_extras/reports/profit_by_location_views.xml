@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Profit by Location Report -->
+
+    <!-- Profit by Location Action -->
+    <record id="action_profit_by_location" model="ir.actions.act_window">
+        <field name="name">Profit by Location</field>
+        <field name="res_model">pos.order</field>
+        <field name="view_mode">tree,pivot,graph</field>
+        <field name="domain">[('state', 'in', ['paid', 'done', 'invoiced'])]</field>
+        <field name="context">{
+            'group_by': ['config_id'],
+            'search_default_filter_this_month': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No POS data yet
+            </p>
+            <p>
+                Profit by location report will appear here.
+            </p>
+        </field>
+    </record>
+
+    <!-- Profit by Location Tree View -->
+    <record id="view_profit_by_location_tree" model="ir.ui.view">
+        <field name="name">profit.by.location.tree</field>
+        <field name="model">pos.order</field>
+        <field name="arch" type="xml">
+            <tree string="Profit by Location" create="false" edit="false">
+                <field name="name"/>
+                <field name="date_order"/>
+                <field name="config_id"/>
+                <field name="amount_total"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+</odoo>

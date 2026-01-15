@@ -1,0 +1,81 @@
+mvp-server | CHANGED | rc=0 >>
+# Virtual host for 194.87.235.33
+# WebSocket configuration with Origin header passthrough
+
+upstream backend_odoo {
+    server localhost:8069;
+    keepalive 32;
+}
+
+upstream backend_odoo_longpolling {
+    server localhost:8072;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    server_name 194.87.235.33;
+
+    # Logging
+    access_log /var/log/nginx/194.87.235.33_access.log;
+    error_log /var/log/nginx/194.87.235.33_error.log;
+
+    # Client settings
+    client_max_body_size 100M;
+    proxy_read_timeout 720s;
+    proxy_connect_timeout 720s;
+    proxy_send_timeout 720s;
+
+    # WebSocket location
+    location /websocket {
+        proxy_pass http://backend_odoo_longpolling;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header Origin $http_origin;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        proxy_buffering off;
+    }
+
+    # Longpolling (legacy)
+    location /longpolling {
+        proxy_pass http://backend_odoo_longpolling;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header Origin $http_origin;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        proxy_buffering off;
+    }
+
+    # Main Odoo application
+    location / {
+        proxy_pass http://backend_odoo;
+        proxy_http_version 1.1;
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Health check endpoint
+    location /nginx-health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}

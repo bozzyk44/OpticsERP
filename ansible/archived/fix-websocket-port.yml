@@ -1,0 +1,80 @@
+---
+- name: Fix WebSocket - expose port 8072 for localhost only
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+
+  tasks:
+    - name: Update docker-compose.yml - add localhost-only port 8072 binding
+      replace:
+        path: "{{ odoo_base_dir }}/docker-compose.yml"
+        regexp: '(\s+)- "8069:8069"$'
+        replace: '\1- "8069:8069"\n\1- "127.0.0.1:8072:8072"'
+      become: yes
+      become_user: "{{ deploy_user }}"
+      register: compose_updated
+
+    - name: Display changes
+      debug:
+        msg: "docker-compose.yml {{ 'updated' if compose_updated.changed else 'not changed' }}"
+
+    - name: Recreate Odoo container with new port mapping
+      shell: cd {{ odoo_base_dir }} && docker compose up -d --force-recreate odoo
+      become: yes
+      become_user: "{{ deploy_user }}"
+      when: compose_updated.changed
+
+    - name: Wait for Odoo to start
+      pause:
+        seconds: 20
+      when: compose_updated.changed
+
+    - name: Check Odoo ports
+      shell: docker port opticserp_odoo
+      register: odoo_ports
+      become: yes
+
+    - name: Display Odoo ports
+      debug:
+        msg: "{{ odoo_ports.stdout_lines }}"
+
+    - name: Test port 8072 is accessible from host
+      shell: curl -s -o /dev/null -w "%{http_code}" http://localhost:8072/
+      register: port_test
+      ignore_errors: yes
+
+    - name: Display port test result
+      debug:
+        msg: "Port 8072 test: HTTP {{ port_test.stdout }}"
+
+    - name: Wait for Odoo to be fully ready
+      pause:
+        seconds: 10
+
+    - name: Check Odoo logs for gevent
+      shell: docker logs opticserp_odoo 2>&1 | grep -i "evented service" | tail -5
+      register: gevent_logs
+      become: yes
+
+    - name: Display gevent status
+      debug:
+        msg: "{{ gevent_logs.stdout_lines }}"
+
+    - name: Display success message
+      debug:
+        msg: |
+          ✅ Port 8072 exposed for localhost!
+
+          Configuration:
+            - Port 8069: 0.0.0.0:8069 (HTTP, public)
+            - Port 8072: 127.0.0.1:8072 (WebSocket, localhost only)
+
+          This allows:
+            - Nginx (on host) → localhost:8072 → Odoo gevent
+            - External access blocked for 8072 (security)
+
+          WebSocket flow:
+            Browser → Nginx:80/websocket → localhost:8072 → Odoo gevent

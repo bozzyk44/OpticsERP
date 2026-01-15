@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu Items -->
+
+    <!-- Main Menu: Accounting / Cash Management -->
+    <menuitem id="menu_cash_management"
+              name="Cash Management"
+              parent="account.menu_finance"
+              sequence="50"/>
+
+    <!-- Submenu: Cash Transfers -->
+    <menuitem id="menu_cash_transfers"
+              name="Cash Transfers"
+              parent="menu_cash_management"
+              action="action_cash_transfer"
+              sequence="10"/>
+
+    <!-- Reports Menu -->
+    <menuitem id="menu_ru_reports"
+              name="RU Reports"
+              parent="account.menu_finance_reports"
+              sequence="100"/>
+
+    <!-- GP Report Menu Item -->
+    <menuitem id="menu_gp_report"
+              name="Gross Profit Report"
+              parent="menu_ru_reports"
+              action="action_gp_report"
+              sequence="10"/>
+
+    <!-- Profit by Location Menu Item -->
+    <menuitem id="menu_profit_by_location"
+              name="Profit by Location"
+              parent="menu_ru_reports"
+              action="action_profit_by_location"
+              sequence="20"/>
+</odoo>

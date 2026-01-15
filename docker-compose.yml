@@ -11,6 +11,10 @@ services:
       - REDIS_PORT=6379
       - REDIS_DB=0
       - BUFFER_DB_PATH=/app/data/buffer.db
+      - OFD_BASE_URL=http://localhost:9000
+      - OFD_MOCK_MODE=false
+      - OFD_TIMEOUT=10
+      - ODOO_API_URL=http://localhost:8070
     ports:
       - "8000:8000"
     volumes:
@@ -68,6 +72,9 @@ services:
       - REDIS_PORT=6379
       - REDIS_DB=0
       - BUFFER_DB_PATH=/app/data/buffer.db
+      - OFD_BASE_URL=http://localhost:9000
+      - OFD_MOCK_MODE=false
+      - OFD_TIMEOUT=10
     volumes:
       - ./kkt_adapter/app:/app
       - ./kkt_adapter/data:/app/data
@@ -95,6 +102,8 @@ services:
       - REDIS_PORT=6379
       - REDIS_DB=0
       - BUFFER_DB_PATH=/app/data/buffer.db
+      - OFD_BASE_URL=http://localhost:9000
+      - OFD_MOCK_MODE=false
     ports:
       - "5555:5555"
     volumes:

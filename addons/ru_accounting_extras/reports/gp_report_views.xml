@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Gross Profit Report -->
+
+    <!-- GP Report Action -->
+    <record id="action_gp_report" model="ir.actions.act_window">
+        <field name="name">Gross Profit Report</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">tree,pivot,graph</field>
+        <field name="domain">[('state', 'in', ['sale', 'done'])]</field>
+        <field name="context">{
+            'group_by': ['product_id'],
+            'search_default_filter_this_month': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No sales data yet
+            </p>
+            <p>
+                Gross Profit report by product category will appear here.
+            </p>
+        </field>
+    </record>
+
+    <!-- GP Report Tree View -->
+    <record id="view_gp_report_tree" model="ir.ui.view">
+        <field name="name">gp.report.tree</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <tree string="GP Report" create="false" edit="false">
+                <field name="name"/>
+                <field name="date_order"/>
+                <field name="partner_id"/>
+                <field name="amount_total"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+</odoo>

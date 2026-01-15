@@ -1,0 +1,44 @@
+---
+- name: Check installed Odoo modules
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+
+  tasks:
+    - name: Query installed modules from database
+      shell: |
+        sudo docker exec opticserp_postgres psql -U odoo -d odoo_production -t -c "
+        SELECT
+          name,
+          state,
+          CASE
+            WHEN state = 'installed' THEN '✅'
+            WHEN state = 'to install' THEN '⏳'
+            WHEN state = 'to upgrade' THEN '🔄'
+            ELSE '❌'
+          END as status
+        FROM ir_module_module
+        WHERE name IN ('optics_core', 'optics_pos_ru54fz', 'connector_b', 'ru_accounting_extras', 'base', 'web', 'point_of_sale', 'account', 'sale')
+        ORDER BY name;
+        "
+      register: modules_status
+
+    - name: Display modules status
+      debug:
+        msg: "{{ modules_status.stdout_lines }}"
+
+    - name: Count modules by state
+      shell: |
+        sudo docker exec opticserp_postgres psql -U odoo -d odoo_production -t -c "
+        SELECT state, COUNT(*)
+        FROM ir_module_module
+        GROUP BY state
+        ORDER BY state;
+        "
+      register: modules_count
+
+    - name: Display modules count
+      debug:
+        msg: "{{ modules_count.stdout_lines }}"

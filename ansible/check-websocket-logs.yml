@@ -1,0 +1,41 @@
+---
+- name: Check if WebSocket errors are gone
+  hosts: odoo_servers
+  become: true
+
+  tasks:
+    - name: Check recent Odoo logs for WebSocket errors
+      shell: docker logs opticserp_odoo 2>&1 | tail -100 | grep -i "websocket\|connection" | tail -20
+      register: odoo_ws_logs
+      become: yes
+      failed_when: false
+
+    - name: Display WebSocket logs
+      debug:
+        msg: "{{ odoo_ws_logs.stdout_lines }}"
+
+    - name: Check Nginx access log for WebSocket requests
+      shell: tail -50 /var/log/nginx/194.87.235.33_access.log | grep websocket
+      register: nginx_ws_access
+      become: yes
+      failed_when: false
+
+    - name: Display Nginx WebSocket access
+      debug:
+        msg: "{{ nginx_ws_access.stdout_lines if nginx_ws_access.stdout_lines else ['No WebSocket requests yet'] }}"
+
+    - name: Final status
+      debug:
+        msg: |
+          ✅ WebSocket configuration applied!
+
+          Next steps:
+          1. Open Odoo in browser: http://194.87.235.33
+          2. Login and use the interface
+          3. Watch for "Connection Lost" errors
+          4. Check browser Console (F12) for WebSocket connection status
+
+          If WebSocket works correctly:
+          - Browser Console should show: "WebSocket connected"
+          - No "Connection Lost" popups
+          - Real-time updates work smoothly

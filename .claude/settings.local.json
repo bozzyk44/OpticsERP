@@ -60,7 +60,13 @@
       "Bash(ls:*)",
       "Bash(ssh bozzyk44@194.87.235.33 \"apt-cache madison postgresql | head -5\")",
       "Bash(ssh bozzyk44@194.87.235.33 \"sudo apt-get update && sudo apt-get install -y acl && echo ''ACL installed successfully''\")",
-      "Bash(ansible:*)"
+      "Bash(ansible:*)",
+      "Bash(wsl:*)",
+      "Bash(ansible-playbook:*)",
+      "Bash(ssh:*)",
+      "Bash(source:*)",
+      "WebFetch(domain:translate.yandex.ru)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []

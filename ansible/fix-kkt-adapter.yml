@@ -1,0 +1,90 @@
+---
+- name: Fix KKT Adapter database directory
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+
+  tasks:
+    - name: Create kkt_adapter/data directory
+      file:
+        path: "{{ odoo_base_dir }}/kkt_adapter/data"
+        state: directory
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0755'
+      become: yes
+
+    - name: Set ACL permissions for Docker user on data directory
+      shell: |
+        setfacl -R -m u:{{deploy_user}}:rwx {{ odoo_base_dir }}/kkt_adapter/data
+        setfacl -R -m u:root:rwx {{ odoo_base_dir }}/kkt_adapter/data
+        setfacl -R -d -m u:{{deploy_user}}:rwx {{ odoo_base_dir }}/kkt_adapter/data
+        setfacl -R -d -m u:root:rwx {{ odoo_base_dir }}/kkt_adapter/data
+      become: yes
+
+    - name: Check if buffer.db exists
+      stat:
+        path: "{{ odoo_base_dir }}/kkt_adapter/data/buffer.db"
+      register: buffer_db_stat
+
+    - name: Display buffer.db status
+      debug:
+        msg: "buffer.db exists: {{ buffer_db_stat.stat.exists }}"
+
+    - name: Stop KKT Adapter, Celery, and Flower
+      shell: cd {{ odoo_base_dir }} && docker compose stop kkt_adapter celery_worker celery_flower
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Remove old containers to force rebuild
+      shell: cd {{ odoo_base_dir }} && docker compose rm -f kkt_adapter celery_worker celery_flower
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Start KKT Adapter
+      shell: cd {{ odoo_base_dir }} && docker compose up -d kkt_adapter
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Wait for KKT Adapter to initialize
+      pause:
+        seconds: 10
+
+    - name: Check KKT Adapter logs
+      shell: cd {{ odoo_base_dir }} && docker compose logs --tail=30 kkt_adapter
+      register: kkt_logs
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Display KKT Adapter logs
+      debug:
+        msg: "{{ kkt_logs.stdout_lines }}"
+
+    - name: Check KKT Adapter health
+      uri:
+        url: http://localhost:8000/v1/health
+        status_code: 200
+        timeout: 10
+      register: kkt_health
+      retries: 5
+      delay: 5
+
+    - name: Display KKT Adapter health
+      debug:
+        msg: "{{ kkt_health.json }}"
+
+    - name: Start Celery Worker and Flower
+      shell: cd {{ odoo_base_dir }} && docker compose up -d celery_worker celery_flower
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Display success message
+      debug:
+        msg: |
+          ✅ KKT Adapter fixed and started successfully!
+
+          Health status: {{ kkt_health.json.status }}
+          Services: kkt_adapter, celery_worker, celery_flower

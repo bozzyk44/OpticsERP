@@ -1,0 +1,14 @@
+---
+- name: Check nginx.conf structure
+  hosts: odoo_servers
+  become: true
+
+  tasks:
+    - name: Read nginx.conf
+      shell: cat /etc/nginx/nginx.conf
+      register: nginx_conf
+      become: yes
+
+    - name: Display nginx.conf
+      debug:
+        msg: "{{ nginx_conf.stdout_lines }}"

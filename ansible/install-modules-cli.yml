@@ -10,9 +10,24 @@
       - optics_core
       - optics_pos_ru54fz
       - connector_b
-      # - ru_accounting_extras  # Skipped due to model errors
+      - ru_accounting_extras
 
   tasks:
+    - name: Copy updated custom addons to server
+      synchronize:
+        src: "{{ playbook_dir }}/../addons/{{ item }}/"
+        dest: "{{ odoo_base_dir }}/addons/{{ item }}/"
+        delete: yes
+        recursive: yes
+        rsync_path: "sudo rsync"
+        rsync_opts:
+          - "--exclude=*.pyc"
+          - "--exclude=__pycache__"
+          - "--exclude=*.log"
+      loop: "{{ custom_modules }}"
+      delegate_to: localhost
+      become: no
+
     - name: Stop Odoo container
       shell: cd {{ odoo_base_dir }} && docker compose stop odoo
       become: yes
@@ -21,11 +36,10 @@
     - name: Install modules using docker run
       shell: |
         docker run --rm \
-          --network host \
+          --network opticserp_opticserp_network \
           -v /etc/opticserp/odoo.conf:/etc/odoo/odoo.conf:ro \
           -v /opt/opticserp/addons:/mnt/extra-addons:ro \
           -v /opt/opticserp/data:/var/lib/odoo \
-          -e POSTGRES_PASSWORD={{ lookup('env', 'POSTGRES_PASSWORD') }} \
           odoo:17.0 \
           odoo -c /etc/odoo/odoo.conf -d odoo_production -i {{ custom_modules | join(',') }} --stop-after-init --without-demo=all --log-level=info
       args:

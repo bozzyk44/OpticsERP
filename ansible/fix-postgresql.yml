@@ -1,0 +1,27 @@
+---
+# Fix PostgreSQL to accept connections from Docker bridge network
+- name: Configure PostgreSQL for Docker containers
+  hosts: odoo_servers
+  become: true
+
+  tasks:
+    - name: Configure PostgreSQL to listen on all addresses
+      lineinfile:
+        path: /etc/postgresql/12/main/postgresql.conf
+        regexp: '^#?listen_addresses\s*='
+        line: "listen_addresses = '*'"
+        backup: yes
+      notify: restart postgresql
+
+    - name: Allow Docker bridge network in pg_hba.conf
+      lineinfile:
+        path: /etc/postgresql/12/main/pg_hba.conf
+        line: "host    all             all             172.17.0.0/16           md5"
+        backup: yes
+      notify: restart postgresql
+
+  handlers:
+    - name: restart postgresql
+      systemd:
+        name: postgresql
+        state: restarted

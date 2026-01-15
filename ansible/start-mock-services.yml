@@ -1,0 +1,144 @@
+---
+- name: Start mock OFD and Odoo API services
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    mock_services_dir: "/opt/opticserp/mock_services"
+    deploy_user: "deploy"
+
+  tasks:
+    - name: Check if mock services directory exists
+      stat:
+        path: "{{ mock_services_dir }}"
+      register: mock_dir
+
+    - name: Create docker-compose.mock.yml from template
+      copy:
+        dest: "{{ mock_services_dir }}/docker-compose.mock.yml"
+        content: |
+          version: '3.8'
+
+          services:
+            # Mock OFD Server
+            mock_ofd:
+              image: opticserp-mock-ofd
+              container_name: opticserp_mock_ofd
+              restart: unless-stopped
+              environment:
+                - OFD_PORT=9000
+                - OFD_HOST=0.0.0.0
+                - LOG_LEVEL=INFO
+              network_mode: "host"
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+                interval: 10s
+                timeout: 5s
+                retries: 3
+                start_period: 5s
+              logging:
+                driver: "json-file"
+                options:
+                  max-size: "10m"
+                  max-file: "3"
+
+            # Mock Odoo API
+            mock_odoo_api:
+              image: opticserp-mock-odoo
+              container_name: opticserp_mock_odoo_api
+              restart: unless-stopped
+              environment:
+                - ODOO_PORT=8070
+                - ODOO_HOST=0.0.0.0
+                - LOG_LEVEL=INFO
+              network_mode: "host"
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:8070/health"]
+                interval: 10s
+                timeout: 5s
+                retries: 3
+                start_period: 5s
+              logging:
+                driver: "json-file"
+                options:
+                  max-size: "10m"
+                  max-file: "3"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0644'
+      become: yes
+      when: mock_dir.stat.exists
+
+    - name: Build mock OFD Docker image
+      shell: |
+        cd {{ mock_services_dir }}
+        docker build -t opticserp-mock-ofd -f Dockerfile.mock_ofd .
+      become: yes
+      become_user: "{{ deploy_user }}"
+      register: build_ofd
+
+    - name: Build mock Odoo API Docker image
+      shell: |
+        cd {{ mock_services_dir }}
+        docker build -t opticserp-mock-odoo -f Dockerfile.mock_odoo .
+      become: yes
+      become_user: "{{ deploy_user }}"
+      register: build_odoo_api
+
+    - name: Start mock services
+      shell: |
+        cd {{ mock_services_dir }}
+        docker compose -f docker-compose.mock.yml up -d
+      become: yes
+      become_user: "{{ deploy_user }}"
+      register: start_result
+
+    - name: Wait for services to start
+      pause:
+        seconds: 10
+
+    - name: Check mock services status
+      shell: docker ps --filter name=mock
+      register: mock_status
+      become: yes
+
+    - name: Display mock services status
+      debug:
+        msg: "{{ mock_status.stdout_lines }}"
+
+    - name: Test mock OFD health
+      uri:
+        url: http://localhost:9000/health
+        status_code: 200
+        timeout: 5
+      register: ofd_health
+      retries: 3
+      delay: 3
+      ignore_errors: yes
+
+    - name: Test mock Odoo API health
+      uri:
+        url: http://localhost:8070/health
+        status_code: 200
+        timeout: 5
+      register: odoo_api_health
+      retries: 3
+      delay: 3
+      ignore_errors: yes
+
+    - name: Display success message
+      debug:
+        msg: |
+          ✅ Mock services started!
+
+          Mock OFD:
+            - URL: http://localhost:9000
+            - Health: {{ 'OK' if ofd_health.status == 200 else 'FAILED' }}
+
+          Mock Odoo API:
+            - URL: http://localhost:8070
+            - Health: {{ 'OK' if odoo_api_health.status == 200 else 'FAILED' }}
+
+          These services are configured in KKT Adapter via environment variables:
+            - OFD_BASE_URL=http://localhost:9000
+            - OFD_MOCK_MODE=false

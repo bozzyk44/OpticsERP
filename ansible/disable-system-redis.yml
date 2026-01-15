@@ -1,0 +1,104 @@
+---
+- name: Disable system Redis and use Docker Redis
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+
+  tasks:
+    - name: Stop redis-server service
+      systemd:
+        name: redis-server
+        state: stopped
+      become: yes
+      ignore_errors: yes
+
+    - name: Disable redis-server service
+      systemd:
+        name: redis-server
+        enabled: no
+        masked: yes
+      become: yes
+      ignore_errors: yes
+
+    - name: Stop redis service
+      systemd:
+        name: redis
+        state: stopped
+      become: yes
+      ignore_errors: yes
+
+    - name: Disable redis service
+      systemd:
+        name: redis
+        enabled: no
+        masked: yes
+      become: yes
+      ignore_errors: yes
+
+    - name: Kill any remaining Redis processes
+      shell: pkill -9 redis-server || true
+      become: yes
+
+    - name: Wait for port to be freed
+      pause:
+        seconds: 3
+
+    - name: Verify port 6379 is free
+      shell: lsof -i:6379 || echo "✅ Port 6379 is free"
+      register: verify_port
+      become: yes
+
+    - name: Display port status
+      debug:
+        msg: "{{ verify_port.stdout }}"
+
+    - name: Start all Docker services
+      shell: cd {{ odoo_base_dir }} && docker compose up -d
+      become: yes
+      become_user: "{{ deploy_user }}"
+      register: compose_up
+
+    - name: Wait for services to initialize
+      pause:
+        seconds: 25
+
+    - name: Check all services status
+      shell: docker ps --filter "name=opticserp"
+      register: docker_ps
+      become: yes
+
+    - name: Display services status
+      debug:
+        msg: "{{ docker_ps.stdout_lines }}"
+
+    - name: Check KKT Adapter health
+      uri:
+        url: http://localhost:8000/v1/health
+        status_code: 200
+        timeout: 10
+      register: kkt_health
+      retries: 5
+      delay: 5
+      ignore_errors: yes
+
+    - name: Display KKT Adapter health
+      debug:
+        msg: "{{ kkt_health.json | default('Health check failed') }}"
+
+    - name: Display success message
+      debug:
+        msg: |
+          ✅ System Redis disabled, Docker services started!
+
+          Services running:
+            - Odoo (8069)
+            - Redis (6379) - Docker container
+            - PostgreSQL (5432)
+            - KKT Adapter (8000)
+            - Celery Worker
+            - Celery Flower (5555)
+            - Mock OFD (9000)
+            - Mock Odoo API (8070)

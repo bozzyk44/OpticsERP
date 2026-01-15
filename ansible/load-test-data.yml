@@ -1,0 +1,228 @@
+---
+# Load Test Data into OpticsERP Database
+# Usage: ansible-playbook -i inventories/production/hosts.yml load-test-data.yml
+#
+# WARNING: This will insert test data into the database!
+# Only use on development/staging environments!
+
+- name: Load OpticsERP Test Data
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    test_data_dir: "{{ playbook_dir }}/test_data"
+    db_name: "odoo_production"
+    db_user: "odoo"
+    db_password: "odoo"
+    backup_before_load: true
+    skip_confirmation: false  # Set to true to skip manual confirmation (use with caution!)
+
+  tasks:
+    # ========================================================================
+    # Safety checks
+    # ========================================================================
+
+    - name: Display WARNING
+      debug:
+        msg: |
+          ⚠️  WARNING: Loading Test Data
+          ═══════════════════════════════════════════════════════
+          This will insert test data into database: {{ db_name }}
+
+          Test data includes:
+          - 4 test users (manager, 2 cashiers, optician)
+          - 5 customers
+          - 3 suppliers
+          - ~20 products (lenses, frames, accessories)
+          - 5 prescriptions
+          - 6 lens types
+          - 4 manufacturing orders
+          - 5 sales orders with line items
+
+          ONLY use this on development/staging environments!
+          ═══════════════════════════════════════════════════════
+
+    - name: Confirm environment (manual approval required)
+      pause:
+        prompt: |
+          ⚠️  Are you SURE you want to load test data? (yes/no)
+          Database: {{ db_name }}
+          Server: {{ ansible_host }}
+      register: confirm_load
+      when: not skip_confirmation
+
+    - name: Abort if not confirmed
+      fail:
+        msg: "❌ Load cancelled by user"
+      when: not skip_confirmation and confirm_load.user_input | lower != 'yes'
+
+    # ========================================================================
+    # Pre-load backup
+    # ========================================================================
+
+    - name: Create backup before loading test data
+      shell: |
+        docker exec opticserp_postgres pg_dump -U {{ db_user }} {{ db_name }} \
+          | gzip > /tmp/{{ db_name }}_before_testdata_$(date +%Y%m%d_%H%M%S).sql.gz
+      become: yes
+      when: backup_before_load
+      register: backup_result
+
+    - name: Display backup location
+      debug:
+        msg: "✅ Backup created: {{ backup_result.stdout }}"
+      when: backup_before_load and backup_result is defined
+
+    # ========================================================================
+    # Check if custom modules are installed
+    # ========================================================================
+
+    - name: Check if optics_core module is installed
+      shell: |
+        docker exec opticserp_postgres psql -U {{ db_user }} -d {{ db_name }} -t -c \
+          "SELECT state FROM ir_module_module WHERE name = 'optics_core';"
+      register: optics_core_check
+      failed_when: false
+
+    - name: Verify optics_core is installed
+      fail:
+        msg: |
+          ❌ ERROR: optics_core module is NOT installed!
+
+          Custom modules must be installed before loading test data.
+          Run: ansible-playbook -i inventories/production/hosts.yml install-modules-cli.yml
+      when: optics_core_check.stdout is not search('installed')
+
+    # ========================================================================
+    # Copy SQL file to server
+    # ========================================================================
+
+    - name: Create test_data directory on server
+      file:
+        path: /tmp/opticserp_test_data
+        state: directory
+        mode: '0755'
+      become: yes
+
+    - name: Copy test data SQL file to server
+      copy:
+        src: "{{ test_data_dir }}/sample_data.sql"
+        dest: /tmp/opticserp_test_data/sample_data.sql
+        mode: '0644'
+      become: yes
+
+    # ========================================================================
+    # Load test data into database
+    # ========================================================================
+
+    - name: Load test data into PostgreSQL
+      shell: |
+        docker exec -i opticserp_postgres psql -U {{ db_user }} -d {{ db_name }} \
+          < /tmp/opticserp_test_data/sample_data.sql
+      become: yes
+      register: load_result
+
+    - name: Display load result
+      debug:
+        msg: "{{ load_result.stdout_lines }}"
+
+    # ========================================================================
+    # Verify loaded data
+    # ========================================================================
+
+    - name: Verify test users loaded
+      shell: |
+        docker exec opticserp_postgres psql -U {{ db_user }} -d {{ db_name }} -t -c \
+          "SELECT COUNT(*) FROM res_users WHERE id >= 100 AND id < 200;"
+      register: users_count
+
+    - name: Verify test customers loaded
+      shell: |
+        docker exec opticserp_postgres psql -U {{ db_user }} -d {{ db_name }} -t -c \
+          "SELECT COUNT(*) FROM res_partner WHERE id >= 200 AND id < 300;"
+      register: customers_count
+
+    - name: Verify products loaded
+      shell: |
+        docker exec opticserp_postgres psql -U {{ db_user }} -d {{ db_name }} -t -c \
+          "SELECT COUNT(*) FROM product_product WHERE id >= 1000;"
+      register: products_count
+
+    - name: Verify prescriptions loaded
+      shell: |
+        docker exec opticserp_postgres psql -U {{ db_user }} -d {{ db_name }} -t -c \
+          "SELECT COUNT(*) FROM optics_prescription WHERE id >= 100;"
+      register: prescriptions_count
+      failed_when: false
+
+    - name: Verify sales orders loaded
+      shell: |
+        docker exec opticserp_postgres psql -U {{ db_user }} -d {{ db_name }} -t -c \
+          "SELECT COUNT(*) FROM sale_order WHERE id >= 100;"
+      register: sales_count
+
+    # ========================================================================
+    # Display summary
+    # ========================================================================
+
+    - name: Display verification summary
+      debug:
+        msg: |
+          ✅ Test Data Loaded Successfully!
+          ═══════════════════════════════════════════════════════
+
+          Verification Results:
+          - Users: {{ users_count.stdout | trim }}
+          - Customers: {{ customers_count.stdout | trim }}
+          - Products: {{ products_count.stdout | trim }}
+          - Prescriptions: {{ prescriptions_count.stdout | trim if prescriptions_count.rc == 0 else 'N/A (table not found)' }}
+          - Sales Orders: {{ sales_count.stdout | trim }}
+
+          Test Credentials:
+          ═══════════════════════════════════════════════════════
+          Manager:   manager@optics.ru   / manager123
+          Cashier 1: cashier1@optics.ru  / cashier123
+          Cashier 2: cashier2@optics.ru  / cashier123
+          Optician:  optician@optics.ru  / optician123
+
+          Access Odoo:
+          ═══════════════════════════════════════════════════════
+          URL: http://{{ ansible_host }}
+
+          Next Steps:
+          ═══════════════════════════════════════════════════════
+          1. Login to Odoo with test credentials
+          2. Verify customers, products, and orders appear
+          3. Test POS functionality with sample products
+          4. Create manufacturing orders from prescriptions
+
+          Backup Location:
+          ═══════════════════════════════════════════════════════
+          Server: /tmp/{{ db_name }}_before_testdata_*.sql.gz
+
+          To restore if needed:
+          gunzip < backup.sql.gz | docker exec -i opticserp_postgres \
+            psql -U {{ db_user }} -d {{ db_name }}
+
+    # ========================================================================
+    # Cleanup
+    # ========================================================================
+
+    - name: Cleanup temporary files
+      file:
+        path: /tmp/opticserp_test_data
+        state: absent
+      become: yes
+
+    - name: Final success message
+      debug:
+        msg: |
+          🎉 Test data successfully loaded!
+
+          You can now:
+          - Test POS with sample products
+          - Create manufacturing orders from prescriptions
+          - Test customer management
+          - Verify 54-ФЗ compliance with sample sales
+
+          Documentation: ansible/test_data/README.md

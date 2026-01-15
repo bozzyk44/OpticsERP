@@ -1,0 +1,44 @@
+---
+# Recreate broken PostgreSQL 12 cluster
+- name: Recreate PostgreSQL 12 cluster
+  hosts: odoo_servers
+  become: true
+
+  tasks:
+    - name: Stop PostgreSQL service
+      systemd:
+        name: postgresql
+        state: stopped
+      ignore_errors: yes
+
+    - name: Remove broken PostgreSQL 12 cluster
+      shell: pg_dropcluster --stop 12 main
+      ignore_errors: yes
+
+    - name: Create new PostgreSQL 12 cluster
+      shell: pg_createcluster 12 main --start
+      register: cluster_create
+      failed_when:
+        - cluster_create.rc != 0
+        - "'already exists' not in cluster_create.stderr"
+
+    - name: Start PostgreSQL service
+      systemd:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Wait for PostgreSQL to be ready
+      wait_for:
+        port: 5432
+        delay: 2
+        timeout: 30
+
+    - name: Check PostgreSQL status
+      shell: systemctl status postgresql@12-main | head -10
+      register: pg_status
+      changed_when: false
+
+    - name: Display PostgreSQL status
+      debug:
+        msg: "{{ pg_status.stdout_lines }}"
