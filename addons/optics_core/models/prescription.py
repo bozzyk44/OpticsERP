@@ -12,7 +12,7 @@ Model for storing optical prescriptions with validation for:
 - Sphere (Sph): -20 to +20, step 0.25
 - Cylinder (Cyl): -4 to 0, step 0.25
 - Axis: 1-180° (required if Cyl ≠ 0)
-- Add: 0.75-3.0 (for progressive lenses)
+- Add: -30.0 to +20.0 (for progressive/bifocal lenses)
 - PD (Pupillary Distance): 56-72 mm
 
 Business Rules:
@@ -80,8 +80,8 @@ class OpticsPrescription(models.Model):
 
     od_add = fields.Float(
         string='OD Add',
-        digits=(2, 2),
-        help='Right eye addition for progressive lenses: 0.75-3.00'
+        digits=(3, 2),
+        help='Right eye addition for progressive/bifocal lenses: -30.00 to +20.00'
     )
 
     # Left Eye (OS - Oculus Sinister)
@@ -104,8 +104,8 @@ class OpticsPrescription(models.Model):
 
     os_add = fields.Float(
         string='OS Add',
-        digits=(2, 2),
-        help='Left eye addition for progressive lenses: 0.75-3.00'
+        digits=(3, 2),
+        help='Left eye addition for progressive/bifocal lenses: -30.00 to +20.00'
     )
 
     # Pupillary Distance
@@ -273,15 +273,15 @@ class OpticsPrescription(models.Model):
 
     @api.constrains('od_add', 'os_add')
     def _check_add_range(self):
-        """Validate Add range: 0.75-3.00"""
+        """Validate Add range: -30.00 to +20.00"""
         for record in self:
-            if record.od_add and not (0.75 <= record.od_add <= 3.0):
+            if record.od_add and not (-30.0 <= record.od_add <= 20.0):
                 raise ValidationError(
-                    f"OD Add must be between 0.75 and 3.00 (got {record.od_add})"
+                    f"OD Add must be between -30.00 and +20.00 (got {record.od_add})"
                 )
-            if record.os_add and not (0.75 <= record.os_add <= 3.0):
+            if record.os_add and not (-30.0 <= record.os_add <= 20.0):
                 raise ValidationError(
-                    f"OS Add must be between 0.75 and 3.00 (got {record.os_add})"
+                    f"OS Add must be between -30.00 and +20.00 (got {record.os_add})"
                 )
 
     @api.constrains('pd')
@@ -343,13 +343,13 @@ class OpticsPrescription(models.Model):
         ),
         (
             'check_od_add_range',
-            'CHECK (od_add IS NULL OR (od_add >= 0.75 AND od_add <= 3.0))',
-            'OD Add must be between 0.75 and 3.00'
+            'CHECK (od_add IS NULL OR (od_add >= -30.0 AND od_add <= 20.0))',
+            'OD Add must be between -30.00 and +20.00'
         ),
         (
             'check_os_add_range',
-            'CHECK (os_add IS NULL OR (os_add >= 0.75 AND os_add <= 3.0))',
-            'OS Add must be between 0.75 and 3.00'
+            'CHECK (os_add IS NULL OR (os_add >= -30.0 AND os_add <= 20.0))',
+            'OS Add must be between -30.00 and +20.00'
         ),
         (
             'check_pd_range',
