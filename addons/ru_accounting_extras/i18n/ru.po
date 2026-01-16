@@ -142,19 +142,19 @@ msgid "Set to Draft"
 msgstr "Вернуть в черновик"
 
 #. module: ru_accounting_extras
-#: code:addons/ru_accounting_extras/models/cash_transfer.py
+#: code:addons/ru_accounting_extras/models/cash_transfer.py:0
 #, python-format
 msgid "Amount must be positive"
 msgstr "Сумма должна быть положительной"
 
 #. module: ru_accounting_extras
-#: code:addons/ru_accounting_extras/models/cash_transfer.py
+#: code:addons/ru_accounting_extras/models/cash_transfer.py:0
 #, python-format
 msgid "From and To accounts must be different"
 msgstr "Счета отправления и получения должны быть разными"
 
 #. module: ru_accounting_extras
-#: code:addons/ru_accounting_extras/models/cash_transfer.py
+#: code:addons/ru_accounting_extras/models/cash_transfer.py:0
 #, python-format
 msgid "Cash Transfer: %s"
 msgstr "Перевод между счетами: %s"

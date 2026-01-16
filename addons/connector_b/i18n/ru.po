@@ -169,49 +169,49 @@ msgid "Cancel"
 msgstr "Отмена"
 
 #. module: connector_b
-#: code:addons/connector_b/models/import_job.py
+#: code:addons/connector_b/models/import_job.py:0
 #, python-format
 msgid "Import completed successfully"
 msgstr "Импорт выполнен успешно"
 
 #. module: connector_b
-#: code:addons/connector_b/models/import_job.py
+#: code:addons/connector_b/models/import_job.py:0
 #, python-format
 msgid "Import failed with errors"
 msgstr "Импорт завершён с ошибками"
 
 #. module: connector_b
-#: code:addons/connector_b/models/import_job.py
+#: code:addons/connector_b/models/import_job.py:0
 #, python-format
 msgid "File is required"
 msgstr "Файл обязателен"
 
 #. module: connector_b
-#: code:addons/connector_b/models/import_job.py
+#: code:addons/connector_b/models/import_job.py:0
 #, python-format
 msgid "Import profile is required"
 msgstr "Профиль импорта обязателен"
 
 #. module: connector_b
-#: code:addons/connector_b/models/import_job.py
+#: code:addons/connector_b/models/import_job.py:0
 #, python-format
 msgid "Unsupported file format. Please use XLSX or CSV"
 msgstr "Неподдерживаемый формат файла. Используйте XLSX или CSV"
 
 #. module: connector_b
-#: code:addons/connector_b/models/import_job.py
+#: code:addons/connector_b/models/import_job.py:0
 #, python-format
 msgid "Cannot import while offline buffers are not synced"
 msgstr "Невозможно импортировать пока офлайн-буферы не синхронизированы"
 
 #. module: connector_b
-#: code:addons/connector_b/models/import_profile.py
+#: code:addons/connector_b/models/import_profile.py:0
 #, python-format
 msgid "Profile name is required"
 msgstr "Название профиля обязательно"
 
 #. module: connector_b
-#: code:addons/connector_b/models/import_profile.py
+#: code:addons/connector_b/models/import_profile.py:0
 #, python-format
 msgid "Invalid JSON mapping"
 msgstr "Некорректный JSON маппинг"
