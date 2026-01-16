@@ -538,28 +538,28 @@ msgstr "Левый глаз (OS)"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__os_add
-msgid "Left eye addition for progressive lenses: 0.75-3.00"
-msgstr "Аддидация левого глаза для прогрессивных линз: 0.75-3.00"
+msgid "Left eye addition for progressive/bifocal lenses: -30.00 to +20.00"
+msgstr "Аддидация левого глаза для прогрессивных/бифокальных линз: от -30.00 до +20.00"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__os_axis
 msgid "Left eye axis: 1-180°"
-msgstr ""
+msgstr "Ось левого глаза: 1-180°"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__os_cyl
 msgid "Left eye cylinder: -4.00 to 0.00"
-msgstr ""
+msgstr "Цилиндр левого глаза: от -4.00 до 0.00"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__prism_os
 msgid "Left eye prism (e.g., \"1.5 BU\")"
-msgstr ""
+msgstr "Призма левого глаза (напр., \"1.5 BU\")"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__os_sph
 msgid "Left eye sphere: -20.00 to +20.00"
-msgstr ""
+msgstr "Сфера левого глаза: от -20.00 до +20.00"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__pd_left
@@ -767,12 +767,12 @@ msgstr ""
 #. module: optics_core
 #: model:ir.model.fields,field_description:optics_core.field_optics_prescription__od_add
 msgid "OD Add"
-msgstr ""
+msgstr "OD Аддидация"
 
 #. module: optics_core
 #: model:ir.model.constraint,message:optics_core.constraint_optics_prescription_check_od_add_range
-msgid "OD Add must be between 0.75 and 3.00"
-msgstr ""
+msgid "OD Add must be between -30.00 and +20.00"
+msgstr "OD Аддидация должна быть от -30.00 до +20.00"
 
 #. module: optics_core
 #: model:ir.model.fields,field_description:optics_core.field_optics_prescription__od_axis
@@ -797,7 +797,7 @@ msgstr "OD Цилиндр должен быть от -4.00 до 0.00"
 #. module: optics_core
 #: model:ir.model.fields,field_description:optics_core.field_optics_prescription__prism_od
 msgid "OD Prism"
-msgstr ""
+msgstr "OD Призма"
 
 #. module: optics_core
 #: model:ir.model.fields,field_description:optics_core.field_optics_prescription__od_sph
@@ -812,12 +812,12 @@ msgstr "OD Сфера должна быть от -20.00 до +20.00"
 #. module: optics_core
 #: model:ir.model.fields,field_description:optics_core.field_optics_prescription__os_add
 msgid "OS Add"
-msgstr ""
+msgstr "OS Аддидация"
 
 #. module: optics_core
 #: model:ir.model.constraint,message:optics_core.constraint_optics_prescription_check_os_add_range
-msgid "OS Add must be between 0.75 and 3.00"
-msgstr ""
+msgid "OS Add must be between -30.00 and +20.00"
+msgstr "OS Аддидация должна быть от -30.00 до +20.00"
 
 #. module: optics_core
 #: model:ir.model.fields,field_description:optics_core.field_optics_prescription__os_axis
@@ -842,7 +842,7 @@ msgstr "OS Цилиндр должен быть от -4.00 до 0.00"
 #. module: optics_core
 #: model:ir.model.fields,field_description:optics_core.field_optics_prescription__prism_os
 msgid "OS Prism"
-msgstr ""
+msgstr "OS Призма"
 
 #. module: optics_core
 #: model:ir.model.fields,field_description:optics_core.field_optics_prescription__os_sph
@@ -1044,28 +1044,28 @@ msgstr "Правый глаз (OD)"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__od_add
-msgid "Right eye addition for progressive lenses: 0.75-3.00"
-msgstr ""
+msgid "Right eye addition for progressive/bifocal lenses: -30.00 to +20.00"
+msgstr "Аддидация правого глаза для прогрессивных/бифокальных линз: от -30.00 до +20.00"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__od_axis
 msgid "Right eye axis: 1-180°"
-msgstr ""
+msgstr "Ось правого глаза: 1-180°"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__od_cyl
 msgid "Right eye cylinder: -4.00 to 0.00"
-msgstr ""
+msgstr "Цилиндр правого глаза: от -4.00 до 0.00"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__prism_od
 msgid "Right eye prism (e.g., \"2.0 BI\")"
-msgstr ""
+msgstr "Призма правого глаза (напр., \"2.0 BI\")"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__od_sph
 msgid "Right eye sphere: -20.00 to +20.00"
-msgstr ""
+msgstr "Сфера правого глаза: от -20.00 до +20.00"
 
 #. module: optics_core
 #: model:ir.model.fields,help:optics_core.field_optics_prescription__pd_right
