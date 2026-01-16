@@ -26,11 +26,11 @@ services:
       - redis
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "python -c 'import requests; requests.get(\"http://localhost:8000/health\", timeout=5)' || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/v1/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 10s
     logging:
       driver: "json-file"
       options:
@@ -84,6 +84,12 @@ services:
       - redis
       - kkt_adapter
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A celery_app inspect ping || exit 1"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
@@ -116,6 +122,12 @@ services:
       - kkt_adapter
       - celery_worker
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5555/healthcheck || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     logging:
       driver: "json-file"
       options:
