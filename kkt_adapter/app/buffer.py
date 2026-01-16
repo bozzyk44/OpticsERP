@@ -108,7 +108,7 @@ _db_lock = threading.RLock()
 _db_connection: Optional[sqlite3.Connection] = None
 
 
-def init_buffer_db(db_path: str = 'kkt_adapter/data/buffer.db') -> sqlite3.Connection:
+def init_buffer_db(db_path: str = None) -> sqlite3.Connection:
     """
     Initialize SQLite buffer database with correct PRAGMA settings
 
@@ -116,7 +116,7 @@ def init_buffer_db(db_path: str = 'kkt_adapter/data/buffer.db') -> sqlite3.Conne
     critical PRAGMA settings for durability and performance.
 
     Args:
-        db_path: Path to SQLite database file
+        db_path: Path to SQLite database file. If None, uses BUFFER_DB_PATH env var.
 
     Returns:
         SQLite connection object
@@ -124,6 +124,10 @@ def init_buffer_db(db_path: str = 'kkt_adapter/data/buffer.db') -> sqlite3.Conne
     Raises:
         sqlite3.Error: If database initialization fails
     """
+    # Use environment variable BUFFER_DB_PATH if no path provided
+    import os
+    if db_path is None:
+        db_path = os.getenv('BUFFER_DB_PATH', 'kkt_adapter/data/buffer.db')
     # Create parent directory if it doesn't exist
     db_file = Path(db_path)
     db_file.parent.mkdir(parents=True, exist_ok=True)
