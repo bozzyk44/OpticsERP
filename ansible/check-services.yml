@@ -1,0 +1,29 @@
+---
+- name: Check services status and logs
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+
+  tasks:
+    - name: Get docker compose ps output
+      shell: cd {{ odoo_base_dir }} && docker compose ps
+      register: docker_ps
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Display docker compose ps
+      debug:
+        msg: "{{ docker_ps.stdout_lines }}"
+
+    - name: Get KKT Adapter logs (last 100 lines)
+      shell: cd {{ odoo_base_dir }} && docker compose logs --tail=100 kkt_adapter 2>&1 || echo "No logs available"
+      register: kkt_logs
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Display KKT Adapter logs
+      debug:
+        msg: "{{ kkt_logs.stdout_lines }}"

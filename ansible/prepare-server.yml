@@ -1,0 +1,40 @@
+---
+# Playbook for initial server preparation only
+# Usage: ansible-playbook -i inventories/production/hosts.yml prepare-server.yml --limit odoo-prod-01
+
+- name: Prepare single server for OpticsERP deployment
+  hosts: all
+  become: true
+
+  pre_tasks:
+    - name: Check if server is Debian/Ubuntu
+      assert:
+        that:
+          - ansible_os_family == "Debian"
+        fail_msg: "This playbook only supports Debian/Ubuntu servers"
+        success_msg: "Server OS check passed"
+
+    - name: Display server information
+      debug:
+        msg: |
+          Preparing server: {{ inventory_hostname }}
+          IP: {{ ansible_host }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Environment: {{ deployment_env }}
+
+  roles:
+    - common
+    - docker
+    - security
+
+  post_tasks:
+    - name: Display completion message
+      debug:
+        msg: |
+          ✅ Server {{ inventory_hostname }} prepared successfully!
+
+          Next steps:
+          1. Verify Docker: docker --version
+          2. Verify NTP: timedatectl status
+          3. Check firewall: ufw status
+          4. Deploy application: ansible-playbook deploy-app.yml

@@ -1,0 +1,50 @@
+---
+- name: Test WebSocket endpoint
+  hosts: odoo_servers
+  become: true
+
+  tasks:
+    - name: Test WebSocket endpoint with curl
+      shell: |
+        curl -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" \
+             -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: test" \
+             http://localhost/websocket?version=17.0-3
+      register: ws_test
+      become: yes
+      failed_when: false
+      timeout: 5
+
+    - name: Display curl test result
+      debug:
+        msg: "{{ ws_test.stdout_lines }}"
+
+    - name: Check latest Odoo logs (last 20 lines)
+      shell: docker logs opticserp_odoo 2>&1 | tail -20
+      register: odoo_latest
+      become: yes
+
+    - name: Display latest Odoo logs
+      debug:
+        msg: "{{ odoo_latest.stdout_lines }}"
+
+    - name: Check latest Nginx access log
+      shell: tail -10 /var/log/nginx/194.87.235.33_access.log
+      register: nginx_latest
+      become: yes
+
+    - name: Display latest Nginx access
+      debug:
+        msg: "{{ nginx_latest.stdout_lines }}"
+
+    - name: Final diagnostic
+      debug:
+        msg: |
+          Test completed!
+
+          Expected result if WebSocket works:
+          - Curl should get HTTP 101 Switching Protocols
+          - Odoo logs should show WebSocket connection attempt
+          - Nginx logs should show /websocket request
+
+          If test fails with HTTP 500, the problem persists.
+          If test succeeds with HTTP 101, ask user to test in browser.

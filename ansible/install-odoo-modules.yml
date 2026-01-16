@@ -1,0 +1,82 @@
+---
+- name: Install custom Odoo modules
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+    custom_modules:
+      - optics_core
+      - optics_pos_ru54fz
+      - connector_b
+      - ru_accounting_extras
+
+  tasks:
+    - name: Check Odoo container status
+      shell: docker ps --filter name=opticserp_odoo --format "{{"{{"}} .Status {{"}}"}}"
+      register: odoo_status
+      changed_when: false
+
+    - name: Display Odoo status
+      debug:
+        msg: "Odoo status: {{ odoo_status.stdout }}"
+
+    - name: Install custom modules one by one
+      shell: |
+        docker exec opticserp_odoo odoo \
+          -c /etc/odoo/odoo.conf \
+          -d odoo_production \
+          -i {{ item }} \
+          --stop-after-init \
+          --log-level=info
+      loop: "{{ custom_modules }}"
+      register: module_install
+      become: yes
+      become_user: "{{ deploy_user }}"
+      ignore_errors: yes
+
+    - name: Display installation results
+      debug:
+        msg: "{{ item.item }}: {{ 'SUCCESS' if item.rc == 0 else 'FAILED - ' + (item.stderr | default('Unknown error'))[:200] }}"
+      loop: "{{ module_install.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Restart Odoo to apply changes
+      shell: cd {{ odoo_base_dir }} && docker compose restart odoo
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Wait for Odoo to start
+      wait_for:
+        port: 8069
+        delay: 10
+        timeout: 60
+
+    - name: Verify Odoo is accessible
+      uri:
+        url: http://localhost:8069/web
+        status_code: 200,302,303
+        timeout: 30
+      register: odoo_check
+      retries: 3
+      delay: 5
+
+    - name: Display success message
+      debug:
+        msg: |
+          ✅ Custom modules installation completed!
+
+          Installed modules:
+          {% for module in custom_modules %}
+            - {{ module }}
+          {% endfor %}
+
+          Access Odoo: http://194.87.235.33:8069
+
+          To activate modules in the UI:
+          1. Login as admin
+          2. Apps menu
+          3. Update Apps List
+          4. Install the modules if not already active

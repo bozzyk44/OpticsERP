@@ -1,0 +1,69 @@
+---
+- name: Configure Odoo websocket_url for Nginx proxy
+  hosts: odoo_servers
+  become: true
+
+  tasks:
+    - name: Backup odoo.conf
+      copy:
+        src: /etc/opticserp/odoo.conf
+        dest: /etc/opticserp/odoo.conf.backup-wsurl
+        remote_src: yes
+      become: yes
+
+    - name: Add websocket_url to odoo.conf
+      lineinfile:
+        path: /etc/opticserp/odoo.conf
+        regexp: '^websocket_url\s*='
+        line: 'websocket_url = ws://194.87.235.33/websocket'
+        insertafter: '^proxy_mode'
+      become: yes
+
+    - name: Display updated config
+      shell: cat /etc/opticserp/odoo.conf | grep -A 2 "proxy_mode"
+      register: config_check
+      become: yes
+
+    - name: Show config
+      debug:
+        msg: "{{ config_check.stdout_lines }}"
+
+    - name: Restart Odoo to apply changes
+      shell: cd /opt/opticserp && docker compose restart odoo
+      become: yes
+      become_user: deploy
+
+    - name: Wait for Odoo to start
+      pause:
+        seconds: 15
+
+    - name: Check Odoo status
+      shell: docker ps --filter name=opticserp_odoo --format '{{.Status}}'
+      register: odoo_status
+      become: yes
+
+    - name: Display Odoo status
+      debug:
+        msg: "Odoo status: {{ odoo_status.stdout }}"
+
+    - name: Check Odoo logs for startup
+      shell: docker logs opticserp_odoo 2>&1 | tail -20
+      register: startup_logs
+      become: yes
+
+    - name: Display startup logs
+      debug:
+        msg: "{{ startup_logs.stdout_lines }}"
+
+    - name: Final message
+      debug:
+        msg: |
+          ✅ WebSocket URL configured!
+
+          Added to odoo.conf:
+            websocket_url = ws://194.87.235.33/websocket
+
+          This tells Odoo to use Nginx proxy for WebSocket connections.
+
+          Next: Test in browser at http://194.87.235.33
+          Expected: No more "Connection Lost" errors!

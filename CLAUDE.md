@@ -1,266 +1,370 @@
 # Инструкции для Claude
 
-## Основные правила работы
+## 📋 Оглавление
 
-### Управление задачами
-- **ВАЖНО:** Решать только ОДНУ задачу за запрос
-- Если задача требует нескольких шагов, разбить на подзадачи и решать последовательно
-- После завершения задачи запросить подтверждение перед началом следующей
+### Правила работы (§1-4)
+1. [Управление задачами](#1-управление-задачами)
+2. [Языки и документация](#2-языки-и-документация)
+3. [Управление портами](#3-управление-портами-критично)
+4. [Git Workflow](#4-git-workflow-обязательно)
 
-### Языковые правила
-- Использовать английский язык для комментариев в коде
-- Использовать английский язык для документации API
-- Использовать русский язык для остальной документации и ответов
+### Архитектура проекта (§5-8)
+5. [Обзор проекта](#5-обзор-проекта)
+6. [Архитектура компонентов](#6-архитектура-компонентов)
+7. [Адаптер ККТ](#7-адаптер-ккт-детальная-имплементация)
+8. [План спринтов](#8-план-спринтов)
 
-### Документация
-- **КРИТИЧНО:** Записывать и хранить ЛЮБУЮ документацию ИСКЛЮЧИТЕЛЬНО в `/docs`
-- Добавлять диаграммы для сложных концепций
-- Запрещено хранить документацию в корне проекта или других каталогах
-
-### Git Workflow (обязательный процесс)
-
-#### Перед началом работы над задачей:
-1. Создать отдельную ветку под задачу:
-   ```bash
-   git checkout -b feature/task-name
-   # Например: feature/week1-buffer-crud
-   ```
-
-#### Планирование перед кодированием:
-2. Создать файл с планом задачи в `/docs/task_plans/`:
-   ```bash
-   docs/task_plans/YYYYMMDD_task_name.md
-   # Например: docs/task_plans/20251008_week1_buffer_crud.md
-   ```
-3. План должен содержать:
-   - Описание задачи
-   - Шаги выполнения (детально)
-   - Список файлов для создания/изменения
-   - Acceptance criteria
-   - Команды для тестирования
-
-#### После завершения задачи:
-4. Сделать commit с описательным сообщением:
-   ```bash
-   git add .
-   git commit -m "feat: краткое описание задачи
-
-   Подробное описание изменений
-
-   🤖 Generated with Claude Code
-
-   Co-Authored-By: Claude <noreply@anthropic.com>"
-   ```
-
-5. Push в remote:
-   ```bash
-   git push -u origin feature/task-name
-   ```
-
-6. Создать Pull Request:
-   ```bash
-   gh pr create --title "feat: название задачи" --body "$(cat <<'EOF'
-   ## Summary
-   - Описание изменений
-
-   ## Test plan
-   - [ ] Команды для проверки
-
-   🤖 Generated with Claude Code
-   EOF
-   )"
-   ```
-
-## При каждом compact чата:
-- Всегда хранить саммари истории чата и действий
-- Записывать саммари в `/claude_history`
-
-## При каждом создании/изменении файла:
-- Добавлять заголовок с автором, датой обновления и назначением файла
-- Использовать Prettify для форматирования
-
-# CLAUDE.md — План имплементации OpticsERP (Offline-First POS)
-
-> **Назначение:** Единый план для разработки системы на базе Odoo Community 17 с поддержкой offline-first архитектуры для сети оптик.
-> **Версия:** 1.0 • Дата: 2025-10-08 • Разработчик: 1 человек
-> **Базовые документы:** docs/1-5 (Постановка задачи, Требования, Архитектура, Дорожная карта, Offline-режим)
+### Операционные процедуры (§9-13)
+9. [Мониторинг и алерты](#9-мониторинг-и-метрики)
+10. [Чек-листы развертывания](#10-чек-лист-готовности)
+11. [Регламенты эксплуатации](#11-регламенты-эксплуатации)
+12. [Следующие шаги](#12-следующие-шаги)
+13. [AI Agent Handoff](#13-ai-agent-handoff-protocol)
 
 ---
 
-## 🤖 AI Agent Quick Start
+## ⚠️ КРИТИЧНО: Требования для Windows
 
-**IMPORTANT:** Read this section first before writing any code.
+**Для Windows-разработчиков:**
 
-### Bootstrap Project (First Time Setup)
+🔴 **WSL - ЕДИНСТВЕННЫЙ способ запуска Ansible на Windows**
+
+- ❌ **НЕ РАБОТАЕТ:** Git Bash, PowerShell, CMD, Cygwin
+- ✅ **РАБОТАЕТ ТОЛЬКО:** WSL (Windows Subsystem for Linux)
+- 📖 **Подробнее:** См. §2.1 [Ansible и WSL](#21-ansible-и-wsl-критично-для-windows)
+
+**Quick Start для Windows:**
+```bash
+# 1. Установить WSL (PowerShell от администратора)
+wsl --install -d Ubuntu-20.04
+
+# 2. После перезагрузки открыть WSL и перейти в проект
+cd /mnt/d/OpticsERP/ansible
+
+# 3. Все команды Ansible запускать ТОЛЬКО в WSL
+bash scripts/deploy-wrapper.sh
+```
+
+---
+
+## 1. Управление задачами
+
+- **КРИТИЧНО:** Решать только ОДНУ задачу за запрос
+- Если задача требует нескольких шагов → разбить на подзадачи
+- После завершения → запросить подтверждение перед следующей
+
+### JIRA Integration (КРИТИЧНО)
+
+**API Credentials:**
+- **Файл:** `.env` (root проекта)
+- **Переменные:**
+  - `JIRA_URL`: https://bozzyk44.atlassian.net
+  - `JIRA_EMAIL`: bozzyk44@gmail.com
+  - `JIRA_API_TOKEN`: API токен для авторизации
+  - `JIRA_PROJECT_KEY`: OpticsERP
+
+**Важно:** `.env` в `.gitignore` - не коммитить!
+
+**Приоритет источников информации:**
+1. **ПЕРВИЧНО:** Реальная JIRA (WebFetch от bozzyk44.atlassian.net)
+2. **ВТОРИЧНО:** `docs/jira/jira_import.csv` (только если JIRA недоступна)
+
+**Workflow работы с задачами:**
 
 ```bash
-# Clone and navigate to project
-cd OpticsERP
+# 1. Получение задачи
+# ❌ НЕПРАВИЛЬНО: Читать jira_import.csv напрямую
+grep "OPTERP-31" docs/jira/jira_import.csv
 
-# Bootstrap: create structure, install dependencies, init database
-make bootstrap
-
-# Verify environment (Python 3.11+, Docker, SQLite, Git)
-make verify-env
-
-# Run smoke test (verify bootstrap worked)
-make smoke-test
+# ✅ ПРАВИЛЬНО: Запросить задачу из JIRA
+WebFetch(url: "https://bozzyk44.atlassian.net/browse/OPTERP-31")
 ```
 
-**Expected output:**
+**После завершения задачи (ОБЯЗАТЕЛЬНО):**
+
+1. **Создать task plan:** `docs/task_plans/YYYYMMDD_OPTERP-XX_description.md`
+2. **Commit + Push** (см. §4 Git Workflow)
+3. **Обновить комментарий в JIRA:**
+
+```markdown
+✅ Задача выполнена
+
+**Выполнено:**
+- [x] Пункт 1 из acceptance criteria
+- [x] Пункт 2 из acceptance criteria
+- [x] Пункт 3 из acceptance criteria
+
+**Файлы:**
+- Created: file1.py, file2.py
+- Modified: file3.py
+
+**Commit:** [1dfd534](https://github.com/bozzyk44/OpticsERP/commit/1dfd534)
+**Task Plan:** docs/task_plans/YYYYMMDD_OPTERP-XX_description.md
+
+**Тесты:** ✅ All tests passed
+**Coverage:** 95%+
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
-✅ Bootstrap complete!
-✅ Environment verification complete
-✅ Smoke test passed. Ready to develop.
+
+**Важно:**
+- ВСЕГДА обращайся к реальной JIRA при работе с задачей
+- `jira_import.csv` - только fallback или для bulk операций
+- Комментарий в JIRA = proof of completion (для аудита)
+- Ссылка на commit обязательна
+
+## 2. Языки и документация
+
+**Языки:**
+- **English:** Код, комментарии, API документация
+- **Русский:** Остальная документация, ответы пользователю
+
+**Хранение:**
+- **КРИТИЧНО:** ВСЯ документация ТОЛЬКО в `/docs/`
+- Диаграммы для сложных концепций обязательны
+- Запрещено хранить docs в корне проекта
+
+## 2.1. Ansible и WSL (КРИТИЧНО для Windows)
+
+**КРИТИЧНО:** Ansible НЕ поддерживается нативно на Windows! WSL - это **ЕДИНСТВЕННЫЙ** способ для Windows-разработчика.
+
+### Требования для Windows разработчиков:
+
+**WSL (Windows Subsystem for Linux):**
+- **ОБЯЗАТЕЛЬНО** для запуска Ansible на Windows
+- **ЕДИНСТВЕННЫЙ** поддерживаемый метод для локальной разработки
+- Установка: `wsl --install -d Ubuntu-20.04`
+- После установки: перезагрузка Windows
+
+**Доступ к проекту из WSL:**
+```bash
+# В WSL терминале
+cd /mnt/d/OpticsERP/ansible
+```
+
+**Установка Ansible в WSL:**
+```bash
+# Обновить систему
+sudo apt update && sudo apt upgrade -y
+
+# Установить Python и pip
+sudo apt install -y python3 python3-pip python3-venv
+
+# Установить Ansible
+pip3 install ansible-core==2.16.3 ansible==9.2.0
+
+# Проверить установку
+ansible --version
+```
+
+**Workflow с WSL (ЕДИНСТВЕННЫЙ способ на Windows):**
+
+**Перед запуском любых Ansible команд:**
+1. Убедитесь, что вы в WSL (не в Git Bash, не в PowerShell!)
+2. Проверка: команда `uname -a` должна показать "Linux"
+
+```bash
+# ⚠️ КРИТИЧНО: Все команды ТОЛЬКО в WSL терминале!
+
+# 1. Открыть WSL (НЕ Git Bash! НЕ PowerShell!)
+wsl
+
+# 2. Проверить, что вы в Linux окружении
+uname -a  # Должно быть "Linux"
+
+# 3. Перейти в директорию проекта
+cd /mnt/d/OpticsERP/ansible
+
+# 4. Запустить deployment
+bash scripts/deploy-wrapper.sh
+```
+
+**ВАЖНО - Приоритет методов для Windows:**
+
+**ЕДИНСТВЕННЫЙ способ для разработчика на Windows:**
+- ✅ **WSL** - ОБЯЗАТЕЛЬНО для локальной разработки
+
+**НЕ поддерживаются на Windows (НИКОГДА НЕ ИСПОЛЬЗОВАТЬ):**
+- ❌ **Git Bash** - НЕ поддерживает Ansible (ошибки модуля os)
+- ❌ **PowerShell** - НЕ поддерживает Ansible
+- ❌ **CMD** - НЕ поддерживает Ansible
+- ❌ **Cygwin** - НЕ поддерживается
+
+**Альтернативы WSL (только для специфических случаев, НЕ для разработки):**
+- **Docker:** Запуск Ansible из контейнера (для CI/CD)
+- **Linux VM:** Виртуальная машина (избыточно при наличии WSL)
+- **Удалённый Linux:** SSH на production-сервер (только для production)
+
+**Правило:**
+- 🔴 **Windows-разработчик:** WSL - ЕДИНСТВЕННЫЙ способ, никаких альтернатив
+- 🔴 **Все Ansible команды:** ТОЛЬКО через WSL терминал
+- 🔴 **Если не WSL:** Ansible работать НЕ БУДЕТ
+
+## 3. Управление портами (КРИТИЧНО)
+
+**Правило:** ВСЕГДА использовать стандартные порты. НИКОГДА не менять.
+
+### Стандартные порты
+
+| Сервис | Порт | Назначение |
+|--------|------|------------|
+| **KKT Adapter** | **8000** | FastAPI REST API |
+| Odoo | 8069 | Web server |
+| PostgreSQL | 5432 | Database |
+| Redis | 6379 | Celery broker |
+| Prometheus | 9090 | Metrics |
+| Grafana | 3000 | Dashboards |
+
+### Workflow при занятом порте
+
+```bash
+# 1. Kill process on port
+python scripts/kill_port.py 8000
+
+# 2. Start service on standard port
+cd kkt_adapter/app && python main.py
+
+# Kill all project ports
+python scripts/kill_port.py 8000 --all
+```
+
+## 4. Git Workflow (ОБЯЗАТЕЛЬНО)
+
+**КРИТИЧНО:** Commit + Push после КАЖДОЙ завершенной задачи (OPTERP-X)!
+
+### Workflow
+```bash
+# 1. Create branch
+git checkout -b feature/task-name
+
+# 2. Create task plan
+docs/task_plans/YYYYMMDD_task_name.md
+
+# 3. Work → Test → Commit
+git add .
+git commit -m "<type>(<scope>): description [OPTERP-X]"
+
+# 4. Push (ОБЯЗАТЕЛЬНО!)
+git push -u origin feature/task-name
+```
+
+### Commit Types
+- `feat(scope):` — новая функциональность
+- `test(scope):` — тесты
+- `fix(scope):` — баг
+- `docs(scope):` — документация
+- `refactor(scope):` — рефакторинг
+- `chore(scope):` — технические задачи
+
+### Pre-Commit Checklist
+- [ ] Все тесты пройдены (0 FAILED)
+- [ ] Coverage ≥95% (unit tests)
+- [ ] Логи тестов сохранены (`tests/logs/`)
+- [ ] Task plan создан (`docs/task_plans/`)
+- [ ] JIRA ID в commit message
+
+### Когда делать Commit + Push
+- ✅ **Завершена задача OPTERP-X**
+- ✅ **Все тесты пройдены**
+- ✅ **Перед новой задачей**
+- ✅ **Завершена сессия работы**
+- ❌ Не накапливать задачи перед push!
+
+### Test Logging (КРИТИЧНО)
+
+**Структура:**
+```
+tests/logs/{test_type}/YYYYMMDD_{TASK_ID}_{desc}.log
+```
+
+**Команда:**
+```bash
+pytest tests/unit/test_hlc.py -v --tb=short 2>&1 | \
+  tee tests/logs/unit/$(date +%Y%m%d)_OPTERP-3_hlc_tests.log
+```
+
+**При failed test:**
+1. Сохранить с суффиксом `_FAILED.log`
+2. Записать в `claude_history/`
+3. НЕ делать commit до исправления
+
+### Session History
+- Компактировать историю чата в `/claude_history`
+- Формат: `claude_history/session_YYYYMMDD.md`
+
+---
+
+# План имплементации OpticsERP (Offline-First POS)
+
+> **Версия:** 1.0 • Дата: 2025-10-08 • Разработчик: 1 человек
+> **Базовые документы:** docs/1-5 (Постановка, Требования, Архитектура, Дорожная карта, Офлайн-режим)
+
+---
+
+## 🤖 AI Quick Start
+
+### First Time Setup
+```bash
+make bootstrap  # Create structure, install deps, init DB
+make verify-env # Verify Python 3.11+, Docker, SQLite, Git
+make smoke-test # Run smoke test
 ```
 
 ### Essential Resources
+1. **GLOSSARY.md** — Терминология (ККТ, ОФД, ФН, Circuit Breaker)
+2. **docs/5. Офлайн-режим.md** — Offline architecture (§5.2-5.6)
+3. **bootstrap/kkt_adapter_skeleton/schema.sql** — SQLite schema
 
-**Before coding, familiarize yourself with:**
-
-1. **GLOSSARY.md** — Domain terminology (ККТ, ОФД, ФН, Circuit Breaker, etc.)
-2. **docs/5. Руководство по офлайн-режиму.md** — Offline architecture (§5.2-5.6)
-3. **docs/PROMPT_ENGINEERING_TEMPLATES.md** — Reusable prompts for common tasks
-4. **bootstrap/kkt_adapter_skeleton/schema.sql** — SQLite buffer schema
-
-### Your First Task
-
-**Task:** Implement SQLite buffer database CRUD operations
-
-**Steps:**
-1. Read `bootstrap/kkt_adapter_skeleton/schema.sql` (understand schema)
-2. Implement `kkt_adapter/app/buffer.py` with functions:
-   - `insert_receipt(receipt_data)` → receipt_id
-   - `get_pending_receipts(limit=50)` → List[Receipt]
-   - `mark_synced(receipt_id, server_time)` → bool
-   - `move_to_dlq(receipt_id, reason)` → bool
-3. Write unit tests in `tests/unit/test_buffer_db.py`
-
-**Checkpoint W1.1:** Run `pytest tests/unit/test_buffer_db.py` — all 5 tests should PASS.
-
-**Reference:** See docs/PROMPT_ENGINEERING_TEMPLATES.md §3.2 for SQLite CRUD template.
+### First Task: SQLite Buffer CRUD
+1. Read `bootstrap/kkt_adapter_skeleton/schema.sql`
+2. Implement `kkt_adapter/app/buffer.py`:
+   - `insert_receipt()`, `get_pending_receipts()`, `mark_synced()`, `move_to_dlq()`
+3. Write tests in `tests/unit/test_buffer_db.py`
+4. **Checkpoint:** `pytest tests/unit/test_buffer_db.py` → all PASS
 
 ---
 
-## 0. Dependency Graph
+## 5. Обзор проекта
 
-**Purpose:** Understand task dependencies to parallelize independent work.
+**Цель:** ERP/POS для сети оптик (Odoo 17) с **offline-first режимом**
+- Автономность: 8+ часов без ОФД
+- Бизнес-доступность: ≥99.5%
+- 54-ФЗ compliance
+- 20 точек (40 касс)
 
-```mermaid
-graph TD
-    A[SQLite буфер CRUD] --> B[Hybrid Logical Clock]
-    B --> C[Адаптер ККТ базовый API]
-    C --> D[Circuit Breaker для ОФД]
-    D --> E[Двухфазная фискализация]
-    E --> F[Sync Worker]
+**Ключевые принципы:**
+1. **Offline-first** — касса автономна, облако вторично
+2. **Двухфазная фискализация** — печать → ОФД асинхронно
+3. **Гарантированная доставка** — 100% чеков в ОФД
+4. **Hybrid Logical Clock** — метки времени не зависят от NTP
+5. **Паттерны:** Circuit Breaker, Saga, Bulkhead, Event Sourcing
 
-    G[optics_core models] --> H[optics_core views]
-    G --> I[optics_pos_ru54fz расширения]
-
-    J[connector_b базовый] --> K[connector_b профили маппинга]
-    K --> L[Блокировка импорта при буфере]
-    L --> I
-
-    M[ru_accounting_extras] --> N[Отчёт GP]
-    M --> O[Кассовые счета по точкам]
-
-    I --> P[POS UI офлайн-режим]
-    F --> P
-
-    style A fill:#90EE90
-    style G fill:#90EE90
-    style J fill:#90EE90
-    style M fill:#90EE90
-```
-
-**Legend:**
-- 🟢 Green nodes: **INDEPENDENT** — can start immediately
-- Arrows: Dependencies (A → B means "B depends on A")
-
-**Task Annotations:**
-
-| Task | Status | Dependencies |
-|------|--------|-------------|
-| SQLite буфер CRUD | INDEPENDENT | None — start immediately |
-| Hybrid Logical Clock | INDEPENDENT | None — start immediately |
-| optics_core models | INDEPENDENT | None — start immediately |
-| connector_b базовый | INDEPENDENT | None — start immediately |
-| ru_accounting_extras | INDEPENDENT | None — start immediately |
-| Адаптер ККТ базовый API | DEPENDS ON | SQLite буфер, HLC |
-| Circuit Breaker | DEPENDS ON | Адаптер ККТ API |
-| Двухфазная фискализация | DEPENDS ON | Circuit Breaker |
-| Sync Worker | DEPENDS ON | Двухфазная фискализация |
-| optics_pos_ru54fz | DEPENDS ON | optics_core, Адаптер ККТ |
-| Блокировка импорта | DEPENDS ON | connector_b, Адаптер ККТ buffer API |
-| POS UI офлайн | DEPENDS ON | optics_pos_ru54fz, Sync Worker |
-
-**Parallelization Strategy:**
-- **Week 1-2 (POC):** Work on SQLite + HLC + optics_core in parallel
-- **Week 3-4:** After SQLite done → start Адаптер ККТ; optics_core done → start views
-- **Week 6-7 (MVP):** All Odoo modules can be developed in parallel (independent)
+**Tech Stack:**
+- **Backend:** Odoo 17, PostgreSQL 15, Redis, Celery
+- **Edge:** FastAPI, SQLite (WAL), APScheduler
+- **Monitoring:** Prometheus, Grafana, Jaeger
+- **Infra:** Docker Compose, Nginx, NTP
 
 ---
 
-## 1. Обзор проекта
+## 5.1. Этапы разработки
 
-### 1.1 Цель
-Разработать ERP/POS систему для сети оптик на базе Odoo Community 17 с критичной поддержкой **offline-first режима**:
-- Автономная работа кассы при обрывах связи с ОФД (8+ часов)
-- Бизнес-доступность ≥99.5% (независимо от интернета)
-- Соответствие 54-ФЗ с гарантированной фискализацией
-- Масштабирование до 20 точек (40 касс)
+| Этап | Сроки | Exit Criteria |
+|------|-------|---------------|
+| **POC** | 06.10-09.11 (5w) | POC-4/5 ✅, метрики |
+| **MVP** | 10.11-07.12 (4w) | UAT ≥95%, 0 блокеров |
+| **Buffer** | 08.12-14.12 (1w) | Нагрузочные тесты |
+| **Пилот** | 15.12-11.01 (4w) | 99.5% uptime, 2 точки |
+| **Soft Launch** | 12.01-25.01 (2w) | 5 точек, capacity OK |
+| **Прод** | 26.01-22.02 (4w) | 20 точек, RTO≤1ч |
 
-### 1.2 Ключевые принципы архитектуры
-1. **Offline-first:** касса работает автономно, облако вторично
-2. **Двухфазная фискализация:** печать локально → отправка в ОФД асинхронно
-3. **Гарантированная доставка:** 100% чеков попадают в ОФД (Circuit Breaker + ретраи)
-4. **Hybrid Logical Clock:** временные метки не зависят от NTP
-5. **Graceful degradation:** плавная деградация без резких отказов
-6. **Архитектурные паттерны:** Circuit Breaker, Saga, Bulkhead, Event Sourcing
-
-### 1.3 Технологический стек
-
-**Backend:**
-- Odoo Community 17 (Python 3.11+)
-- PostgreSQL 15
-- Redis (очереди Celery)
-- Celery (фоновые задачи)
-
-**Edge (кассовый терминал):**
-- FastAPI (адаптер ККТ)
-- SQLite (офлайн-буфер, WAL mode)
-- APScheduler (heartbeat, синхронизация)
-
-**Мониторинг:**
-- Prometheus + Grafana
-- Jaeger (трейсинг)
-- Sentry (опционально)
-
-**Инфраструктура:**
-- Docker + Docker Compose
-- Nginx (reverse proxy, TLS 1.3)
-- NTP (синхронизация времени)
+**Итого:** 19 недель
 
 ---
 
-## 2. Этапы разработки (T0 = 06.10.2025)
+## 6. Архитектура компонентов
 
-| Этап | Сроки | Критерии выхода | Фокус |
-|------|-------|-----------------|-------|
-| **POC** | 06.10 - 09.11 (5 нед) | POC-4/5 пройдены, метрики достигнуты | Proof of concept офлайн-режима |
-| **MVP** | 10.11 - 07.12 (4 нед) | UAT ≥95%, офлайн-UAT 100%, 0 блокеров | Полная функциональность |
-| **Buffer** | 08.12 - 14.12 (1 нед) | Нагрузочные тесты, 0 блокеров | Стабилизация |
-| **Пилот** | 15.12 - 11.01 (4 нед) | Бизнес-доступность ≥99.5%, обучение | 2 точки (4 кассы) |
-| **Soft Launch** | 12.01 - 25.01 (2 нед) | Capacity metrics, узкие места | 5 точек (10 касс) |
-| **Прод** | 26.01 - 22.02 (4 нед) | RTO≤1ч, RPO≤24ч, 20 точек | Полное развёртывание |
-
-**Итого:** 19 недель (T0 → T0+19)
-
----
-
-## 3. Архитектура компонентов
-
-### 3.1 Структура проекта
+### Структура проекта
 
 ```
 OpticsERP/
@@ -379,950 +483,252 @@ Draft → Confirmed → In Production → Ready → Delivered
 
 ---
 
-## 4. Адаптер ККТ (kkt_adapter) — детальная имплементация
+## 7. Адаптер ККТ (детальная имплементация)
 
-### 4.1 Офлайн-буфер (SQLite)
+### SQLite Buffer Schema
 
-**Схема базы данных:**
-```sql
--- Основная таблица чеков
-CREATE TABLE receipts (
-  id TEXT PRIMARY KEY,              -- UUIDv4
-  pos_id TEXT NOT NULL,
-  created_at INTEGER NOT NULL,      -- Unix timestamp
-  hlc_local_time INTEGER NOT NULL,  -- Hybrid Logical Clock
-  hlc_logical_counter INTEGER NOT NULL,
-  hlc_server_time INTEGER,          -- Присваивается при синхронизации
-  fiscal_doc TEXT NOT NULL,         -- JSON ФФД
-  status TEXT NOT NULL DEFAULT 'pending',  -- pending|syncing|synced|failed
-  retry_count INTEGER DEFAULT 0,
-  last_error TEXT,
-  synced_at INTEGER,
-  CHECK (status IN ('pending', 'syncing', 'synced', 'failed'))
-);
+**Таблицы:** `receipts`, `dlq`, `buffer_events`
+- **receipts:** id, pos_id, created_at, hlc_*, fiscal_doc, status, retry_count
+- **dlq:** Dead Letter Queue для failed receipts (max_retries=20)
+- **buffer_events:** Event Sourcing (receipt_added, synced, failed, circuit_*)
 
-CREATE INDEX idx_status ON receipts(status);
-CREATE INDEX idx_created_at ON receipts(created_at);
-CREATE INDEX idx_hlc ON receipts(hlc_server_time, hlc_local_time, hlc_logical_counter);
-
--- Dead Letter Queue
-CREATE TABLE dlq (
-  id TEXT PRIMARY KEY,
-  original_receipt_id TEXT NOT NULL,
-  failed_at INTEGER NOT NULL,
-  reason TEXT NOT NULL,
-  fiscal_doc TEXT NOT NULL,
-  retry_attempts INTEGER NOT NULL,
-  last_error TEXT,
-  resolved_at INTEGER,
-  resolved_by TEXT,
-  FOREIGN KEY (original_receipt_id) REFERENCES receipts(id)
-);
-
--- События (Event Sourcing)
-CREATE TABLE buffer_events (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  event_type TEXT NOT NULL,
-  receipt_id TEXT,
-  timestamp INTEGER NOT NULL,
-  metadata TEXT,
-  CHECK (event_type IN ('receipt_added', 'receipt_synced', 'receipt_failed',
-                        'circuit_opened', 'circuit_closed', 'sync_started', 'sync_completed'))
-);
-```
-
-**Конфигурация SQLite (максимальная durability):**
+**SQLite Config (КРИТИЧНО):**
 ```python
-def init_buffer_db(db_path='/app/data/buffer.db'):
-    conn = sqlite3.connect(db_path)
-
-    # КРИТИЧНО: защита от power loss
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=FULL")       # !!!
-    conn.execute("PRAGMA wal_autocheckpoint=100")
-    conn.execute("PRAGMA cache_size=-64000")      # 64 MB
-    conn.execute("PRAGMA foreign_keys=ON")
-
-    return conn
+PRAGMA journal_mode=WAL
+PRAGMA synchronous=FULL  # ⚠️ Power loss protection
+PRAGMA wal_autocheckpoint=100
+PRAGMA cache_size=-64000  # 64 MB
 ```
 
-### 4.2 Двухфазная фискализация
+**Full schema:** `bootstrap/kkt_adapter_skeleton/schema.sql`
 
-**Фаза 1: Локальное сохранение (всегда успешна)**
-```python
-def create_receipt_phase1(receipt_data):
-    """
-    Фаза 1: локальная — всегда успешна, даже без сети.
-    """
-    # 1. Генерация Hybrid Logical Clock timestamp
-    hlc = generate_hlc()
-    receipt_id = str(uuid.uuid4())
+### Двухфазная фискализация
 
-    # 2. Сохранение в SQLite
-    buffer_db.execute(
-        """INSERT INTO receipts
-           (id, pos_id, created_at, hlc_local_time, hlc_logical_counter, fiscal_doc, status)
-           VALUES (?, ?, ?, ?, ?, ?, 'pending')""",
-        (receipt_id, receipt_data['pos_id'], int(time.time()),
-         hlc.local_time, hlc.logical_counter, json.dumps(receipt_data))
-    )
-    buffer_db.commit()
+**Фаза 1 (ВСЕГДА успешна):**
+1. Generate HLC timestamp
+2. Insert to SQLite (`status='pending'`)
+3. Print на ККТ
+4. Log event (`receipt_added`)
 
-    # 3. Печать чека на ККТ
-    try:
-        kkt_driver.print_receipt(receipt_data)
-    except TimeoutError:
-        send_alert(f"ККТ не отвечает на {receipt_data['pos_id']}", level='P2')
+**Фаза 2 (асинхронная, best-effort):**
+1. Check Circuit Breaker state
+2. Send to ОФД API (timeout=10s)
+3. Update `status='synced'`, set `hlc_server_time`
+4. On failure: increment `retry_count` (max=20 → DLQ)
 
-    # 4. Логирование события
-    buffer_db.execute(
-        "INSERT INTO buffer_events (event_type, receipt_id, timestamp) VALUES (?, ?, ?)",
-        ('receipt_added', receipt_id, int(time.time()))
-    )
+**Circuit Breaker:** `failure_threshold=5`, `recovery_timeout=60s`
 
-    return receipt_id
-```
+**Implementation:** См. `kkt_adapter/app/buffer.py`, `ofd_client.py`
 
-**Фаза 2: Отправка в ОФД (с Circuit Breaker)**
-```python
-class OFDCircuitBreaker:
-    @circuit(failure_threshold=5, recovery_timeout=60)
-    async def send_receipt(self, receipt):
-        response = await ofd_client.post("/receipts", json=receipt, timeout=10)
-        return response
+### Hybrid Logical Clock
 
-async def create_receipt_phase2(receipt_id):
-    """
-    Фаза 2: отправка в ОФД (асинхронная, best-effort)
-    """
-    receipt = buffer_db.execute(
-        "SELECT * FROM receipts WHERE id = ? AND status = 'pending'",
-        (receipt_id,)
-    ).fetchone()
-
-    if not receipt:
-        return
-
-    try:
-        if ofd_cb.current_state == "OPEN":
-            log.warning(f"Circuit Breaker OPEN, buffering {receipt_id}")
-            return
-
-        fiscal_doc = await ofd_cb.send_receipt(json.loads(receipt['fiscal_doc']))
-
-        buffer_db.execute(
-            """UPDATE receipts
-               SET status='synced', synced_at=?, hlc_server_time=?
-               WHERE id=?""",
-            (int(time.time()), get_server_time(), receipt_id)
-        )
-        buffer_db.commit()
-
-    except CircuitBreakerError:
-        log.warning(f"Circuit Breaker opened for {receipt_id}")
-
-    except (TimeoutError, ConnectionError) as e:
-        buffer_db.execute(
-            "UPDATE receipts SET retry_count = retry_count + 1, last_error = ? WHERE id = ?",
-            (str(e), receipt_id)
-        )
-        buffer_db.commit()
-
-        if receipt['retry_count'] + 1 >= 20:
-            move_to_dlq(receipt_id, reason="max_retries_exceeded")
-```
-
-### 4.3 Hybrid Logical Clock
+**Ordering:** `server_time > local_time > logical_counter`
 
 ```python
 @dataclass
 class HybridTimestamp:
-    local_time: int        # Unix timestamp локальной системы
-    logical_counter: int   # Монотонный счётчик
-    server_time: Optional[int] = None  # Присваивается при синхронизации
-
-    def __lt__(self, other):
-        # Порядок: server_time > local_time > logical_counter
-        if self.server_time and other.server_time:
-            if self.server_time != other.server_time:
-                return self.server_time < other.server_time
-        elif self.local_time != other.local_time:
-            return self.local_time < other.local_time
-        return self.logical_counter < other.logical_counter
-
-def generate_hlc():
-    """Генерация Hybrid Logical Clock timestamp"""
-    global _hlc_counter, _last_hlc_time
-
-    current_time = int(time.time())
-
-    if current_time == _last_hlc_time:
-        _hlc_counter += 1
-    else:
-        _hlc_counter = 0
-        _last_hlc_time = current_time
-
-    return HybridTimestamp(
-        local_time=current_time,
-        logical_counter=_hlc_counter,
-        server_time=None
-    )
+    local_time: int        # Unix timestamp
+    logical_counter: int   # Monotonic counter
+    server_time: Optional[int] = None  # Set on sync
 ```
 
-### 4.4 API endpoints адаптера
+**Implementation:** `kkt_adapter/app/hlc.py`
 
-```yaml
-# OpenAPI 3.0.3
-paths:
-  /v1/kkt/receipt:
-    post:
-      summary: Create fiscal receipt (двухфазная фискализация)
-      parameters:
-        - name: Idempotency-Key
-          in: header
-          required: true
-          schema: { type: string, format: uuid }
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [pos_id, type, items, payments]
-              properties:
-                pos_id: { type: string }
-                type: { enum: [sale, refund, correction] }
-                items: { type: array }
-                payments: { type: array }
-      responses:
-        '200':
-          description: Чек напечатан и сохранен локально
-          content:
-            application/json:
-              schema:
-                properties:
-                  status: { enum: [printed, buffered] }
-                  receipt_id: { type: string, format: uuid }
-                  fiscal_doc: { type: object, nullable: true }
-        '503':
-          description: Офлайн-буфер переполнен
+### API Endpoints
 
-  /v1/kkt/buffer/status:
-    get:
-      summary: Статус офлайн-буфера
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                properties:
-                  total_capacity: { type: integer, example: 200 }
-                  current_queued: { type: integer }
-                  percent_full: { type: number }
-                  network_status: { enum: [online, offline, degraded] }
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/v1/kkt/receipt` | POST | Create fiscal receipt (2-phase) |
+| `/v1/kkt/buffer/status` | GET | Buffer fullness, network status |
+| `/v1/kkt/buffer/sync` | POST | Manual sync (Distributed Lock) |
+| `/v1/health` | GET | Health check (Circuit Breaker state) |
 
-  /v1/kkt/buffer/sync:
-    post:
-      summary: Принудительная синхронизация
-      security: [AdminAuth: []]
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                force: { type: boolean, default: false }
-      responses:
-        '202':
-          description: Синхронизация запущена
-        '409':
-          description: Синхронизация уже идет (Distributed Lock)
-
-  /v1/health:
-    get:
-      summary: Health check
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                properties:
-                  status: { enum: [healthy, degraded, unhealthy] }
-                  components:
-                    type: object
-                    properties:
-                      circuit_breaker:
-                        properties:
-                          state: { enum: [CLOSED, OPEN, HALF_OPEN] }
-```
+**Full API:** OpenAPI 3.0 spec в `kkt_adapter/openapi.yaml`
 
 ---
 
-## 5. План спринтов (детально)
+## 8. План спринтов
 
-### 5.1 Спринт 1-3: POC (5 недель)
+### POC (W1-5): Proof of Concept
 
-**Неделя 1-2: Базовая инфраструктура**
-- [ ] Настройка Docker-окружения (Odoo + PostgreSQL + Redis)
-- [ ] Базовая структура модулей Odoo (скелеты)
-- [ ] Адаптер ККТ: FastAPI skeleton
-- [ ] SQLite буфер: схема + CRUD
-- [ ] Hybrid Logical Clock: имплементация + unit-тесты
+**W1-2:** Docker, Odoo skeletons, FastAPI, SQLite CRUD, HLC
+**W3:** 2-phase fiscalization, Circuit Breaker, POC-1
+**W4:** Heartbeat, offline mode, catalog cache, POC-4 (8h offline)
+**W5:** connector_b import, POC-2/5, Go/No-Go
 
-**Неделя 3: Двухфазная фискализация + Circuit Breaker**
-- [ ] Фаза 1: сохранение в SQLite + печать
-- [ ] Фаза 2: отправка в ОФД (mock)
-- [ ] Circuit Breaker: библиотека + интеграция
-- [ ] POC-1: эмулятор ККТ + 50 операций
+### MVP (W6-9): Полная функциональность
 
-**Неделя 4: Heartbeat + Офлайн-режим**
-- [ ] Heartbeat к Odoo (30s, hysteresis)
-- [ ] Автоматическое переключение online/offline/degraded
-- [ ] Локальный кэш каталога (1000 товаров)
-- [ ] POC-4: 8ч офлайн, 50 чеков, синхронизация
+**W6-7:** Odoo modules (optics_core, optics_pos_ru54fz, ru_accounting_extras, connector_b)
+**W8:** Offline UI, Distributed Lock, Saga, Bulkhead
+**W9:** UAT (01-04, 08-11), fix blockers, MVP sign-off
 
-**Неделя 5: Импорт + POC-5 (split-brain)**
-- [ ] connector_b: базовый импорт Excel
-- [ ] POC-2: импорт 10k строк
-- [ ] POC-5: тесты split-brain, flapping, конкурентная синхронизация
-- [ ] Отчёт POC + Go/No-Go решение
+### Buffer (W10): Стабилизация
 
-### 5.2 Спринт 4-5: MVP (4 недели)
+Load tests (scenarios 1-4), rollback procedure, docs update, CI/CD gates
 
-**Неделя 6-7: Odoo модули**
-- [ ] optics_core: модели рецептов/линз/заказов
-- [ ] optics_pos_ru54fz: POS UI + X/Z-отчёты
-- [ ] ru_accounting_extras: кассовые счета + GP
-- [ ] connector_b: профили маппинга + превью
+### Пилот (W11-14): 2 точки
 
-**Неделя 8: Офлайн UI + архитектурные паттерны**
-- [ ] UI офлайн-режима: статус-бар, tooltip, алерты
-- [ ] Страница "Офлайн-буфер" (администратор)
-- [ ] Distributed Lock для синхронизации (Redis)
-- [ ] Saga Pattern для возврата чека
-- [ ] Bulkhead Pattern (Celery очереди: critical/high/default/low)
+**W11-12:** Deploy 4 кассы, UPS, training (≥90%)
+**W13-14:** Grafana, alerts, stress-test (2 кассы × 8h × 50 receipts), sign-off
 
-**Неделя 9: Тестирование + UAT**
-- [ ] UAT-01/02/03/04: позитивные сценарии
-- [ ] UAT-08/09/10b/10c/11: офлайн-сценарии
-- [ ] Исправление критичных дефектов
-- [ ] MVP sign-off
+### Soft Launch (W15-16): 5 точек
 
-### 5.3 Спринт 6: Buffer (1 неделя)
+Deploy 10 касс, capacity metrics (PG P95 <50ms, Celery queue <30), optimization
 
-**Неделя 10: Стабилизация**
-- [ ] Нагрузочные тесты (сценарии 1-3)
-- [ ] Упрощённый нагрузочный тест (5 касс, сценарий 4)
-- [ ] Rollback-процедура: тестирование
-- [ ] Документация: обновление всех 5 документов
-- [ ] CI/CD gate: автоматизация DoD
+### Прод (W17-20): 20 точек
 
-### 5.4 Спринт 7-8: Пилот (4 недели)
-
-**Неделя 11-12: Развёртывание 2 точек**
-- [ ] Установка адаптеров ККТ на 4 кассы
-- [ ] Настройка UPS + graceful shutdown
-- [ ] Обучение кассиров (≥90% прохождение теста)
-- [ ] Регламент X/Z-отчётов + офлайн-буфер
-
-**Неделя 13-14: Мониторинг + реальная эксплуатация**
-- [ ] Grafana dashboard (4 панели)
-- [ ] Алерты Prometheus + интеграция (email/telegram)
-- [ ] Stress-test: 2 кассы × 8ч офлайн × 50 чеков
-- [ ] Decision Tree для L1/L2
-- [ ] Процедура замены ФН
-- [ ] Пилот sign-off
-
-### 5.5 Спринт 9: Soft Launch (2 недели)
-
-**Неделя 15-16: Масштабирование 5 точек + capacity metrics**
-- [ ] Развёртывание 5 дополнительных касс (итого 10)
-- [ ] Нагрузочный тест упрощённый (сценарий 4: 5 касс, 1000 чеков/день)
-- [ ] Capacity metrics: PostgreSQL, Celery, Odoo
-- [ ] Проверка узких мест:
-  - [ ] PostgreSQL query P95 <50ms
-  - [ ] Celery critical queue <30 задач
-  - [ ] Нет OOM/CPU throttling
-- [ ] Процедура добавления кассы (задокументирована + тест)
-- [ ] Оптимизация по результатам
-- [ ] Soft Launch sign-off
-
-### 5.6 Спринт 10-11: Продуктив (4 недели)
-
-**Неделя 17-18: Развёртывание 20 точек**
-- [ ] Масштабирование на 20 точек (40 касс)
-- [ ] pgbouncer: настройка (если нужно)
-- [ ] Бэкапы офлайн-буферов: ежедневные snapshot
-- [ ] DR-тестирование: RTO≤1ч, RPO≤24ч
-
-**Неделя 19-20: Документация + Day 2 Ops**
-- [ ] Руководство администратора (≥50 страниц)
-- [ ] Runbook (≥20 сценариев)
-- [ ] SLA инцидентов + процедуры эскалации
-- [ ] On-call процедура
-- [ ] Регламенты поддержки
-- [ ] Продуктив sign-off
+**W17-18:** 40 кассы, pgbouncer, daily backups, DR test (RTO≤1h)
+**W19-20:** Admin manual, runbook (≥20 scenarios), SLA, on-call, sign-off
 
 ---
 
-## 6. Критерии приёмки этапов (DoD)
+## 8.1. DoD (Definition of Done)
 
-### 6.1 MVP Exit
+**MVP Exit:**
+- ✅ UAT ≥95% (11 scenarios), 0 blockers
+- ✅ Дубликаты чеков = 0, P95 печати ≤7s, импорт 10k ≤2min
+- ✅ Офлайн: 8h, 50 receipts, sync ≤10min
+- ✅ Circuit Breaker, Distributed Lock, Saga работают (автотесты)
 
-| Критерий | Процедура верификации | Автоматизация |
-|----------|----------------------|---------------|
-| **≥95% UAT пройдено** | Протокол UAT (11 сценариев) | Частично (автотесты) |
-| **0 блокирующих дефектов** | JIRA: `type=Bug AND severity=Blocker AND status!=Closed` | Полностью (CI gate) |
-| **Дубликаты чеков = 0** | SQL-запрос по буферу + ОФД API | Полностью (pytest) |
-| **P95 печати ≤7с** | Jaeger traces за 24ч | Полностью (Jaeger API) |
-| **Импорт 10k ≤2 мин** | Тестовый импорт | Полностью (pytest) |
-| **Офлайн: 8ч, 50 чеков, синхронизация ≤10 мин** | Автотест POC-4 | Полностью (pytest + tc qdisc) |
-| **UAT-08/09/10b/10c/11 пройдены** | Ручные офлайн-UAT | Частично (backend автотесты) |
-| **Circuit Breaker работает** | Эмуляция 5 ошибок ОФД → OPEN → HALF_OPEN | Автотест (pytest) |
-| **Distributed Lock работает** | Конкурентная синхронизация → HTTP 409 | Автотест (pytest) |
-| **Saga Pattern работает** | Возврат несинхронизированного чека → HTTP 409 | Автотест (pytest) |
+**Пилот Exit:**
+- ✅ MVP + Uptime ≥99.5% (2w), training ≥90%, 0 P1 incidents
 
-### 6.2 Пилот Exit
-
-- ✅ Все критерии MVP
-- ✅ Бизнес-доступность ≥99.5% (2 недели)
-- ✅ Обучение кассиров: ≥90% прошли тест
-- ✅ Регламенты X/Z + офлайн утверждены
-- ✅ Stress-test: 2 кассы × 8ч × 50 чеков → 100% синхронизация
-- ✅ 0 P1 инцидентов за 2 недели
-
-### 6.3 Продуктив Exit
-
-- ✅ Все критерии Пилота
-- ✅ Масштабирование: 20 точек (40 касс)
-- ✅ RTO≤1ч, RPO≤24ч (проверено)
-- ✅ Мониторинг: дашборд + алерты активны
-- ✅ Бэкапы: PostgreSQL + SQLite ежедневно
-- ✅ Регламенты поддержки утверждены
+**Прод Exit:**
+- ✅ Пилот + 20 точек, RTO≤1h, RPO≤24h, monitoring active
 
 ---
 
-## 7. Риски и митигация
+## 8.2. Риски
 
-| Риск | Вероятность | Влияние | Митигация |
-|------|-------------|---------|-----------|
-| **Переполнение офлайн-буфера** | Средняя | Критичное | Алерт при 80%, блокировка при 100%, процедура экстренной синхронизации |
-| **Рассинхронизация времени ККТ** | Низкая | Высокое | NTP обязателен, Hybrid Clock снижает зависимость, мониторинг drift |
-| **ФН заполнен во время офлайна** | Низкая | Критичное | Алерт за 3-5 дней, процедура замены ФН с синхронизацией буфера |
-| **Ограниченные ресурсы (1 разработчик)** | Высокая | Среднее | Фокус на MVP, автоматизация тестов, part-time DevOps/QA |
-| **Недостоверные прайсы поставщиков** | Высокая | Среднее | Валидация, превью импорта, алерты на расхождения >20% |
-
----
-
-## 8. Мониторинг и метрики
-
-### 8.1 Ключевые метрики Prometheus
-
-```python
-# Офлайн-буфер
-kkt_buffer_size = Gauge('kkt_buffer_size', 'Current buffer size', ['pos_id'])
-kkt_buffer_percent_full = Gauge('kkt_buffer_percent_full', 'Buffer fullness %', ['pos_id'])
-
-# Circuit Breaker
-kkt_circuit_breaker_state = Gauge('kkt_circuit_breaker_state', 'State: 0=CLOSED, 1=OPEN, 2=HALF_OPEN', ['pos_id'])
-kkt_circuit_breaker_opens = Counter('kkt_circuit_breaker_opens_total', 'Times opened', ['pos_id'])
-
-# Синхронизация
-kkt_sync_duration_seconds = Histogram('kkt_sync_duration_seconds', 'Sync duration', ['pos_id'])
-kkt_receipts_synced = Counter('kkt_receipts_synced_total', 'Total synced', ['pos_id', 'status'])
-
-# DLQ
-kkt_dlq_size = Gauge('kkt_dlq_size', 'Dead Letter Queue size', ['pos_id'])
-
-# Hybrid Clock
-kkt_hlc_drift_seconds = Gauge('kkt_hlc_drift_seconds', 'HLC drift from NTP', ['pos_id'])
-```
-
-### 8.2 Алерты (критичные)
-
-```yaml
-groups:
-  - name: offline_mode_alerts
-    rules:
-      - alert: OfflineBufferWarning
-        expr: kkt_buffer_percent_full >= 80
-        for: 5m
-        labels: { severity: P2 }
-        annotations:
-          summary: "Офлайн-буфер ≥80% на {{ $labels.pos_id }}"
-
-      - alert: OfflineBufferFull
-        expr: kkt_buffer_percent_full >= 100
-        for: 1m
-        labels: { severity: P1 }
-        annotations:
-          summary: "Офлайн-буфер переполнен на {{ $labels.pos_id }}"
-
-      - alert: CircuitBreakerOpen
-        expr: kkt_circuit_breaker_state == 1
-        for: 5m
-        labels: { severity: P2 }
-        annotations:
-          summary: "Circuit Breaker OPEN на {{ $labels.pos_id }}"
-```
-
-### 8.3 Grafana Dashboard (4 панели)
-
-1. **Статус касс:** карта с цветовой индикацией (🟢/🟡/🔴)
-2. **Circuit Breaker:** состояния за 24ч (CLOSED/OPEN/HALF_OPEN)
-3. **Офлайн-буфер:** заполненность, топ-5 касс, средняя синхронизация
-4. **Производительность:** P95 печати, throughput синхронизации, DLQ
+| Риск | Митигация |
+|------|-----------|
+| **Buffer overflow** | Alert @80%, block @100%, emergency sync |
+| **Clock drift** | NTP mandatory, HLC, drift monitoring |
+| **ФН full offline** | Alert 3-5d early, replacement procedure |
+| **1 dev resource** | MVP focus, test automation, part-time DevOps |
 
 ---
 
-## 9. Чек-лист готовности перед развёртыванием
+## 9. Мониторинг и метрики
 
-### 9.1 Pre-flight (перед каждым развёртыванием)
+**Prometheus Metrics:**
+- `kkt_buffer_percent_full` — Buffer fullness %
+- `kkt_circuit_breaker_state` — CB state (0/1/2)
+- `kkt_sync_duration_seconds` — Sync latency
+- `kkt_dlq_size` — DLQ size
+- `kkt_hlc_drift_seconds` — HLC drift from NTP
 
-**Инфраструктура:**
-- [ ] Офлайн-буфер пуст (<10 чеков на всех кассах)
-- [ ] NTP-синхронизация активна (drift <1с)
-- [ ] Кэш каталога актуален (<1ч давности)
-- [ ] Свободное место на диске ≥10GB
-- [ ] Heartbeat к Odoo работает (100% касс)
+**Critical Alerts:**
+- **P1:** Buffer ≥100% (1m), ФН full
+- **P2:** Buffer ≥80% (5m), CB OPEN (5m)
 
-**Функционал:**
-- [ ] Тестовая продажа в онлайн-режиме успешна (все кассы)
-- [ ] Тестовая продажа в офлайн-режиме успешна (минимум 1 касса)
-- [ ] Алерты срабатывают корректно (тест на стенде)
-
-**Мониторинг:**
-- [ ] Grafana дашборд доступен и актуален
-- [ ] Prometheus exporter работает на всех адаптерах
-- [ ] Интеграция с каналами алертов работает
-
-### 9.2 Post-deployment (smoke-test)
-
-**В течение 30 минут:**
-- [ ] Продажа на каждой кассе (100% успех)
-- [ ] Проверка офлайн-буферов (размер не вырос)
-- [ ] Heartbeat восстановлен (все кассы)
-- [ ] Мониторинг: нет критичных алертов
-
-**В течение 24 часов:**
-- [ ] Нет P1/P2 инцидентов
-- [ ] Офлайн-буферы стабильны
-- [ ] Логи: нет критичных ошибок
+**Grafana Panels:**
+1. Статус касс (🟢/🟡/🔴 map)
+2. Circuit Breaker history (24h)
+3. Buffer fullness, top-5 POS
+4. Performance (P95 print, sync throughput, DLQ)
 
 ---
 
-## 10. Регламенты эксплуатации
+## 10. Чек-лист готовности
 
-### 10.1 Бэкапы
+**Pre-flight:**
+- [ ] Buffer <10 чеков, NTP active (drift <1s), disk ≥10GB
+- [ ] Test sale online/offline OK, alerts work
+- [ ] Grafana + Prometheus exporter active
 
-**PostgreSQL:**
-- Ежедневный full backup (pg_dump)
-- Инкрементальные каждые 6 часов
-- Ретенция: 90 дней
+**Post-deployment (30min):**
+- [ ] Sale on each POS (100%), buffer stable, heartbeat OK
 
-**SQLite буферы:**
-- Ежедневный snapshot всех SQLite-файлов
-- Ретенция: 7 дней
-- `PRAGMA wal_checkpoint(TRUNCATE)` перед backup
-
-### 10.2 SLA инцидентов
-
-| Приоритет | Response | Resolution | Эскалация |
-|-----------|----------|------------|-----------|
-| P1 (Critical) | ≤15 мин | ≤1 ч | Владелец через 30 мин |
-| P2 (High) | ≤1 ч | ≤4 ч | Тех. лидер через 2ч |
-| P3 (Medium) | ≤24 ч | ≤3 дня | Нет |
-
-### 10.3 On-call
-
-**Контакты:**
-- L1: __________________ (телефон, telegram)
-- L2: __________________ (телефон, telegram)
-- Владелец: __________________ (только P1)
-
-**Ротация:** недельная (пн 09:00 → пн 09:00)
+**Post-deployment (24h):**
+- [ ] 0 P1/P2 incidents, buffers stable
 
 ---
 
-## 11. Следующие шаги
+## 11. Регламенты эксплуатации
 
-### Немедленно (Неделя 1):
-1. Настроить Docker-окружение (docker-compose.yml)
-2. Создать скелеты модулей Odoo
-3. Начать разработку адаптера ККТ (FastAPI)
-4. Реализовать SQLite буфер с базовой схемой
+**Бэкапы:**
+- **PostgreSQL:** Daily full + 6h incremental (retention 90d)
+- **SQLite:** Daily snapshot (retention 7d) + `PRAGMA wal_checkpoint(TRUNCATE)`
 
-### Короткий срок (Неделя 2-3):
-1. Имплементировать Hybrid Logical Clock
-2. Разработать Circuit Breaker для ОФД
-3. Создать POC-тесты (1-5)
+**SLA:**
+| Priority | Response | Resolution | Escalation |
+|----------|----------|------------|------------|
+| P1 | ≤15m | ≤1h | Owner @30m |
+| P2 | ≤1h | ≤4h | Lead @2h |
+| P3 | ≤24h | ≤3d | — |
 
-### Средний срок (Неделя 4-9):
-1. Завершить MVP (все модули + UAT)
-2. Провести нагрузочные тесты
-3. Подготовить к пилоту
+**On-call:** Weekly rotation (Mon 09:00 → Mon 09:00)
 
 ---
 
-## 12. Дополнительные ресурсы
+## 12. Следующие шаги
 
-**Документация:**
-- docs/1. Постановка задачи.md — цели, OKR, стратегия
-- docs/2. Требования.md — функциональные/нефункциональные требования, UAT
-- docs/3. Архитектура.md — компоненты, API, развёртывание
-- docs/4. Дорожная карта.md — план работ, артефакты
-- docs/5. Руководство по офлайн-режиму.md — архитектура офлайн, Decision Tree, процедуры
+**W1:** Docker setup, Odoo skeletons, FastAPI, SQLite buffer schema
+**W2-3:** HLC, Circuit Breaker, POC tests (1-5)
+**W4-9:** MVP (all modules + UAT), load tests, pilot prep
 
-**Внешние спецификации:**
-- 54-ФЗ: фискализация и отчётность
-- ФФД 1.2: формат фискальных данных
-- Odoo 17 Community: документация
+**Ресурсы:**
+- **Docs:** docs/1-5 (Постановка, Требования, Архитектура, Дорожная карта, Офлайн)
+- **Specs:** 54-ФЗ, ФФД 1.2, Odoo 17 Community
+- **Tools:** pybreaker, python-redis-lock, OpenTelemetry
 
-**Инструменты:**
-- Circuit Breaker: библиотека `pybreaker`
-- Distributed Lock: Redis + `python-redis-lock`
-- Hybrid Clock: custom имплементация
-- OpenTelemetry: трейсинг
-
----
-
-## Заключение
-
-Этот план имплементации OpticsERP фокусируется на **offline-first архитектуре** как критичном требовании. Ключевые моменты:
-
-✅ **Двухфазная фискализация** гарантирует бизнес-непрерывность
-✅ **Circuit Breaker** защищает от каскадных отказов
-✅ **Hybrid Logical Clock** обеспечивает корректный порядок событий
-✅ **Distributed Lock** предотвращает конкурентные конфликты
-✅ **19 недель** от старта до продуктива (T0 → T0+19)
-✅ **Пошаговый план** с чёткими критериями успеха
-
-**Следующий шаг:** начать Спринт 1 (POC) с настройки инфраструктуры.
+**Summary:**
+- ✅ 2-phase fiscalization → business continuity
+- ✅ Circuit Breaker → cascade failure protection
+- ✅ HLC → correct event ordering
+- ✅ 19 weeks (T0 → T0+19) to production
 
 ---
 
 ## 13. AI Agent Handoff Protocol
 
-### 13.1 When Starting New AI Session
+### Session Start
+```bash
+# 1. Read last session
+cat claude_history/session_$(date +%Y%m%d).md
 
-**Purpose:** Resume development from last checkpoint without loss of context.
+# 2. Verify env
+make verify-env && git status
 
-**Steps:**
-
-1. **Resume from checkpoint history:**
-   ```bash
-   # Read last session notes
-   cat claude_history/session_$(date +%Y%m%d).md
-
-   # Or find latest session
-   ls -t claude_history/ | head -1
-   ```
-
-2. **Verify environment:**
-   ```bash
-   # Check project structure
-   make verify-env
-
-   # Check git status (what was changed?)
-   git status
-
-   # List all tests (should be 50+ after POC)
-   pytest --co
-   ```
-
-3. **Run last checkpoint:**
-   ```bash
-   # Example: resuming after W6.2 (optics.lens model)
-   pytest tests/unit/test_lens.py -v
-
-   # Expected: All tests PASS
-   ```
-
-4. **If checkpoint fails:**
-   - **STOP** — do not proceed with development
-   - **Escalate to human** with detailed error report:
-     ```
-     ❌ Checkpoint W6.2 failed
-
-     Test: tests/unit/test_lens.py::test_lens_coating_validation
-     Error: AssertionError: Expected coating 'AR' in allowed list
-
-     Last commit: a3f2d1e "feat(optics_core): add lens model"
-     Last session: claude_history/session_20251008.md
-
-     Action needed: Review lens.py:45 coating validation logic
-     ```
-
-### 13.2 When Ending AI Session
-
-**Purpose:** Document progress for next session (human or AI).
-
-**Steps:**
-
-1. **Document progress:**
-   ```bash
-   # Create/update session file
-   SESSION_FILE="claude_history/session_$(date +%Y%m%d).md"
-
-   cat >> $SESSION_FILE << EOF
-   ## Session $(date +%Y-%m-%d\ %H:%M)
-
-   ### Completed
-   - ✅ optics.lens model implemented (models/lens.py)
-   - ✅ Unit tests written (tests/unit/test_lens.py)
-   - ✅ Checkpoint W6.2 passed
-
-   ### Next Session Tasks
-   - [ ] Implement optics.manufacturing.order workflow
-   - [ ] Run Checkpoint W6.3
-
-   ### Checkpoints Status
-   - W6.1 (prescription model): ✅ PASS
-   - W6.2 (lens model): ✅ PASS
-   - W6.3 (manufacturing order): ⏳ Pending
-
-   ### Blockers
-   - None
-
-   ### Notes
-   - Lens coating validation required additional enum constraint
-   - Added index range check (1.5-1.9) per specs
-   EOF
-   ```
-
-2. **Commit work:**
-   ```bash
-   # Stage changes
-   git add .
-
-   # Commit with checkpoint reference
-   git commit -m "feat(optics_core): implement lens model [W6.2]
-
-   - Add Lens model with type, index, coating fields
-   - Validation for coating options and index range
-   - Unit tests for all lens types (single/bifocal/progressive)
-
-   Checkpoint: W6.2 ✅"
-   ```
-
-3. **Push to remote (if applicable):**
-   ```bash
-   git push origin main
-   ```
-
-### 13.3 Session History Template
-
-**File:** `claude_history/session_YYYYMMDD.md`
-
-```markdown
-# Development Session — YYYY-MM-DD
-
-## Session Info
-- **Date:** 2025-10-08
-- **Duration:** 2 hours
-- **Sprint:** POC Week 6
-- **AI Agent:** Claude Sonnet 4.5
-
----
-
-## Completed Tasks
-
-- ✅ Task description
-  - File: path/to/file.py
-  - Lines changed: +150 -20
-  - Tests: tests/unit/test_file.py (5 tests, all PASS)
-
----
-
-## Checkpoints
-
-| Checkpoint | Status | Details |
-|------------|--------|---------|
-| W6.1 | ✅ PASS | Prescription model tests pass |
-| W6.2 | ✅ PASS | Lens model tests pass |
-| W6.3 | ⏳ Next | Manufacturing order (pending) |
-
----
-
-## Next Session Tasks
-
-1. [ ] Implement optics.manufacturing.order
-2. [ ] Run Checkpoint W6.3
-3. [ ] Start optics_core views if W6.3 passes
-
----
-
-## Blockers
-
-- None
-
----
-
-## Notes & Learnings
-
-- Lens coating enum required CHECK constraint in Odoo
-- Index range validation: 1.5-1.9 (common optical indices)
-- Progressive lens type needs Add field validation
-
----
-
-## Git Commits
-
-- `a3f2d1e` feat(optics_core): implement prescription model [W6.1]
-- `b4e5f2a` feat(optics_core): implement lens model [W6.2]
+# 3. Run last checkpoint
+pytest tests/unit/test_lens.py -v  # Expected: all PASS
 ```
 
-### 13.4 Error Recovery Protocol
+**If checkpoint fails:**
+- ❌ **STOP** — do NOT proceed
+- Escalate to human with error report (test name, error, last commit, action needed)
 
-**When checkpoint fails, follow this protocol:**
+### Session End
+```bash
+# 1. Document progress
+cat >> claude_history/session_$(date +%Y%m%d).md << EOF
+## Session $(date +%Y-%m-%d\ %H:%M)
+### Completed
+- ✅ task [file:line]
+### Next Tasks
+- [ ] next task
+### Checkpoints
+- W6.1: ✅ PASS
+- W6.2: ⏳ Pending
+EOF
 
-1. **Analyze failure:**
-   ```bash
-   # Run with verbose output
-   pytest tests/unit/test_prescription.py -vv
+# 2. Commit + Push
+git add . && git commit -m "feat(scope): description [W6.1]" && git push
+```
 
-   # Check logs
-   tail -100 logs/app.log | grep ERROR
-   ```
+### Error Recovery
+1. **Regression?** → `git reset --hard HEAD~1`
+2. **Coverage drop >5%?** → ROLLBACK
+3. **3 failures?** → Escalate to human with detailed issue report
 
-2. **Check if regression:**
-   ```bash
-   # Run all previously passing tests
-   pytest tests/unit/ -k "not prescription"
+### Code Freeze (After POC)
+**FROZEN (no refactor without approval):**
+- SQLite schema, HLC implementation, Circuit Breaker config, ФФД 1.2 structure, Prometheus metrics
 
-   # If other tests now fail → ROLLBACK
-   git log --oneline -5
-   git reset --hard HEAD~1  # Rollback last commit
-   ```
+**Refactorable (MVP):**
+- API endpoints, UI components, internal functions, variable names
 
-3. **Fix root cause:**
-   - Edit code (NOT tests) to fix issue
-   - Do NOT modify passing tests to make them fail
-   - Re-run full test suite (not just failed tests)
-
-4. **Re-run full test suite:**
-   ```bash
-   pytest tests/unit/ -v
-
-   # All tests should PASS
-   ```
-
-5. **If 3 consecutive failures:**
-   - **Escalate to human**
-   - Create detailed issue report:
-     ```markdown
-     ## ❌ Checkpoint W6.1 Failed (3 attempts)
-
-     **Test:** tests/unit/test_prescription.py::test_sph_range
-     **Error:** AssertionError: -25 not in valid Sph range (-20, +20)
-
-     **Attempts:**
-     1. Fixed Sph validation → test_cyl_validation failed
-     2. Fixed Cyl validation → test_sph_range failed again
-     3. Tried different approach → same error
-
-     **Root Cause Hypothesis:**
-     - Sph range validation logic incorrect (models/prescription.py:67)
-     - Test data generator creating invalid prescriptions?
-
-     **Action Needed:**
-     Human review of Sph validation logic and test fixtures.
-     ```
-
-### 13.5 Auto-Rollback Triggers
-
-**Automatically rollback (git reset) if:**
-
-1. **Regression detected:**
-   - Previously passing tests now fail
-   - Action: `git reset --hard HEAD~1`
-
-2. **Coverage drops >5%:**
-   ```bash
-   # Before commit
-   pytest --cov=kkt_adapter --cov-report=term | grep TOTAL
-   # Coverage: 82%
-
-   # After commit
-   pytest --cov=kkt_adapter --cov-report=term | grep TOTAL
-   # Coverage: 75%  (dropped 7% → ROLLBACK)
-   ```
-
-3. **Linter errors increase:**
-   ```bash
-   # Before: 0 errors
-   # After: 15 errors → ROLLBACK
-   ```
-
-### 13.6 Code Stability Zones
-
-**Frozen after POC (do NOT refactor without explicit approval):**
-
-- SQLite schema (`bootstrap/kkt_adapter_skeleton/schema.sql`)
-- Hybrid Logical Clock implementation (`kkt_adapter/app/hlc.py`)
-- Circuit Breaker configuration (`config.toml` §buffer.*)
-- FFD 1.2 fiscal document structure
-
-**Refactorable during MVP:**
-
-- API endpoint names (for consistency)
-- UI components (офлайн-режим indicators)
-- Prometheus metric names (if Grafana needs changes)
-- Internal function names (non-public API)
-
-**Rule:** If AI wants to refactor frozen code, create issue + ask human approval first.
-
-### 13.7 Context Preservation Checklist
-
-**Before ending session, ensure:**
-
-- [ ] Session history updated (`claude_history/session_YYYYMMDD.md`)
-- [ ] All changes committed with checkpoint reference
-- [ ] Last checkpoint passed (verified with pytest)
-- [ ] No uncommitted changes (`git status` clean)
-- [ ] Next tasks documented clearly
-- [ ] Blockers (if any) escalated to human
-
-**Before starting session, ensure:**
-
-- [ ] Read last session history
-- [ ] Environment verified (`make verify-env`)
-- [ ] Last checkpoint re-run (to verify state)
-- [ ] If checkpoint fails → escalate, do NOT proceed
-
----
-
-## 14. Code Freeze Points & Refactoring Policy
-
-### 14.1 Frozen Components (After POC Sign-Off)
-
-**Components below are FROZEN after POC passes. Do NOT modify without human approval.**
-
-| Component | File(s) | Reason |
-|-----------|---------|--------|
-| **SQLite Schema** | `bootstrap/kkt_adapter_skeleton/schema.sql` | Migration complexity, data durability |
-| **HLC Implementation** | `kkt_adapter/app/hlc.py` | Timestamp ordering critical for conflict resolution |
-| **Circuit Breaker Params** | `config.toml` (buffer.*) | Tuned during POC testing |
-| **FFD 1.2 Structure** | Fiscal doc JSON schema | 54-ФЗ compliance |
-| **Prometheus Metrics** | Metric names/labels | Grafana dashboards depend on them |
-
-**If refactoring needed:**
-1. Create GitHub issue with detailed justification
-2. Wait for human approval
-3. Create migration script (for DB changes)
-4. Update all dependent code/tests
-5. Run full regression test suite
-
-### 14.2 Refactorable Components (During MVP)
-
-**Safe to refactor without approval:**
-
-- API endpoint paths (update docs)
-- Internal function names (non-public API)
-- UI component structure
-- Variable names (maintain readability)
-- Test helper functions
-
-**Best practice:** Still document refactoring in commit message.
-
----
-
-**🤖 For AI Agents:** This handoff protocol ensures continuity across sessions. Always follow §13.1-13.2 when starting/ending work.
+### Context Preservation
+**Before end:** Session history updated, checkpoint PASS, git clean, next tasks documented
+**Before start:** Read history, verify env, re-run checkpoint

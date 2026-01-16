@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Cash Transfer Tree View -->
+    <record id="view_cash_transfer_tree" model="ir.ui.view">
+        <field name="name">account.cash.transfer.tree</field>
+        <field name="model">account.cash.transfer</field>
+        <field name="arch" type="xml">
+            <tree string="Cash Transfers">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="source_account_id"/>
+                <field name="destination_account_id"/>
+                <field name="amount"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Cash Transfer Form View -->
+    <record id="view_cash_transfer_form" model="ir.ui.view">
+        <field name="name">account.cash.transfer.form</field>
+        <field name="model">account.cash.transfer</field>
+        <field name="arch" type="xml">
+            <form string="Cash Transfer">
+                <header>
+                    <button name="action_confirm" string="Confirm" type="object"
+                            invisible="state != 'draft'" class="oe_highlight"/>
+                    <button name="action_post" string="Post" type="object"
+                            invisible="state != 'confirmed'" class="oe_highlight"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state not in ('draft', 'confirmed')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,confirmed,posted"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="date"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="source_account_id"
+                                   options="{'no_create': True}"/>
+                            <field name="destination_account_id"
+                                   options="{'no_create': True}"/>
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="notes" placeholder="Additional notes..."/>
+                    </group>
+                    <group>
+                        <field name="move_id" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Cash Transfer Action -->
+    <record id="action_cash_transfer" model="ir.actions.act_window">
+        <field name="name">Cash Transfers</field>
+        <field name="res_model">account.cash.transfer</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a cash transfer
+            </p>
+            <p>
+                Transfer cash between accounts (e.g., store cash to collection account).
+            </p>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,259 @@
+/**
+ * Offline Indicator Styles - POS UI Component
+ *
+ * Author: AI Agent
+ * Created: 2025-11-27
+ * Task: OPTERP-45
+ * Reference: CLAUDE.md §3.2 (optics_pos_ru54fz module)
+ *
+ * Purpose:
+ * Styles for offline indicator widget with color coding.
+ *
+ * Color Scheme:
+ * - GREEN (#28a745): Online, buffer <50%, CB CLOSED
+ * - YELLOW (#ffc107): Warning, buffer 50-80%, CB HALF_OPEN
+ * - RED (#dc3545): Critical, offline, buffer >80%, CB OPEN
+ */
+
+.offline-indicator {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 9999;
+    min-width: 250px;
+    max-width: 350px;
+    padding: 12px 16px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        transform: translateY(-2px);
+    }
+
+    // ==================
+    // Status Colors
+    // ==================
+
+    &.status-green {
+        border-color: #28a745;
+
+        .indicator-status {
+            color: #28a745;
+        }
+    }
+
+    &.status-yellow {
+        border-color: #ffc107;
+
+        .indicator-status {
+            color: #ffc107;
+        }
+    }
+
+    &.status-red {
+        border-color: #dc3545;
+        animation: pulse-red 2s infinite;
+
+        .indicator-status {
+            color: #dc3545;
+        }
+    }
+
+    // ==================
+    // Loading State
+    // ==================
+
+    .indicator-loading {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6c757d;
+        font-size: 14px;
+
+        i {
+            font-size: 16px;
+        }
+    }
+
+    // ==================
+    // Error State
+    // ==================
+
+    .indicator-error {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        i {
+            color: #dc3545;
+            font-size: 20px;
+        }
+
+        .error-text {
+            color: #dc3545;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .btn {
+            align-self: flex-end;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: #007bff;
+        }
+    }
+
+    // ==================
+    // Normal State
+    // ==================
+
+    .indicator-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        position: relative;
+
+        > div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+
+            i {
+                width: 16px;
+                text-align: center;
+            }
+        }
+    }
+
+    // Status Section
+    .indicator-status {
+        font-weight: 600;
+        font-size: 15px;
+
+        i {
+            font-size: 18px;
+        }
+    }
+
+    // Buffer Section
+    .indicator-buffer {
+        color: #495057;
+
+        .buffer-text {
+            font-weight: 500;
+        }
+    }
+
+    // Circuit Breaker Section
+    .indicator-cb {
+        color: #495057;
+
+        .cb-text {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    }
+
+    // Time Section
+    .indicator-time {
+        color: #6c757d;
+        font-size: 11px;
+
+        .time-text {
+            font-style: italic;
+        }
+    }
+
+    // Refresh Button
+    .indicator-refresh {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        padding: 4px 8px;
+        font-size: 14px;
+        color: #007bff;
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            background: #f8f9fa;
+            border-color: #007bff;
+        }
+
+        &:active {
+            transform: rotate(360deg);
+            transition: transform 0.6s ease;
+        }
+    }
+
+    // ==================
+    // Animations
+    // ==================
+
+    @keyframes pulse-red {
+        0%, 100% {
+            border-color: #dc3545;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        50% {
+            border-color: #ff6b7a;
+            box-shadow: 0 2px 12px rgba(220, 53, 69, 0.4);
+        }
+    }
+
+    // ==================
+    // Responsive
+    // ==================
+
+    @media (max-width: 768px) {
+        top: 5px;
+        right: 5px;
+        min-width: 200px;
+        max-width: 250px;
+        padding: 10px 12px;
+        font-size: 12px;
+
+        .indicator-status {
+            font-size: 14px;
+
+            i {
+                font-size: 16px;
+            }
+        }
+
+        .indicator-content > div {
+            font-size: 12px;
+
+            i {
+                width: 14px;
+                font-size: 13px;
+            }
+        }
+    }
+}
+
+// ==================
+// POS-specific overrides
+// ==================
+
+.pos {
+    .offline-indicator {
+        // Adjust position for POS layout
+        top: 60px; // Below POS header
+
+        // Higher z-index to stay above POS UI
+        z-index: 10000;
+    }
+}

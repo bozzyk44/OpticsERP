@@ -1,0 +1,75 @@
+---
+- name: Fix Odoo port mappings - remove direct 8072 exposure
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+
+  tasks:
+    - name: Backup docker-compose.yml
+      copy:
+        src: "{{ odoo_base_dir }}/docker-compose.yml"
+        dest: "{{ odoo_base_dir }}/docker-compose.yml.backup-$(date +%Y%m%d-%H%M%S)"
+        remote_src: yes
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Update Odoo service - remove port 8072 mapping
+      replace:
+        path: "{{ odoo_base_dir }}/docker-compose.yml"
+        regexp: '^\s+- "8072:8072"\s*$'
+        replace: ''
+      become: yes
+      become_user: "{{ deploy_user }}"
+      register: compose_updated
+
+    - name: Display if changes were made
+      debug:
+        msg: "docker-compose.yml {{ 'was updated' if compose_updated.changed else 'was not changed' }}"
+
+    - name: Restart Odoo to apply port changes
+      shell: cd {{ odoo_base_dir }} && docker compose up -d --force-recreate odoo
+      become: yes
+      become_user: "{{ deploy_user }}"
+      when: compose_updated.changed
+
+    - name: Wait for Odoo to start
+      pause:
+        seconds: 20
+      when: compose_updated.changed
+
+    - name: Verify Odoo is running
+      shell: docker ps --filter name=opticserp_odoo --format '{{ "{{.Status}}" }}'
+      register: odoo_status
+      become: yes
+
+    - name: Display Odoo status
+      debug:
+        msg: "Odoo status: {{ odoo_status.stdout }}"
+
+    - name: Check which ports are exposed
+      shell: docker port opticserp_odoo
+      register: exposed_ports
+      become: yes
+
+    - name: Display exposed ports
+      debug:
+        msg: "{{ exposed_ports.stdout_lines }}"
+
+    - name: Display success message
+      debug:
+        msg: |
+          ✅ Odoo port configuration updated!
+
+          Changes:
+            - Removed direct port 8072 exposure
+            - Port 8069 still exposed for direct HTTP access
+            - All WebSocket connections now go through Nginx
+
+          How it works now:
+            - HTTP: Browser → Nginx:80 → Odoo:8069
+            - WebSocket: Browser → Nginx:80/websocket → Odoo:8072
+
+          This ensures WebSocket connections are properly proxied!

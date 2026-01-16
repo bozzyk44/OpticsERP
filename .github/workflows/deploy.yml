@@ -1,0 +1,176 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_type:
+        description: 'Deployment type'
+        required: true
+        default: 'modules'
+        type: choice
+        options:
+          - modules        # Sync addons and update modules
+          - restart        # Just restart services
+          - full           # Full deployment (use with caution!)
+          - check          # Check services status only
+
+      update_modules:
+        description: 'Update modules after sync (for modules type)'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  ANSIBLE_HOST_KEY_CHECKING: 'false'
+  ANSIBLE_FORCE_COLOR: 'true'
+
+jobs:
+  deploy:
+    name: Deploy OpticsERP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Ansible
+        run: |
+          pip install ansible-core==2.16.3
+          pip install ansible==9.2.0
+          ansible --version
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/opticserp
+          chmod 600 ~/.ssh/opticserp
+
+          # Add server to known_hosts
+          ssh-keyscan -H 194.87.235.33 >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Test SSH connection
+        run: |
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
+            bozzyk44@194.87.235.33 "echo 'SSH connection successful'; hostname; uptime"
+
+      # ============================================================
+      # CHECK SERVICES - Status check only
+      # ============================================================
+      - name: Check services status
+        if: inputs.deployment_type == 'check'
+        run: |
+          cd ansible
+          ansible-playbook -i inventories/production/hosts.yml check-services.yml
+
+      # ============================================================
+      # RESTART SERVICES - Quick restart
+      # ============================================================
+      - name: Restart all services
+        if: inputs.deployment_type == 'restart'
+        run: |
+          cd ansible
+          ansible-playbook -i inventories/production/hosts.yml restart-all-services.yml
+
+      # ============================================================
+      # MODULES DEPLOYMENT - Sync addons and update modules
+      # ============================================================
+      - name: Sync addons to server
+        if: inputs.deployment_type == 'modules'
+        run: |
+          echo "=== Syncing custom addons to server ==="
+
+          for module in optics_core optics_pos_ru54fz connector_b ru_accounting_extras; do
+            echo "Syncing $module..."
+            rsync -avz --delete \
+              --exclude='*.pyc' \
+              --exclude='__pycache__' \
+              --exclude='*.log' \
+              -e "ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no" \
+              addons/$module/ \
+              bozzyk44@194.87.235.33:/tmp/addons/$module/
+          done
+
+          # Copy to destination with sudo
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no bozzyk44@194.87.235.33 "
+            for module in optics_core optics_pos_ru54fz connector_b ru_accounting_extras; do
+              sudo cp -r /tmp/addons/\$module /opt/opticserp/addons/
+            done
+            sudo chown -R root:root /opt/opticserp/addons/
+            echo 'Addons synced successfully'
+          "
+
+      - name: Update Odoo modules
+        if: inputs.deployment_type == 'modules' && inputs.update_modules
+        run: |
+          echo "=== Updating Odoo modules ==="
+
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no bozzyk44@194.87.235.33 "
+            cd /opt/opticserp
+
+            # Stop Odoo
+            sudo docker compose stop odoo
+
+            # Update modules
+            sudo docker compose run --rm odoo odoo \
+              --config /etc/odoo/odoo.conf \
+              -d odoo_production \
+              -u optics_core,optics_pos_ru54fz,connector_b,ru_accounting_extras \
+              --stop-after-init
+
+            # Start Odoo
+            sudo docker compose start odoo
+
+            # Wait for Odoo to be ready
+            sleep 15
+            curl -sI http://localhost:8069/web/health | head -3
+          "
+
+      # ============================================================
+      # FULL DEPLOYMENT - Complete infrastructure deployment
+      # ============================================================
+      - name: Full deployment
+        if: inputs.deployment_type == 'full'
+        run: |
+          echo "=== Running full production deployment ==="
+          echo "WARNING: This will deploy the complete infrastructure!"
+
+          cd ansible
+          ansible-playbook -i inventories/production/hosts.yml deploy-production.yml \
+            --skip-tags "never"
+
+      # ============================================================
+      # FINAL VERIFICATION
+      # ============================================================
+      - name: Verify deployment
+        run: |
+          echo "=== Verifying deployment ==="
+
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no bozzyk44@194.87.235.33 "
+            echo '--- Docker containers ---'
+            sudo docker ps --format 'table {{.Names}}\t{{.Status}}'
+
+            echo ''
+            echo '--- Odoo health check ---'
+            curl -s http://localhost:8069/web/health || echo 'Health endpoint not available'
+
+            echo ''
+            echo '--- KKT Adapter health check ---'
+            curl -s http://localhost:8000/v1/health | head -1 || echo 'KKT Adapter not available'
+          "
+
+      - name: Deployment summary
+        run: |
+          echo "========================================"
+          echo "Deployment completed!"
+          echo "========================================"
+          echo "Type: ${{ inputs.deployment_type }}"
+          echo "Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo ""
+          echo "Access Odoo: http://194.87.235.33:8069"
+          echo "KKT API: http://194.87.235.33:8000/v1/health"
+          echo "========================================"

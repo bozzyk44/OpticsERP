@@ -1,0 +1,39 @@
+---
+# Production inventory example
+# Copy to hosts.yml and configure
+
+all:
+  children:
+    odoo_servers:
+      hosts:
+        odoo-prod-01:
+          ansible_host: YOUR_SERVER_IP_HERE  # ← CHANGE ME
+          ansible_user: deploy
+          ansible_port: 22
+          server_role: primary
+
+    kkt_adapters:
+      hosts:
+        kkt-adapter-01:
+          ansible_host: YOUR_KKT_SERVER_IP_HERE  # ← CHANGE ME
+          ansible_user: deploy
+          ansible_port: 22
+          pos_location: store_01
+
+    db_servers:
+      hosts:
+        db-prod-01:
+          ansible_host: YOUR_DB_SERVER_IP_HERE  # ← CHANGE ME
+          ansible_user: deploy
+          ansible_port: 22
+
+    monitoring_servers:
+      hosts:
+        monitoring-01:
+          ansible_host: YOUR_MONITORING_SERVER_IP_HERE  # ← CHANGE ME
+          ansible_user: deploy
+          ansible_port: 22
+
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    deployment_env: production

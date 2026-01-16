@@ -1,0 +1,9 @@
+---
+# Handlers for monitoring role
+
+- name: restart monitoring
+  docker_compose:
+    project_src: "{{ monitoring_dir }}"
+    restarted: yes
+  become: yes
+  become_user: "{{ deploy_user }}"

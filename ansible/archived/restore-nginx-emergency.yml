@@ -1,0 +1,56 @@
+---
+- name: EMERGENCY - Restore Nginx from backup
+  hosts: odoo_servers
+  become: true
+
+  tasks:
+    - name: Check Nginx error logs
+      shell: journalctl -u nginx -n 50 --no-pager
+      register: nginx_errors
+      become: yes
+
+    - name: Display Nginx error logs
+      debug:
+        msg: "{{ nginx_errors.stdout_lines }}"
+
+    - name: Restore nginx.conf from backup (remove map directive)
+      shell: |
+        # Remove the map directive we just added
+        sudo sed -i '/# BEGIN ANSIBLE MANAGED BLOCK - WebSocket map/,/# END ANSIBLE MANAGED BLOCK - WebSocket map/d' /etc/nginx/nginx.conf
+      become: yes
+      ignore_errors: yes
+
+    - name: Restore site configuration from backup
+      copy:
+        src: /etc/nginx/sites-available/194.87.235.33.conf.backup
+        dest: /etc/nginx/sites-available/194.87.235.33.conf
+        remote_src: yes
+        owner: root
+        group: root
+        mode: '0644'
+      become: yes
+
+    - name: Test restored configuration
+      command: nginx -t
+      register: nginx_test
+      become: yes
+
+    - name: Display test result
+      debug:
+        msg: "{{ nginx_test.stderr_lines }}"
+
+    - name: Start Nginx
+      systemd:
+        name: nginx
+        state: started
+      become: yes
+
+    - name: Check Nginx status
+      systemd:
+        name: nginx
+      register: nginx_status
+      become: yes
+
+    - name: Display Nginx status
+      debug:
+        msg: "Nginx status: {{ nginx_status.status.ActiveState }}"

@@ -1,0 +1,160 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* optics_pos_ru54fz
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0-20251121\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-30 08:27+0000\n"
+"PO-Revision-Date: 2025-11-30 08:27+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_config__kkt_adapter_status
+msgid "Connection Status"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_order__fiscal_sync_date
+msgid "Date when receipt was synced to OFD"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_config__kkt_adapter_enabled
+msgid "Enable KKT Adapter"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_config__kkt_adapter_enabled
+msgid "Enable integration with KKT adapter for fiscal printing"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_order__fiscal_doc_id
+msgid "Fiscal Document ID"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_order__fiscal_sync_date
+msgid "Fiscal Sync Date"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_order__fiscal_sync_status
+msgid "Fiscal Sync Status"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_order__fiscal_doc_id
+msgid "Fiscal document ID (HLC timestamp) from KKT adapter"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__id
+msgid "ID"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_config__kkt_adapter_url
+msgid "KKT Adapter URL"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_config__kkt_adapter_status
+msgid "KKT adapter connection status"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,field_description:optics_pos_ru54fz.field_pos_offline_buffer_status__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/xml/offline_indicator.xml:0
+#, python-format
+msgid "Loading..."
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields.selection,name:optics_pos_ru54fz.selection__pos_order__fiscal_sync_status__not_required
+msgid "Not Required"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model,name:optics_pos_ru54fz.model_pos_offline_buffer_status
+msgid "POS Offline Buffer Status"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields.selection,name:optics_pos_ru54fz.selection__pos_order__fiscal_sync_status__pending
+msgid "Pending Sync"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model,name:optics_pos_ru54fz.model_pos_config
+msgid "Point of Sale Configuration"
+msgstr "Конфигурация точки продаж"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model,name:optics_pos_ru54fz.model_pos_order
+msgid "Point of Sale Orders"
+msgstr "Заказы в торговых точках"
+
+#. module: optics_pos_ru54fz
+#: model:ir.model,name:optics_pos_ru54fz.model_pos_session
+msgid "Point of Sale Session"
+msgstr "Сессия в торговой точке"
+
+#. module: optics_pos_ru54fz
+#. odoo-javascript
+#: code:addons/optics_pos_ru54fz/static/src/xml/offline_indicator.xml:0
+#, python-format
+msgid "Retry"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_order__fiscal_sync_status
+msgid "Status of fiscal receipt sync to OFD"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields.selection,name:optics_pos_ru54fz.selection__pos_order__fiscal_sync_status__failed
+msgid "Sync Failed"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields.selection,name:optics_pos_ru54fz.selection__pos_order__fiscal_sync_status__synced
+msgid "Synced"
+msgstr ""
+
+#. module: optics_pos_ru54fz
+#: model:ir.model.fields,help:optics_pos_ru54fz.field_pos_config__kkt_adapter_url
+msgid "URL of KKT adapter service (e.g., http://localhost:8000)"
+msgstr ""

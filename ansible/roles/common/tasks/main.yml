@@ -1,0 +1,134 @@
+---
+# Common role - System preparation tasks
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  apt:
+    upgrade: dist
+    autoremove: yes
+    autoclean: yes
+
+- name: Remove ntp package (conflicts with chrony)
+  apt:
+    name: ntp
+    state: absent
+    purge: yes
+  ignore_errors: yes
+
+- name: Stop and disable systemd-timesyncd (conflicts with chrony)
+  systemd:
+    name: systemd-timesyncd
+    enabled: no
+    state: stopped
+  ignore_errors: yes
+
+- name: Install common packages
+  apt:
+    name: "{{ common_packages }}"
+    state: present
+
+- name: Set timezone
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Configure locale
+  locale_gen:
+    name: "{{ locale }}"
+    state: present
+
+- name: Set default locale
+  command: localectl set-locale LANG={{ locale }}
+  changed_when: false
+
+- name: Create deploy group
+  group:
+    name: "{{ deploy_group }}"
+    state: present
+
+- name: Create deploy user
+  user:
+    name: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    groups: sudo
+    shell: /bin/bash
+    create_home: yes
+    home: "{{ deploy_home }}"
+    append: yes
+
+- name: Add deploy user to sudoers without password
+  lineinfile:
+    path: /etc/sudoers.d/{{ deploy_user }}
+    line: "{{ deploy_user }} ALL=(ALL) NOPASSWD:ALL"
+    create: yes
+    mode: '0440'
+    validate: 'visudo -cf %s'
+
+- name: Create .ssh directory for deploy user
+  file:
+    path: "{{ deploy_home }}/.ssh"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0700'
+
+- name: Configure NTP with chrony
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+    mode: '0644'
+  notify: restart chrony
+
+- name: Enable and start chrony
+  systemd:
+    name: chrony
+    enabled: yes
+    state: started
+
+- name: Disable systemd-timesyncd (conflicts with chrony)
+  systemd:
+    name: systemd-timesyncd
+    enabled: no
+    state: stopped
+  ignore_errors: yes
+
+- name: Configure system limits
+  pam_limits:
+    domain: "{{ item.domain }}"
+    limit_type: "{{ item.limit_type }}"
+    limit_item: "{{ item.limit_item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { domain: '*', limit_type: 'soft', limit_item: 'nofile', value: '65536' }
+    - { domain: '*', limit_type: 'hard', limit_item: 'nofile', value: '65536' }
+    - { domain: '*', limit_type: 'soft', limit_item: 'nproc', value: '32768' }
+    - { domain: '*', limit_type: 'hard', limit_item: 'nproc', value: '32768' }
+
+- name: Configure sysctl for production
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    - { name: 'vm.swappiness', value: '10' }
+    - { name: 'vm.max_map_count', value: '262144' }
+    - { name: 'net.core.somaxconn', value: '4096' }
+    - { name: 'net.ipv4.tcp_max_syn_backlog', value: '8192' }
+    - { name: 'fs.file-max', value: '2097152' }
+
+- name: Create application directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0755'
+  loop:
+    - /opt/opticserp
+    - /var/log/opticserp
+    - "{{ backup_path }}"
+    - /etc/opticserp

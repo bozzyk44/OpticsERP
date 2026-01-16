@@ -1,0 +1,105 @@
+---
+- name: Restart all services properly
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+    mock_services_dir: "/opt/opticserp/mock_services"
+
+  tasks:
+    - name: Get all running opticserp containers
+      shell: docker ps --filter "name=opticserp" --format '{{ "{{.Names}}" }}'
+      register: running_containers
+      become: yes
+
+    - name: Display running containers
+      debug:
+        msg: "{{ running_containers.stdout_lines }}"
+
+    - name: Stop all opticserp services (main docker-compose)
+      shell: cd {{ odoo_base_dir }} && docker compose down
+      become: yes
+      become_user: "{{ deploy_user }}"
+      ignore_errors: yes
+
+    - name: Wait for containers to stop
+      pause:
+        seconds: 5
+
+    - name: Start main services (Odoo, Redis, PostgreSQL)
+      shell: cd {{ odoo_base_dir }} && docker compose up -d redis odoo
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Wait for Redis and Odoo to be ready
+      pause:
+        seconds: 10
+
+    - name: Start KKT Adapter
+      shell: cd {{ odoo_base_dir }} && docker compose up -d kkt_adapter
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Wait for KKT Adapter to initialize
+      pause:
+        seconds: 10
+
+    - name: Check KKT Adapter logs
+      shell: cd {{ odoo_base_dir }} && docker compose logs --tail=30 kkt_adapter 2>&1
+      register: kkt_logs
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Display KKT Adapter logs
+      debug:
+        msg: "{{ kkt_logs.stdout_lines }}"
+
+    - name: Check KKT Adapter health
+      uri:
+        url: http://localhost:8000/v1/health
+        status_code: 200
+        timeout: 10
+      register: kkt_health
+      retries: 5
+      delay: 5
+      ignore_errors: yes
+
+    - name: Display KKT Adapter health (if available)
+      debug:
+        msg: "{{ kkt_health.json | default('Health check failed') }}"
+
+    - name: Start Celery Worker and Flower
+      shell: cd {{ odoo_base_dir }} && docker compose up -d celery_worker celery_flower
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Wait for all services to stabilize
+      pause:
+        seconds: 10
+
+    - name: Get final status of all services
+      shell: docker ps --filter "name=opticserp"
+      register: final_status
+      become: yes
+
+    - name: Display final status
+      debug:
+        msg: "{{ final_status.stdout_lines }}"
+
+    - name: Display success message
+      debug:
+        msg: |
+          ✅ All services restarted!
+
+          Mock services:
+            - mock_ofd (port 9000)
+            - mock_odoo_api (port 8070)
+
+          Main services:
+            - Odoo (port 8069)
+            - Redis (port 6379)
+            - KKT Adapter (port 8000)
+            - Celery Worker
+            - Celery Flower (port 5555)

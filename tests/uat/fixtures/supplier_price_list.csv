@@ -1,0 +1,11 @@
+SKU,Product Name,Price,Stock,Category,Brand
+SKU001,Progressive Lens 1.67,5000.00,100,Lenses,Brand A
+SKU002,Single Vision Lens 1.5,2000.00,150,Lenses,Brand A
+SKU003,Bifocal Lens 1.6,3500.00,80,Lenses,Brand B
+SKU004,Frame Model X Black,3000.00,50,Frames,Brand C
+SKU005,Frame Model Y Brown,3200.00,45,Frames,Brand C
+SKU006,Anti-Reflective Coating,500.00,200,Coatings,Brand A
+SKU007,Photochromic Coating,800.00,120,Coatings,Brand B
+SKU008,Cleaning Solution 100ml,150.00,300,Accessories,Generic
+SKU009,Lens Case Premium,250.00,200,Accessories,Generic
+SKU010,Progressive Lens 1.74,6500.00,60,Lenses,Brand B

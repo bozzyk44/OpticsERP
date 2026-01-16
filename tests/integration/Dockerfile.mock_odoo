@@ -1,0 +1,41 @@
+# Dockerfile for Mock Odoo Server
+# Purpose: Lightweight Flask server simulating Odoo API
+#
+# Build: docker build -f Dockerfile.mock_odoo -t mock_odoo:latest .
+# Run:   docker run -p 8070:8070 mock_odoo:latest
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements-mock.txt /app/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements-mock.txt
+
+# Copy mock Odoo server code
+COPY mock_odoo_server.py /app/
+COPY mock_odoo_standalone.py /app/
+
+# Expose port
+EXPOSE 8070
+
+# Set environment variables
+ENV FLASK_ENV=development \
+    ODOO_PORT=8070 \
+    ODOO_HOST=0.0.0.0 \
+    PYTHONUNBUFFERED=1
+
+# Health check
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=5s \
+    CMD curl -f http://localhost:8070/api/v1/health || exit 1
+
+# Run standalone server
+CMD ["python", "mock_odoo_standalone.py"]

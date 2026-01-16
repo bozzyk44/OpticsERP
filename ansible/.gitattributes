@@ -1,0 +1,10 @@
+# Force LF line endings for shell scripts and .env files
+# This prevents CRLF issues when sourcing files in bash
+
+*.sh text eol=lf
+.env text eol=lf
+.env.* text eol=lf
+
+# Ansible files
+*.yml text eol=lf
+*.yaml text eol=lf

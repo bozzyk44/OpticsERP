@@ -1,0 +1,7 @@
+---
+# Handlers for PostgreSQL role
+
+- name: restart postgresql
+  systemd:
+    name: postgresql
+    state: restarted

@@ -1,0 +1,95 @@
+---
+- name: Kill processes and restart services cleanly
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+
+  tasks:
+    - name: Stop all Docker containers
+      shell: docker stop $(docker ps -aq) 2>/dev/null || true
+      become: yes
+      ignore_errors: yes
+
+    - name: Remove all Docker containers
+      shell: docker rm $(docker ps -aq) 2>/dev/null || true
+      become: yes
+      ignore_errors: yes
+
+    - name: Check if port 6379 is still in use
+      shell: netstat -tulpn | grep 6379 || echo "Port 6379 is free"
+      register: port_check
+      become: yes
+
+    - name: Display port status
+      debug:
+        msg: "{{ port_check.stdout_lines }}"
+
+    - name: Kill process on port 6379 if exists
+      shell: |
+        PID=$(lsof -ti:6379 || true)
+        if [ -n "$PID" ]; then
+          kill -9 $PID
+          echo "Killed process $PID on port 6379"
+        else
+          echo "No process on port 6379"
+        fi
+      register: kill_result
+      become: yes
+
+    - name: Display kill result
+      debug:
+        msg: "{{ kill_result.stdout }}"
+
+    - name: Wait for ports to be freed
+      pause:
+        seconds: 3
+
+    - name: Start all services
+      shell: cd {{ odoo_base_dir }} && docker compose up -d
+      become: yes
+      become_user: "{{ deploy_user }}"
+      register: compose_up
+
+    - name: Display docker compose up output
+      debug:
+        msg: "{{ compose_up.stderr_lines }}"
+
+    - name: Wait for services to initialize
+      pause:
+        seconds: 20
+
+    - name: Check all containers status
+      shell: docker ps --all --filter "name=opticserp"
+      register: containers_status
+      become: yes
+
+    - name: Display containers status
+      debug:
+        msg: "{{ containers_status.stdout_lines }}"
+
+    - name: Check KKT Adapter logs
+      shell: cd {{ odoo_base_dir }} && docker compose logs --tail=50 kkt_adapter 2>&1
+      register: kkt_logs
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Display KKT Adapter logs
+      debug:
+        msg: "{{ kkt_logs.stdout_lines[-30:] }}"
+
+    - name: Test KKT Adapter health
+      uri:
+        url: http://localhost:8000/v1/health
+        status_code: 200
+        timeout: 10
+      register: kkt_health
+      retries: 3
+      delay: 5
+      ignore_errors: yes
+
+    - name: Display health check result
+      debug:
+        msg: "{{ kkt_health.json | default('Health check failed: ' + (kkt_health.msg | default('Connection refused'))) }}"

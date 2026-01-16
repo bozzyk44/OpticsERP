@@ -1,0 +1,1241 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* optics_core
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0-20251121\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-30 08:25+0000\n"
+"PO-Revision-Date: 2025-11-30 08:25+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid ""
+"<strong>⚠️ Late Order!</strong> This order is past its expected delivery "
+"date."
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__message_needaction
+msgid "Action Needed"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__active
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__active
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__active
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__active
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_search
+msgid "Active"
+msgstr "Активен"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__activity_ids
+msgid "Activities"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__activity_state
+msgid "Activity State"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__activity_type_icon
+msgid "Activity Type Icon"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Addition & Prism"
+msgstr "Аддидация и призма"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__additional_cost
+msgid "Additional Cost"
+msgstr "Дополнительная стоимость"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens_coating__additional_cost
+msgid "Additional cost added to lens price"
+msgstr "Дополнительная стоимость к цене линзы"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__notes
+msgid "Additional notes and special instructions"
+msgstr "Дополнительные примечания и специальные инструкции"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Additional notes and special instructions..."
+msgstr "Дополнительные примечания и специальные инструкции..."
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__notes
+msgid "Additional notes or special instructions"
+msgstr "Дополнительные примечания или специальные инструкции"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Additional notes or special instructions..."
+msgstr "Дополнительные примечания или специальные инструкции..."
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__coating_ids
+msgid ""
+"Applied coatings: AR (Anti-Reflective), HC (Hard Coating), UV, Photochromic"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_search
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_search
+msgid "Archived"
+msgstr "Архивировано"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__message_attachment_count
+msgid "Attachment Count"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_lens__type__bifocal
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_search
+msgid "Bifocal"
+msgstr "Бифокальные"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Binocular PD"
+msgstr "Бинокулярное МР"
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_lens__material__cr39
+msgid "CR-39 (Plastic)"
+msgstr "CR-39 (Пластик)"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Cancel"
+msgstr "Отменить"
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_manufacturing_order__state__cancelled
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Cancelled"
+msgstr "Отменено"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__center_thickness
+msgid "Center Thickness (mm)"
+msgstr "Толщина по центру (мм)"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__center_thickness
+msgid "Center thickness in millimeters"
+msgstr "Толщина по центру в миллиметрах"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__name
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_coating_form
+msgid "Coating Name"
+msgstr "Название покрытия"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens_coating__description
+msgid "Coating benefits and features"
+msgstr "Преимущества и особенности покрытия"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_coating_form
+msgid "Coating benefits and features..."
+msgstr "Преимущества и особенности покрытия..."
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_lens_coating_unique_code
+msgid "Coating code must be unique"
+msgstr "Код покрытия должен быть уникальным"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__coating_ids
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__coating_summary
+msgid "Coatings"
+msgstr "Покрытия"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__code
+msgid "Code"
+msgstr "Код"
+
+#. module: optics_core
+#: model:ir.ui.menu,name:optics_core.menu_optics_configuration
+msgid "Configuration"
+msgstr "Настройки"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Confirm"
+msgstr "Подтвердить"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__date_confirmed
+msgid "Confirmation Date"
+msgstr "Дата подтверждения"
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_manufacturing_order__state__confirmed
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Confirmed"
+msgstr "Подтверждено"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__cost_price
+msgid "Cost Price"
+msgstr "Себестоимость"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_lens_check_cost_price_positive
+msgid "Cost price must be positive"
+msgstr "Себестоимость должна быть положительной"
+
+#. module: optics_core
+#: model_terms:ir.actions.act_window,help:optics_core.action_optics_manufacturing_order
+msgid "Create a new Manufacturing Order"
+msgstr "Создать новый заказ на изготовление"
+
+#. module: optics_core
+#: model_terms:ir.actions.act_window,help:optics_core.action_optics_lens_coating
+msgid "Create your first coating!"
+msgstr "Создайте первое покрытие!"
+
+#. module: optics_core
+#: model_terms:ir.actions.act_window,help:optics_core.action_optics_lens
+msgid "Create your first lens!"
+msgstr "Создайте первую линзу!"
+
+#. module: optics_core
+#: model_terms:ir.actions.act_window,help:optics_core.action_optics_prescription
+msgid "Create your first prescription"
+msgstr "Создайте первый рецепт"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__create_uid
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__create_uid
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__create_uid
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__create_uid
+msgid "Created by"
+msgstr "Создано пользователем"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__create_date
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__create_date
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__create_date
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__create_date
+msgid "Created on"
+msgstr "Дата создания"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__customer_id
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Customer"
+msgstr "Клиент"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Customer Information"
+msgstr "Информация о клиенте"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__customer_id
+msgid "Customer who placed the order"
+msgstr "Клиент, разместивший заказ"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_search
+msgid "Date"
+msgstr "Дата"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__date_confirmed
+msgid "Date when order was confirmed"
+msgstr "Дата подтверждения заказа"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__date_order
+msgid "Date when order was created"
+msgstr "Дата создания заказа"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__date_delivered
+msgid "Date when order was delivered"
+msgstr "Дата доставки заказа"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__date_ready
+msgid "Date when order was ready for delivery"
+msgstr "Дата готовности к доставке"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__date
+msgid "Date when prescription was issued"
+msgstr "Дата выдачи рецепта"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__date_production_start
+msgid "Date when production started"
+msgstr "Дата начала производства"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_manufacturing_order_check_dates_positive
+msgid "Dates must be in chronological order"
+msgstr "Даты должны быть в хронологическом порядке"
+
+#. module: optics_core
+#: model_terms:ir.actions.act_window,help:optics_core.action_optics_lens_coating
+msgid "Define available coatings: AR, HC, UV, Photochromic, etc."
+msgstr "Доступные покрытия: AR, HC, UV, фотохромные и т.д."
+
+#. module: optics_core
+#: model_terms:ir.actions.act_window,help:optics_core.action_optics_lens
+msgid ""
+"Define lens catalog with specifications (type, index, material, coatings)."
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Deliver"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_manufacturing_order__state__delivered
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Delivered"
+msgstr "Доставлено"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__date_delivered
+msgid "Delivery Date"
+msgstr "Дата доставки"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Delivery Information"
+msgstr "Информация о доставке"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__description
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__description
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_form
+msgid "Description"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__description
+msgid "Detailed lens description, features, and specifications"
+msgstr "Подробное описание линзы, характеристики и спецификации"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_form
+msgid "Detailed lens description, features, and specifications..."
+msgstr "Подробное описание линзы, характеристики и спецификации..."
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__diameter
+msgid "Diameter (mm)"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__display_name
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__display_name
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__display_name
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens_coating__sequence
+msgid "Display order"
+msgstr "Порядок отображения"
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_manufacturing_order__state__draft
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Draft"
+msgstr "Черновик"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__duration_days
+msgid "Duration (Days)"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__duration_days
+msgid "Duration from confirmation to delivery in days"
+msgstr "Длительность от подтверждения до доставки в днях"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__expected_delivery_date
+msgid "Expected Delivery"
+msgstr "Ожидаемая дата"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__expected_delivery_date
+msgid "Expected delivery date (calculated from confirmation date)"
+msgstr "Ожидаемая дата доставки (рассчитывается от даты подтверждения)"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__message_follower_ids
+msgid "Followers"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__message_partner_ids
+msgid "Followers (Partners)"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens_coating__name
+msgid "Full coating name (e.g., \"Anti-Reflective Coating\")"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__patient_name
+msgid "Full name of patient"
+msgstr "Полное имя пациента"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_search
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_search
+msgid "Group By"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__has_message
+msgid "Has Message"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_lens__material__high_index
+msgid "High-Index Glass"
+msgstr "Стекло с высоким показателем преломления"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__id
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__id
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__id
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__id
+msgid "ID"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__activity_exception_icon
+msgid "Icon"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__message_has_error
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_manufacturing_order__state__production
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "In Production"
+msgstr "В производстве"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__index
+msgid ""
+"Index of refraction: 1.5 (standard), 1.6 (thin), 1.67 (ultra-thin), 1.74 "
+"(super-thin)"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__notes
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_form
+msgid "Internal Notes"
+msgstr "Внутренние примечания"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Internal notes for production team..."
+msgstr "Внутренние примечания для производства..."
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__notes
+msgid "Internal notes for staff (not visible to customers)"
+msgstr "Внутренние примечания для персонала (не видны клиентам)"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_form
+msgid "Internal notes for staff (not visible to customers)..."
+msgstr "Внутренние примечания для персонала (не видны клиентам)..."
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__message_is_follower
+msgid "Is Follower"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__is_late
+msgid "Is Late"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__write_uid
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__write_uid
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__write_uid
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__write_uid
+msgid "Last Updated by"
+msgstr "Последнее изменение"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__write_date
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__write_date
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__write_date
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__write_date
+msgid "Last Updated on"
+msgstr "Дата изменения"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Late Orders"
+msgstr "Просроченные заказы"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Left Eye (OS)"
+msgstr "Левый глаз (OS)"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__os_add
+msgid "Left eye addition for progressive/bifocal lenses: -30.00 to +20.00"
+msgstr "Аддидация левого глаза для прогрессивных/бифокальных линз: от -30.00 до +20.00"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__os_axis
+msgid "Left eye axis: 1-180°"
+msgstr "Ось левого глаза: 1-180°"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__os_cyl
+msgid "Left eye cylinder: -4.00 to 0.00"
+msgstr "Цилиндр левого глаза: от -4.00 до 0.00"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__prism_os
+msgid "Left eye prism (e.g., \"1.5 BU\")"
+msgstr "Призма левого глаза (напр., \"1.5 BU\")"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__os_sph
+msgid "Left eye sphere: -20.00 to +20.00"
+msgstr "Сфера левого глаза: от -20.00 до +20.00"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__pd_left
+msgid "Left monocular PD"
+msgstr "Левое монокулярное МР"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__lens_id
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_form
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Lens"
+msgstr "Линза"
+
+#. module: optics_core
+#: model:ir.model,name:optics_core.model_optics_lens_coating
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_coating_form
+msgid "Lens Coating"
+msgstr "Покрытие линзы"
+
+#. module: optics_core
+#: model:ir.actions.act_window,name:optics_core.action_optics_lens_coating
+#: model:ir.ui.menu,name:optics_core.menu_optics_lens_coatings
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_coating_tree
+msgid "Lens Coatings"
+msgstr "Покрытия линз"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_form
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_search
+msgid "Lens Name"
+msgstr "Название линзы"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Lens Specification"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__type
+msgid "Lens Type"
+msgstr "Тип линзы"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__diameter
+msgid "Lens diameter in millimeters"
+msgstr "Диаметр линзы в миллиметрах"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__manufacturer
+msgid "Lens manufacturer (e.g., Zeiss, Essilor, Hoya)"
+msgstr "Производитель линз (напр., Zeiss, Essilor, Hoya)"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__material
+msgid "Lens material affects weight, durability, and optical clarity"
+msgstr "Материал линзы влияет на вес, прочность и оптическую четкость"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__name
+msgid "Lens product name (e.g., \"Zeiss Progressive 1.67 AR+UV\")"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__lens_id
+msgid "Lens to be manufactured"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__weight
+msgid "Lens weight in grams"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.actions.act_window,name:optics_core.action_optics_lens
+#: model:ir.ui.menu,name:optics_core.menu_optics_lenses
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_tree
+msgid "Lenses"
+msgstr "Линзы"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__patient_id
+msgid "Link to customer/patient record"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__manufacturer
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_form
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_search
+msgid "Manufacturer"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Manufacturing Order"
+msgstr "Заказ на изготовление"
+
+#. module: optics_core
+#: model:ir.actions.act_window,name:optics_core.action_optics_manufacturing_order
+#: model:ir.ui.menu,name:optics_core.menu_optics_manufacturing
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_tree
+msgid "Manufacturing Orders"
+msgstr "Заказы на изготовление"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__name
+msgid "Manufacturing order reference number"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__state
+msgid "Manufacturing order status"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.actions.act_window,help:optics_core.action_optics_manufacturing_order
+msgid ""
+"Manufacturing orders track the production process of optical lenses\n"
+"                from order confirmation through to delivery."
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Mark Ready"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__material
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_search
+msgid "Material"
+msgstr "Материал"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__message_has_error
+msgid "Message Delivery error"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__message_ids
+msgid "Messages"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Monocular PD"
+msgstr "Монокулярное МР"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__name
+msgid "Name"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__activity_summary
+msgid "Next Activity Summary"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__activity_type_id
+msgid "Next Activity Type"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__notes
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__notes
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Notes"
+msgstr "Примечания"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__production_notes
+msgid "Notes for production team"
+msgstr "Примечания для производства"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__message_needaction_counter
+msgid "Number of Actions"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__message_has_error_counter
+msgid "Number of errors"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__od_add
+msgid "OD Add"
+msgstr "OD Аддидация"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_prescription_check_od_add_range
+msgid "OD Add must be between -30.00 and +20.00"
+msgstr "OD Аддидация должна быть от -30.00 до +20.00"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__od_axis
+msgid "OD Axis"
+msgstr "OD Ось"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_prescription_check_od_axis_range
+msgid "OD Axis must be between 1 and 180"
+msgstr "OD Ось должна быть от 1 до 180"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__od_cyl
+msgid "OD Cylinder"
+msgstr "OD Цилиндр"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_prescription_check_od_cyl_range
+msgid "OD Cylinder must be between -4.00 and 0.00"
+msgstr "OD Цилиндр должен быть от -4.00 до 0.00"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__prism_od
+msgid "OD Prism"
+msgstr "OD Призма"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__od_sph
+msgid "OD Sphere"
+msgstr "OD Сфера"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_prescription_check_od_sph_range
+msgid "OD Sphere must be between -20.00 and +20.00"
+msgstr "OD Сфера должна быть от -20.00 до +20.00"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__os_add
+msgid "OS Add"
+msgstr "OS Аддидация"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_prescription_check_os_add_range
+msgid "OS Add must be between -30.00 and +20.00"
+msgstr "OS Аддидация должна быть от -30.00 до +20.00"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__os_axis
+msgid "OS Axis"
+msgstr "OS Ось"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_prescription_check_os_axis_range
+msgid "OS Axis must be between 1 and 180"
+msgstr "OS Ось должна быть от 1 до 180"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__os_cyl
+msgid "OS Cylinder"
+msgstr "OS Цилиндр"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_prescription_check_os_cyl_range
+msgid "OS Cylinder must be between -4.00 and 0.00"
+msgstr "OS Цилиндр должен быть от -4.00 до 0.00"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__prism_os
+msgid "OS Prism"
+msgstr "OS Призма"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__os_sph
+msgid "OS Sphere"
+msgstr "OS Сфера"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_prescription_check_os_sph_range
+msgid "OS Sphere must be between -20.00 and +20.00"
+msgstr "OS Сфера должна быть от -20.00 до +20.00"
+
+#. module: optics_core
+#: model:ir.model,name:optics_core.model_optics_lens
+msgid "Optical Lens"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model,name:optics_core.model_optics_manufacturing_order
+msgid "Optical Manufacturing Order"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model,name:optics_core.model_optics_prescription
+msgid "Optical Prescription"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.actions.act_window,help:optics_core.action_optics_prescription
+msgid ""
+"Optical prescriptions specify lens parameters (Sph, Cyl, Axis, Add, PD)\n"
+"                for manufacturing orders."
+msgstr ""
+
+#. module: optics_core
+#: model:ir.ui.menu,name:optics_core.menu_optics_root
+msgid "Optics"
+msgstr "Оптика"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__date_order
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Order Date"
+msgstr "Дата заказа"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__name
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Order Reference"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__pd
+msgid "PD (mm)"
+msgstr "МР (мм)"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__pd_left
+msgid "PD Left (mm)"
+msgstr "МР левый (мм)"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__pd_right
+msgid "PD Right (mm)"
+msgstr "МР правый (мм)"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_prescription_check_pd_range
+msgid "PD must be between 56.0 and 72.0 mm"
+msgstr "МР должно быть от 56.0 до 72.0 мм"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__patient_id
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_search
+msgid "Patient"
+msgstr "Пациент"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Patient Information"
+msgstr "Информация о пациенте"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__patient_name
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Patient Name"
+msgstr "Имя пациента"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_form
+msgid "Physical Properties"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_lens__material__polycarbonate
+msgid "Polycarbonate"
+msgstr "Поликарбонат"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__prescription_id
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Prescription"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_prescription__date
+msgid "Prescription Date"
+msgstr "Дата рецепта"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__prescription_id
+msgid "Prescription for lens manufacturing"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.actions.act_window,name:optics_core.action_optics_prescription
+#: model:ir.ui.menu,name:optics_core.menu_optics_prescriptions
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_tree
+msgid "Prescriptions"
+msgstr "Рецепты"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_form
+msgid "Pricing"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__production_notes
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Production Notes"
+msgstr "Производственные примечания"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__date_production_start
+msgid "Production Start Date"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_lens__type__progressive
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_search
+msgid "Progressive"
+msgstr "Прогрессивные"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Pupillary Distance"
+msgstr "Межзрачковое расстояние"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__pd
+msgid "Pupillary Distance: 56.0-72.0 mm"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__cost_price
+msgid "Purchase cost from supplier"
+msgstr "Закупочная цена у поставщика"
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_manufacturing_order__state__ready
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Ready"
+msgstr "Готово"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__date_ready
+msgid "Ready Date"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__index
+msgid "Refractive Index"
+msgstr "Показатель преломления"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_lens_check_index_range
+msgid "Refractive index must be between 1.5 and 1.9"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Reset to Draft"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__activity_user_id
+msgid "Responsible User"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__sale_price
+msgid "Retail price for customers"
+msgstr "Розничная цена для клиентов"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Right Eye (OD)"
+msgstr "Правый глаз (OD)"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__od_add
+msgid "Right eye addition for progressive/bifocal lenses: -30.00 to +20.00"
+msgstr "Аддидация правого глаза для прогрессивных/бифокальных линз: от -30.00 до +20.00"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__od_axis
+msgid "Right eye axis: 1-180°"
+msgstr "Ось правого глаза: 1-180°"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__od_cyl
+msgid "Right eye cylinder: -4.00 to 0.00"
+msgstr "Цилиндр правого глаза: от -4.00 до 0.00"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__prism_od
+msgid "Right eye prism (e.g., \"2.0 BI\")"
+msgstr "Призма правого глаза (напр., \"2.0 BI\")"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__od_sph
+msgid "Right eye sphere: -20.00 to +20.00"
+msgstr "Сфера правого глаза: от -20.00 до +20.00"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__pd_right
+msgid "Right monocular PD"
+msgstr "Правое монокулярное МР"
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__sku
+msgid "SKU"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_lens_unique_sku
+msgid "SKU must be unique"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__sale_price
+msgid "Sale Price"
+msgstr "Цена продажи"
+
+#. module: optics_core
+#: model:ir.model.constraint,message:optics_core.constraint_optics_lens_check_sale_price_positive
+msgid "Sale price must be positive"
+msgstr "Цена продажи должна быть положительной"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_search
+msgid "Search Lenses"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Search Manufacturing Orders"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_search
+msgid "Search Prescriptions"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens_coating__sequence
+msgid "Sequence"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__active
+msgid "Set to False to archive lens"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__active
+msgid "Set to False to archive order"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_prescription__active
+msgid "Set to False to archive prescription"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens_coating__code
+msgid "Short code (e.g., \"AR\", \"HC\", \"UV\")"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_lens__type__single
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_search
+msgid "Single Vision"
+msgstr "Однофокальные"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_form
+msgid "Specification"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_form
+msgid "Sphere & Cylinder"
+msgstr "Сфера и цилиндр"
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Start Production"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__state
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_search
+msgid "Status"
+msgstr "Статус"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__sku
+msgid "Stock Keeping Unit / Product Code"
+msgstr "Артикул / Код товара"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__coating_summary
+msgid "Summary of applied coatings"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_search
+msgid "This Month"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_prescription_search
+msgid "This Year"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_manufacturing_order_form
+msgid "Timeline"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields.selection,name:optics_core.selection__optics_lens__material__trivex
+msgid "Trivex"
+msgstr "Тривекс"
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__is_late
+msgid "True if order is past expected delivery date"
+msgstr ""
+
+#. module: optics_core
+#: model_terms:ir.ui.view,arch_db:optics_core.view_optics_lens_search
+msgid "Type"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_lens__type
+msgid ""
+"Type of lens: Single Vision (одна зона), Bifocal (2 зоны), Progressive "
+"(плавный переход)"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_manufacturing_order__website_message_ids
+msgid "Website Messages"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,help:optics_core.field_optics_manufacturing_order__website_message_ids
+msgid "Website communication history"
+msgstr ""
+
+#. module: optics_core
+#: model:ir.model.fields,field_description:optics_core.field_optics_lens__weight
+msgid "Weight (g)"
+msgstr ""

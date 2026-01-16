@@ -1,0 +1,82 @@
+---
+- name: Cleanup all Redis processes and restart
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+
+  tasks:
+    - name: Find all processes listening on port 6379
+      shell: lsof -i:6379 || echo "No processes found"
+      register: lsof_result
+      become: yes
+
+    - name: Display processes on port 6379
+      debug:
+        msg: "{{ lsof_result.stdout_lines }}"
+
+    - name: Kill all Redis processes
+      shell: pkill -9 redis || echo "No redis processes to kill"
+      register: pkill_result
+      become: yes
+
+    - name: Display pkill result
+      debug:
+        msg: "{{ pkill_result.stdout }}"
+
+    - name: Check if Redis is a system service
+      shell: systemctl list-units --type=service | grep redis || echo "No redis service"
+      register: systemctl_result
+      become: yes
+
+    - name: Display systemctl result
+      debug:
+        msg: "{{ systemctl_result.stdout_lines }}"
+
+    - name: Stop Redis system service if exists
+      systemd:
+        name: redis
+        state: stopped
+      become: yes
+      ignore_errors: yes
+
+    - name: Stop Redis server system service if exists
+      systemd:
+        name: redis-server
+        state: stopped
+      become: yes
+      ignore_errors: yes
+
+    - name: Wait for port to be freed
+      pause:
+        seconds: 5
+
+    - name: Verify port 6379 is free
+      shell: lsof -i:6379 || echo "Port 6379 is now free"
+      register: verify_port
+      become: yes
+
+    - name: Display port verification
+      debug:
+        msg: "{{ verify_port.stdout }}"
+
+    - name: Start all services
+      shell: cd {{ odoo_base_dir }} && docker compose up -d
+      become: yes
+      become_user: "{{ deploy_user }}"
+      register: compose_up
+
+    - name: Wait for services to initialize
+      pause:
+        seconds: 20
+
+    - name: Check services status
+      shell: docker ps --filter "name=opticserp"
+      register: docker_ps
+      become: yes
+
+    - name: Display services status
+      debug:
+        msg: "{{ docker_ps.stdout_lines }}"

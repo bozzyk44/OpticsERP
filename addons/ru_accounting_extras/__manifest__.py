@@ -29,17 +29,22 @@
         'sale',
     ],
     'data': [
+        # Data
+        'data/sequence.xml',
+
         # Security
         'security/ir.model.access.csv',
 
         # Views
         'views/cash_transfer_views.xml',
         'views/account_views.xml',
-        'views/menu_views.xml',
 
-        # Reports
+        # Reports (must be loaded before menu_views.xml because menu references these actions)
         'reports/gp_report_views.xml',
         'reports/profit_by_location_views.xml',
+
+        # Menu (must be last because it references actions from reports)
+        'views/menu_views.xml',
     ],
     'demo': [],
     'installable': True,

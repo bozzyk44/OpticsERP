@@ -1,0 +1,61 @@
+---
+# Default variables for Odoo role
+
+# Odoo version
+odoo_version: "17"
+
+# Deployment paths
+odoo_base_dir: "/opt/opticserp"
+odoo_addons_dir: "{{ odoo_base_dir }}/addons"
+odoo_data_dir: "{{ odoo_base_dir }}/data"
+odoo_config_dir: "/etc/opticserp"
+
+# Database configuration (PostgreSQL 15 in Docker, exposed on host port 5432)
+# Using host network mode for all containers - connect via localhost
+odoo_db_host: "localhost"
+odoo_db_port: 5432
+odoo_db_name: "odoo_production"
+odoo_db_user: "odoo"
+# Password from environment variable POSTGRES_PASSWORD
+
+# Odoo server configuration
+odoo_http_port: 8069
+odoo_longpolling_port: 8072
+odoo_workers: 4
+odoo_max_cron_threads: 2
+
+# Redis configuration (Redis on host)
+# Using host network mode - connect via localhost
+redis_host: "localhost"
+redis_port: 6379
+
+# KKT Adapter configuration
+kkt_adapter_port: 8000
+
+# Celery Flower (monitoring)
+celery_flower_port: 5555
+celery_flower_enabled: true
+
+# Admin password (from environment variable ODOO_ADMIN_PASSWORD)
+odoo_admin_password: "{{ lookup('env', 'ODOO_ADMIN_PASSWORD') | default('changeme', true) }}"
+
+# Security
+odoo_list_db: false  # Hide database list in production
+odoo_without_demo: true  # No demo data in production
+
+# Logging
+odoo_log_level: "info"
+odoo_logfile: "/var/log/opticserp/odoo.log"
+
+# Session timeout (1 hour)
+odoo_session_timeout: 3600
+
+# Proxy mode (behind Nginx)
+odoo_proxy_mode: true
+
+# Custom addons to deploy
+custom_addons:
+  - optics_core
+  - optics_pos_ru54fz
+  - connector_b
+  - ru_accounting_extras

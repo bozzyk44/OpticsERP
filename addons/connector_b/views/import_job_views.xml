@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Import Job Tree View -->
+    <record id="view_connector_import_job_tree" model="ir.ui.view">
+        <field name="name">connector.import.job.tree</field>
+        <field name="model">connector.import.job</field>
+        <field name="arch" type="xml">
+            <tree string="Import Jobs" decoration-success="state=='done'" decoration-danger="state=='failed'" decoration-warning="state=='running'" decoration-muted="state=='cancelled'">
+                <field name="name"/>
+                <field name="profile_id"/>
+                <field name="file_name"/>
+                <field name="start_date"/>
+                <field name="duration" widget="float_time"/>
+                <field name="total_rows"/>
+                <field name="created_count"/>
+                <field name="updated_count"/>
+                <field name="error_count"/>
+                <field name="state" widget="badge" decoration-info="state=='draft'" decoration-warning="state=='running'" decoration-success="state=='done'" decoration-danger="state=='failed'" decoration-muted="state=='cancelled'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Import Job Form View -->
+    <record id="view_connector_import_job_form" model="ir.ui.view">
+        <field name="name">connector.import.job.form</field>
+        <field name="model">connector.import.job</field>
+        <field name="arch" type="xml">
+            <form string="Import Job">
+                <header>
+                    <button name="action_run_import" string="Run Import" type="object"
+                            class="oe_highlight"
+                            invisible="state != 'draft'"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state in ('done', 'failed', 'cancelled')"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" type="object"
+                            invisible="state not in ('failed', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,running,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_logs" type="object" class="oe_stat_button" icon="fa-list-alt">
+                            <field name="log_count" widget="statinfo" string="Logs"/>
+                        </button>
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options='{"terminology": "archive"}'/>
+                        </button>
+                    </div>
+
+                    <!-- Error Message Alert -->
+                    <div class="alert alert-danger" role="alert" invisible="not error_message">
+                        <strong>Error:</strong>
+                        <field name="error_message" readonly="1" nolabel="1"/>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="o_progressbar" invisible="state not in ('running', 'done')">
+                        <div class="o_progressbar_title">
+                            <span>Progress: <field name="progress_percent" readonly="1"/>%</span>
+                        </div>
+                        <div class="o_progressbar_bar">
+                            <div class="o_progressbar_complete" t-attf-style="width: {{progress_percent}}%"/>
+                        </div>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group name="profile_info" string="Import Configuration">
+                            <field name="profile_id" options="{'no_create': True}"/>
+                            <field name="file_name" invisible="1"/>
+                            <field name="file_data" filename="file_name" widget="binary"/>
+                        </group>
+                        <group name="timing" string="Timing">
+                            <field name="start_date" readonly="1"/>
+                            <field name="end_date" readonly="1"/>
+                            <field name="duration" widget="float_time" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group name="statistics" string="Statistics">
+                        <group>
+                            <field name="total_rows" readonly="1"/>
+                            <field name="processed_rows" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="created_count" readonly="1"/>
+                            <field name="updated_count" readonly="1"/>
+                            <field name="skipped_count" readonly="1"/>
+                            <field name="error_count" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page name="logs" string="Logs">
+                            <field name="log_ids" nolabel="1">
+                                <tree decoration-danger="level=='error'" decoration-warning="level=='warning'">
+                                    <field name="create_date"/>
+                                    <field name="level" widget="badge" decoration-info="level=='info'" decoration-warning="level=='warning'" decoration-danger="level=='error'"/>
+                                    <field name="row_number"/>
+                                    <field name="message"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="notes" string="Notes">
+                            <field name="notes" placeholder="Additional notes about this import..." nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Import Job Search View -->
+    <record id="view_connector_import_job_search" model="ir.ui.view">
+        <field name="name">connector.import.job.search</field>
+        <field name="model">connector.import.job</field>
+        <field name="arch" type="xml">
+            <search string="Search Import Jobs">
+                <field name="name" string="Job Reference"/>
+                <field name="profile_id"/>
+                <field name="file_name"/>
+
+                <separator/>
+
+                <filter name="filter_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_running" string="Running" domain="[('state', '=', 'running')]"/>
+                <filter name="filter_done" string="Done" domain="[('state', '=', 'done')]"/>
+                <filter name="filter_failed" string="Failed" domain="[('state', '=', 'failed')]"/>
+                <filter name="filter_cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+
+                <separator/>
+
+                <filter name="filter_has_errors" string="Has Errors" domain="[('error_count', '>', 0)]"/>
+
+                <separator/>
+
+                <filter name="filter_today" string="Today" domain="[('start_date', '>=', (context_today()).strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_this_week" string="This Week" domain="[('start_date', '>=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+
+                <separator/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_profile" string="Profile" context="{'group_by': 'profile_id'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_date" string="Start Date" context="{'group_by': 'start_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Import Job Action -->
+    <record id="action_connector_import_job" model="ir.actions.act_window">
+        <field name="name">Import Jobs</field>
+        <field name="res_model">connector.import.job</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Import Job
+            </p>
+            <p>
+                Import jobs execute supplier catalog imports using configured profiles.
+                Upload your Excel or CSV file and run the import.
+            </p>
+        </field>
+    </record>
+
+    <!-- Import Log Tree View -->
+    <record id="view_connector_import_log_tree" model="ir.ui.view">
+        <field name="name">connector.import.log.tree</field>
+        <field name="model">connector.import.log</field>
+        <field name="arch" type="xml">
+            <tree string="Import Logs" decoration-danger="level=='error'" decoration-warning="level=='warning'">
+                <field name="create_date"/>
+                <field name="job_id"/>
+                <field name="level" widget="badge" decoration-info="level=='info'" decoration-warning="level=='warning'" decoration-danger="level=='error'"/>
+                <field name="row_number"/>
+                <field name="message"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Import Log Form View -->
+    <record id="view_connector_import_log_form" model="ir.ui.view">
+        <field name="name">connector.import.log.form</field>
+        <field name="model">connector.import.log</field>
+        <field name="arch" type="xml">
+            <form string="Import Log">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="job_id"/>
+                            <field name="level" widget="radio"/>
+                            <field name="row_number"/>
+                        </group>
+                        <group>
+                            <field name="create_date"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="message" nolabel="1"/>
+                    </group>
+                    <group string="Row Data (JSON)" invisible="not row_data">
+                        <field name="row_data" widget="ace" options="{'mode': 'json'}" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

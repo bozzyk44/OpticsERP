@@ -1,0 +1,296 @@
+---
+# MASTER PLAYBOOK: Complete Odoo WebSocket Configuration
+# This playbook configures Nginx and Odoo for proper WebSocket support
+# Applied: 2025-12-31
+# Resolves: "Connection Lost" errors in Odoo web interface
+
+- name: Configure Odoo WebSocket Support (Complete Solution)
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    server_ip: "194.87.235.33"
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+
+  tasks:
+    # ==============================================================
+    # STEP 1: Configure Nginx WebSocket Map Directive
+    # ==============================================================
+
+    - name: Backup nginx.conf
+      copy:
+        src: /etc/nginx/nginx.conf
+        dest: /etc/nginx/nginx.conf.backup-{{ ansible_date_time.date }}
+        remote_src: yes
+      become: yes
+
+    - name: Check if WebSocket map directive already exists
+      shell: grep -q "map.*http_upgrade.*connection_upgrade" /etc/nginx/nginx.conf
+      register: map_exists
+      failed_when: false
+      changed_when: false
+      become: yes
+
+    - name: Add WebSocket connection upgrade map to nginx.conf
+      shell: |
+        sudo sed -i '/^http {/a\    # WebSocket connection upgrade map\n    map $http_upgrade $connection_upgrade {\n        default upgrade;\n        '"'"''"'"' close;\n    }\n' /etc/nginx/nginx.conf
+      become: yes
+      when: map_exists.rc != 0
+
+    # ==============================================================
+    # STEP 2: Configure Nginx Site with WebSocket Support
+    # ==============================================================
+
+    - name: Backup current Nginx site configuration
+      copy:
+        src: /etc/nginx/sites-available/{{ server_ip }}.conf
+        dest: /etc/nginx/sites-available/{{ server_ip }}.conf.backup-{{ ansible_date_time.date }}
+        remote_src: yes
+      become: yes
+
+    - name: Deploy Nginx configuration with WebSocket support
+      copy:
+        dest: /etc/nginx/sites-available/{{ server_ip }}.conf
+        content: |
+          # Virtual host for {{ server_ip }}
+          # Complete WebSocket configuration for Odoo 17
+          # Last updated: {{ ansible_date_time.date }} {{ ansible_date_time.time }}
+
+          upstream backend_odoo {
+              server localhost:8069;
+              keepalive 32;
+          }
+
+          upstream backend_odoo_longpolling {
+              server localhost:8072;
+              keepalive 32;
+          }
+
+          server {
+              listen 80;
+              server_name {{ server_ip }};
+
+              # Logging
+              access_log /var/log/nginx/{{ server_ip }}_access.log;
+              error_log /var/log/nginx/{{ server_ip }}_error.log;
+
+              # Client settings
+              client_max_body_size 100M;
+              proxy_read_timeout 720s;
+              proxy_connect_timeout 720s;
+              proxy_send_timeout 720s;
+
+              # WebSocket location (Odoo 17 real-time communication)
+              location /websocket {
+                  proxy_pass http://backend_odoo_longpolling;
+                  proxy_http_version 1.1;
+
+                  # WebSocket upgrade headers
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection $connection_upgrade;
+
+                  # Required headers for Odoo WebSocket
+                  proxy_set_header Host $host;
+                  proxy_set_header Origin $http_origin;
+
+                  # Standard proxy headers
+                  proxy_set_header X-Forwarded-Host $host;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_set_header X-Real-IP $remote_addr;
+
+                  # WebSocket-specific settings
+                  proxy_read_timeout 3600s;
+                  proxy_send_timeout 3600s;
+                  proxy_buffering off;
+              }
+
+              # Longpolling location (legacy support)
+              location /longpolling {
+                  proxy_pass http://backend_odoo_longpolling;
+                  proxy_http_version 1.1;
+
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection $connection_upgrade;
+                  proxy_set_header Host $host;
+                  proxy_set_header Origin $http_origin;
+                  proxy_set_header X-Forwarded-Host $host;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_set_header X-Real-IP $remote_addr;
+
+                  proxy_read_timeout 3600s;
+                  proxy_send_timeout 3600s;
+                  proxy_buffering off;
+              }
+
+              # Main Odoo application
+              location / {
+                  proxy_pass http://backend_odoo;
+                  proxy_http_version 1.1;
+                  proxy_redirect off;
+
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Forwarded-Host $host;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_set_header X-Real-IP $remote_addr;
+              }
+
+              # Health check endpoint
+              location /nginx-health {
+                  access_log off;
+                  return 200 "healthy\n";
+                  add_header Content-Type text/plain;
+              }
+          }
+        owner: root
+        group: root
+        mode: '0644'
+      become: yes
+      register: nginx_site_config
+
+    # ==============================================================
+    # STEP 3: Test and Reload Nginx
+    # ==============================================================
+
+    - name: Test Nginx configuration syntax
+      command: nginx -t
+      register: nginx_test
+      become: yes
+      failed_when: nginx_test.rc != 0
+
+    - name: Display Nginx test result
+      debug:
+        msg: "{{ nginx_test.stderr_lines }}"
+
+    - name: Reload Nginx to apply changes
+      systemd:
+        name: nginx
+        state: reloaded
+      become: yes
+      when: nginx_test.rc == 0
+
+    - name: Verify Nginx is running
+      systemd:
+        name: nginx
+      register: nginx_status
+      become: yes
+
+    - name: Display Nginx status
+      debug:
+        msg: "Nginx status: {{ nginx_status.status.ActiveState }}"
+
+    # ==============================================================
+    # STEP 4: Configure Odoo WebSocket URL
+    # ==============================================================
+
+    - name: Backup odoo.conf
+      copy:
+        src: /etc/opticserp/odoo.conf
+        dest: /etc/opticserp/odoo.conf.backup-{{ ansible_date_time.date }}
+        remote_src: yes
+      become: yes
+
+    - name: Add websocket_url to odoo.conf
+      lineinfile:
+        path: /etc/opticserp/odoo.conf
+        regexp: '^websocket_url\s*='
+        line: 'websocket_url = ws://{{ server_ip }}/websocket'
+        insertafter: '^proxy_mode'
+        state: present
+      become: yes
+      register: odoo_config
+
+    - name: Display updated Odoo config
+      shell: cat /etc/opticserp/odoo.conf | grep -E "(proxy_mode|websocket_url)"
+      register: config_check
+      become: yes
+      when: odoo_config.changed
+
+    - name: Show Odoo WebSocket configuration
+      debug:
+        msg: "{{ config_check.stdout_lines }}"
+      when: odoo_config.changed
+
+    # ==============================================================
+    # STEP 5: Restart Odoo to Apply Changes
+    # ==============================================================
+
+    - name: Restart Odoo container
+      shell: cd {{ odoo_base_dir }} && docker compose restart odoo
+      become: yes
+      become_user: "{{ deploy_user }}"
+      when: odoo_config.changed
+
+    - name: Wait for Odoo to start
+      pause:
+        seconds: 20
+      when: odoo_config.changed
+
+    - name: Verify Odoo container is running
+      shell: docker ps --filter name=opticserp_odoo --format 'Up {{.Status}}'
+      register: odoo_status
+      become: yes
+
+    - name: Display Odoo container status
+      debug:
+        msg: "{{ odoo_status.stdout }}"
+
+    # ==============================================================
+    # STEP 6: Verify WebSocket Ports
+    # ==============================================================
+
+    - name: Check Odoo port mappings
+      shell: docker port opticserp_odoo
+      register: odoo_ports
+      become: yes
+
+    - name: Display Odoo ports
+      debug:
+        msg: "{{ odoo_ports.stdout_lines }}"
+
+    # ==============================================================
+    # FINAL STATUS
+    # ==============================================================
+
+    - name: Display final configuration summary
+      debug:
+        msg: |
+          ✅ Odoo WebSocket Configuration Complete!
+
+          Changes Applied:
+          ================
+          1. Nginx Configuration:
+             - Added WebSocket map directive to nginx.conf
+             - Configured /websocket location → localhost:8072
+             - Added proper WebSocket upgrade headers
+             - Added Origin header passthrough
+
+          2. Odoo Configuration:
+             - Set websocket_url = ws://{{ server_ip }}/websocket
+             - Ensures browser connects via Nginx proxy
+
+          3. Port Mapping:
+             - Port 8069: 0.0.0.0:8069 (HTTP, public)
+             - Port 8072: 127.0.0.1:8072 (WebSocket, localhost only)
+
+          WebSocket Flow:
+          ================
+          Browser → Nginx:80/websocket → localhost:8072 → Odoo gevent
+
+          Testing:
+          ========
+          1. Open browser: http://{{ server_ip }}
+          2. Login to Odoo
+          3. Check for "Connection Lost" errors (should be GONE)
+          4. Browser console (F12): Look for WebSocket connection
+          5. Network tab → WS filter: Should show ws://{{ server_ip }}/websocket
+
+          Status:
+          =======
+          - Nginx: {{ nginx_status.status.ActiveState }}
+          - Odoo: {{ odoo_status.stdout }}
+
+          Configuration files backed up with date: {{ ansible_date_time.date }}

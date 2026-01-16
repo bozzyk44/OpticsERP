@@ -32,20 +32,19 @@
     'data': [
         # Security
         'security/ir.model.access.csv',
-
-        # Views
-        'views/pos_session_views.xml',
-        'views/pos_config_views.xml',
-        'views/offline_buffer_views.xml',
-
-        # Reports
-        'reports/x_report_template.xml',
-        'reports/z_report_template.xml',
     ],
     'assets': {
         'point_of_sale.assets': [
+            # JavaScript
             'optics_pos_ru54fz/static/src/js/offline_indicator.js',
             'optics_pos_ru54fz/static/src/js/kkt_adapter_client.js',
+            'optics_pos_ru54fz/static/src/js/refund_saga.js',
+
+            # XML Templates
+            'optics_pos_ru54fz/static/src/xml/offline_indicator.xml',
+
+            # Styles
+            'optics_pos_ru54fz/static/src/scss/offline_indicator.scss',
         ],
     },
     'demo': [],

@@ -1,0 +1,145 @@
+---
+# PostgreSQL role - Deploy PostgreSQL 15 in Docker
+
+- name: Remove broken PostgreSQL repository files FIRST
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/apt/sources.list.d/pgdg.list
+    - /etc/apt/sources.list.d/pgdg.list.save
+    - /usr/share/keyrings/postgresql-keyring.gpg
+    - /usr/share/keyrings/postgresql-archive-keyring.gpg
+    - /etc/apt/trusted.gpg.d/postgresql.gpg
+  ignore_errors: yes
+
+- name: Update apt cache after removing broken repositories
+  apt:
+    update_cache: yes
+  ignore_errors: yes
+
+- name: Install acl package (required for Ansible become operations)
+  apt:
+    name: acl
+    state: present
+
+- name: Stop and remove old PostgreSQL 12 if exists
+  systemd:
+    name: postgresql
+    state: stopped
+    enabled: no
+  ignore_errors: yes
+
+- name: Remove old PostgreSQL packages
+  apt:
+    name:
+      - postgresql
+      - postgresql-12
+      - postgresql-contrib-12
+      - postgresql-client-12
+    state: absent
+    purge: yes
+  ignore_errors: yes
+
+- name: Install python3-psycopg2 for Ansible PostgreSQL modules
+  apt:
+    name: python3-psycopg2
+    state: present
+
+- name: Create PostgreSQL directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0755'
+  loop:
+    - "{{ postgresql_base_dir }}"
+    - "{{ postgresql_data_dir }}"
+    - "{{ postgresql_config_dir }}"
+
+- name: Deploy PostgreSQL configuration
+  template:
+    src: postgresql.conf.j2
+    dest: "{{ postgresql_config_dir }}/postgresql.conf"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0644'
+
+- name: Deploy pg_hba.conf
+  template:
+    src: pg_hba.conf.j2
+    dest: "{{ postgresql_config_dir }}/pg_hba.conf"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0644'
+
+- name: Deploy PostgreSQL docker-compose file
+  template:
+    src: docker-compose.postgresql.yml.j2
+    dest: "{{ postgresql_base_dir }}/docker-compose.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0644'
+
+- name: Pull PostgreSQL Docker image
+  command: docker pull postgres:15-alpine
+  become: yes
+  become_user: "{{ deploy_user }}"
+
+- name: Start PostgreSQL container
+  command: docker compose up -d
+  args:
+    chdir: "{{ postgresql_base_dir }}"
+  environment:
+    POSTGRES_PASSWORD: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+  become: yes
+  become_user: "{{ deploy_user }}"
+  register: docker_compose_output
+  changed_when: "'Creating' in docker_compose_output.stdout or 'Starting' in docker_compose_output.stdout or 'Recreating' in docker_compose_output.stdout"
+
+- name: Wait for PostgreSQL to be ready
+  wait_for:
+    port: "{{ postgresql_port }}"
+    delay: 5
+    timeout: 60
+
+- name: Create PostgreSQL databases
+  postgresql_db:
+    name: "{{ item.name }}"
+    encoding: "{{ item.encoding }}"
+    lc_collate: "{{ item.lc_collate }}"
+    lc_ctype: "{{ item.lc_ctype }}"
+    state: present
+    login_host: localhost
+    login_port: "{{ postgresql_port }}"
+    login_user: postgres
+    login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+  loop: "{{ postgresql_databases }}"
+
+- name: Create PostgreSQL users
+  postgresql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    db: "{{ item.db }}"
+    priv: "{{ item.priv }}"
+    state: present
+    login_host: localhost
+    login_port: "{{ postgresql_port }}"
+    login_user: postgres
+    login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+  loop: "{{ postgresql_users }}"
+  no_log: true
+
+- name: Display PostgreSQL container status
+  command: docker compose ps
+  args:
+    chdir: "{{ postgresql_base_dir }}"
+  become: yes
+  become_user: "{{ deploy_user }}"
+  register: pg_status
+  changed_when: false
+
+- name: Show PostgreSQL status
+  debug:
+    msg: "{{ pg_status.stdout_lines }}"

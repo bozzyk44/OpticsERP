@@ -1,0 +1,71 @@
+---
+# Common variables for all servers
+
+# System user for deployment
+deploy_user: deploy
+deploy_group: deploy
+deploy_home: /home/deploy
+
+# Timezone and NTP
+timezone: Europe/Moscow
+ntp_servers:
+  - 0.ru.pool.ntp.org
+  - 1.ru.pool.ntp.org
+  - 2.ru.pool.ntp.org
+
+# Python version
+python_version: "3.11"
+
+# Docker
+docker_edition: ce
+docker_compose_version: "2.24.0"
+
+# PostgreSQL
+postgresql_version: "15"
+postgresql_port: 5432
+
+# Redis
+redis_version: "7.2"
+redis_port: 6379
+redis_maxmemory: "512mb"
+redis_maxmemory_policy: "allkeys-lru"
+
+# Odoo
+odoo_version: "17.0"
+odoo_port: 8069
+
+# KKT Adapter
+kkt_adapter_port: 8000
+
+# Nginx
+nginx_version: latest
+
+# Monitoring
+prometheus_version: "v2.48.0"
+grafana_version: "10.2.0"
+prometheus_port: 9090
+grafana_port: 3000
+
+# Firewall ports
+allowed_tcp_ports:
+  - 22    # SSH
+  - 80    # HTTP
+  - 443   # HTTPS
+  - 8069  # Odoo HTTP
+  - 8072  # Odoo Longpolling
+  - 8000  # KKT Adapter
+  - 5555  # Celery Flower (monitoring)
+  - 9090  # Prometheus
+  - 3000  # Grafana
+
+# SSL/TLS
+ssl_certificate_path: /etc/ssl/certs
+ssl_key_path: /etc/ssl/private
+
+# Backup
+backup_retention_days: 90
+backup_path: /var/backups/opticserp
+
+# Logging
+log_rotation_days: 7
+log_max_size: 100M

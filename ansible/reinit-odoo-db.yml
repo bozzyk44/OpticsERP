@@ -1,0 +1,66 @@
+---
+- name: Reinitialize Odoo database
+  hosts: odoo_servers
+  become: true
+
+  tasks:
+    - name: Stop Odoo container
+      shell: cd /opt/opticserp && docker compose stop odoo
+
+    - name: Wait for connections to close
+      pause:
+        seconds: 5
+
+    - name: Drop odoo_production database
+      postgresql_db:
+        name: odoo_production
+        state: absent
+        login_host: localhost
+        login_port: 5432
+        login_user: postgres
+        login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+
+    - name: Recreate odoo_production database
+      postgresql_db:
+        name: odoo_production
+        encoding: UTF8
+        lc_collate: en_US.utf8
+        lc_ctype: en_US.utf8
+        state: present
+        login_host: localhost
+        login_port: 5432
+        login_user: postgres
+        login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+
+    - name: Grant all privileges to odoo user
+      postgresql_user:
+        name: odoo
+        password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+        db: odoo_production
+        priv: "ALL"
+        state: present
+        login_host: localhost
+        login_port: 5432
+        login_user: postgres
+        login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+
+    - name: Grant ALL on schema public to odoo user
+      postgresql_query:
+        login_host: localhost
+        login_port: 5432
+        login_user: postgres
+        login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+        db: odoo_production
+        query: "GRANT ALL ON SCHEMA public TO odoo"
+
+    - name: Grant ownership of schema public to odoo user
+      postgresql_query:
+        login_host: localhost
+        login_port: 5432
+        login_user: postgres
+        login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+        db: odoo_production
+        query: "ALTER SCHEMA public OWNER TO odoo"
+
+    - name: Restart Odoo container
+      shell: cd /opt/opticserp && docker compose restart odoo

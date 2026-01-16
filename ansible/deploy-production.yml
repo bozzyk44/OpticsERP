@@ -1,0 +1,372 @@
+---
+# MASTER DEPLOYMENT PLAYBOOK для OpticsERP Production
+# Полное развертывание с нуля с учетом всех исправлений
+# Last Updated: 2025-12-31
+# Usage: ansible-playbook -i inventories/production/hosts.yml deploy-production.yml
+
+- name: "PHASE 1: Server Preparation"
+  hosts: all
+  become: true
+  tags: ['prepare', 'phase1']
+
+  tasks:
+    - name: Display deployment info
+      debug:
+        msg: |
+          ═══════════════════════════════════════════════════════
+          OpticsERP Production Deployment
+          ═══════════════════════════════════════════════════════
+          Phase 1: Server Preparation
+
+          Target: {{ inventory_hostname }}
+          Date: {{ ansible_date_time.iso8601 }}
+
+          This will:
+          - Install base packages
+          - Configure security
+          - Install Docker
+          - Prepare system for OpticsERP
+          ═══════════════════════════════════════════════════════
+
+    - name: Run common role (base system)
+      include_role:
+        name: common
+      tags: ['common']
+
+    - name: Run security role (firewall, SSH hardening)
+      include_role:
+        name: security
+      tags: ['security']
+
+    - name: Run Docker role
+      include_role:
+        name: docker
+      tags: ['docker']
+
+# ==============================================================================
+# PHASE 2: Database and Cache Setup
+# ==============================================================================
+
+- name: "PHASE 2: Database & Cache"
+  hosts: odoo_servers
+  become: true
+  tags: ['database', 'phase2']
+
+  vars:
+    deploy_user: "deploy"
+
+  tasks:
+    - name: Display Phase 2 info
+      debug:
+        msg: |
+          ═══════════════════════════════════════════════════════
+          Phase 2: Database & Cache Installation
+          ═══════════════════════════════════════════════════════
+          Installing:
+          - PostgreSQL 15
+          - Redis 7.2
+
+          CRITICAL: System Redis will be disabled to prevent
+          port conflicts with Docker Redis.
+          ═══════════════════════════════════════════════════════
+
+    - name: Install PostgreSQL
+      include_role:
+        name: postgresql
+      tags: ['postgresql']
+
+    - name: Disable system Redis (prevent port 6379 conflict)
+      block:
+        - name: Stop redis-server service
+          systemd:
+            name: redis-server
+            state: stopped
+          ignore_errors: yes
+
+        - name: Disable and mask redis-server
+          systemd:
+            name: redis-server
+            enabled: no
+            masked: yes
+          ignore_errors: yes
+
+        - name: Stop redis service
+          systemd:
+            name: redis
+            state: stopped
+          ignore_errors: yes
+
+        - name: Disable and mask redis
+          systemd:
+            name: redis
+            enabled: no
+            masked: yes
+          ignore_errors: yes
+
+        - name: Kill any remaining redis-server processes
+          shell: pkill -9 redis-server || true
+          ignore_errors: yes
+      tags: ['redis-cleanup']
+
+    - name: Install Redis role
+      include_role:
+        name: redis
+      tags: ['redis']
+
+# ==============================================================================
+# PHASE 3: Nginx Reverse Proxy (WITHOUT WebSocket yet)
+# ==============================================================================
+
+- name: "PHASE 3: Nginx Reverse Proxy"
+  hosts: odoo_servers
+  become: true
+  tags: ['nginx', 'phase3']
+
+  tasks:
+    - name: Display Phase 3 info
+      debug:
+        msg: |
+          ═══════════════════════════════════════════════════════
+          Phase 3: Nginx Reverse Proxy
+          ═══════════════════════════════════════════════════════
+          Installing Nginx with basic configuration
+
+          WebSocket support will be added in Phase 5
+          after Odoo is deployed.
+          ═══════════════════════════════════════════════════════
+
+    - name: Install Nginx
+      include_role:
+        name: nginx
+      tags: ['nginx-base']
+
+# ==============================================================================
+# PHASE 4: Odoo Deployment
+# ==============================================================================
+
+- name: "PHASE 4: Odoo Application"
+  hosts: odoo_servers
+  become: true
+  tags: ['odoo', 'phase4']
+
+  tasks:
+    - name: Display Phase 4 info
+      debug:
+        msg: |
+          ═══════════════════════════════════════════════════════
+          Phase 4: Odoo Application Deployment
+          ═══════════════════════════════════════════════════════
+          Deploying:
+          - Odoo 17 via Docker Compose
+          - Base configuration
+          - Database initialization
+
+          Custom modules will be installed in Phase 6
+          after WebSocket configuration.
+          ═══════════════════════════════════════════════════════
+
+    - name: Deploy Odoo
+      include_role:
+        name: odoo
+      tags: ['odoo-deploy']
+
+# ==============================================================================
+# PHASE 5: WebSocket Configuration (CRITICAL!)
+# ==============================================================================
+
+- name: "PHASE 5: WebSocket Configuration"
+  hosts: odoo_servers
+  become: true
+  tags: ['websocket', 'phase5']
+
+  tasks:
+    - name: Display Phase 5 info
+      debug:
+        msg: |
+          ═══════════════════════════════════════════════════════
+          Phase 5: WebSocket Configuration
+          ═══════════════════════════════════════════════════════
+          CRITICAL FIX: Configure Odoo WebSocket support
+
+          This resolves "Connection Lost" errors by:
+          1. Adding WebSocket map to nginx.conf
+          2. Configuring WebSocket proxy locations
+          3. Setting websocket_url in odoo.conf
+          4. Ensuring proper port mapping (8072 localhost-only)
+
+          Without this, Odoo web interface will have
+          persistent connection issues!
+          ═══════════════════════════════════════════════════════
+
+    - name: Configure WebSocket support
+      include_tasks: configure-odoo-websocket.yml
+      tags: ['websocket-config']
+
+# ==============================================================================
+# PHASE 6: Custom Modules Installation
+# ==============================================================================
+
+- name: "PHASE 6: Custom Modules"
+  hosts: odoo_servers
+  become: true
+  tags: ['modules', 'phase6']
+
+  tasks:
+    - name: Display Phase 6 info
+      debug:
+        msg: |
+          ═══════════════════════════════════════════════════════
+          Phase 6: Custom Modules Installation
+          ═══════════════════════════════════════════════════════
+          Installing OpticsERP custom modules:
+          - optics_core (prescriptions, lenses, manufacturing)
+          - optics_pos_ru54fz (POS with 54-ФЗ compliance)
+          - connector_b (Excel/CSV import)
+          - ru_accounting_extras (cash accounts, GP reports)
+          ═══════════════════════════════════════════════════════
+
+    - name: Install custom modules
+      include_tasks: install-modules-cli.yml
+      tags: ['modules-install']
+
+# ==============================================================================
+# PHASE 7: Mock Services (Optional - Development/Testing)
+# ==============================================================================
+
+- name: "PHASE 7: Mock Services (Optional)"
+  hosts: odoo_servers
+  become: true
+  tags: ['mock', 'phase7', 'never']  # 'never' tag - must be explicitly requested
+
+  tasks:
+    - name: Display Phase 7 info
+      debug:
+        msg: |
+          ═══════════════════════════════════════════════════════
+          Phase 7: Mock Services (Development/Testing)
+          ═══════════════════════════════════════════════════════
+          OPTIONAL: Install mock services for testing
+
+          Services:
+          - Mock OFD (port 9000)
+          - Mock Odoo API (port 8070)
+
+          NOTE: Only use for development/testing!
+          Production should use real OFD service.
+          ═══════════════════════════════════════════════════════
+
+    - name: Deploy mock services
+      include_tasks: start-mock-services.yml
+      tags: ['mock-deploy']
+      when: deploy_mock_services | default(false)
+
+# ==============================================================================
+# PHASE 8: Monitoring (Optional)
+# ==============================================================================
+
+- name: "PHASE 8: Monitoring Setup (Optional)"
+  hosts: monitoring_servers
+  become: true
+  tags: ['monitoring', 'phase8', 'never']  # Must be explicitly requested
+
+  tasks:
+    - name: Display Phase 8 info
+      debug:
+        msg: |
+          ═══════════════════════════════════════════════════════
+          Phase 8: Monitoring Setup
+          ═══════════════════════════════════════════════════════
+          Installing:
+          - Prometheus (metrics collection)
+          - Grafana (dashboards)
+
+          Access after installation:
+          - Prometheus: http://SERVER_IP:9090
+          - Grafana: http://SERVER_IP:3000
+          ═══════════════════════════════════════════════════════
+
+    - name: Install monitoring
+      include_role:
+        name: monitoring
+      tags: ['monitoring-install']
+
+# ==============================================================================
+# FINAL: Verification and Summary
+# ==============================================================================
+
+- name: "FINAL: Deployment Verification"
+  hosts: odoo_servers
+  become: true
+  tags: ['verify', 'always']
+
+  vars:
+    server_ip: "{{ ansible_host }}"
+
+  tasks:
+    - name: Check Nginx status
+      systemd:
+        name: nginx
+      register: nginx_status
+
+    - name: Check Docker containers
+      shell: docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+      register: docker_status
+
+    - name: Check Odoo WebSocket port mapping
+      shell: docker port opticserp_odoo 2>/dev/null | grep 8072 || echo "Not configured"
+      register: websocket_port
+
+    - name: Check WebSocket configuration in odoo.conf
+      shell: grep websocket_url /etc/opticserp/odoo.conf || echo "Not configured"
+      register: websocket_config
+
+    - name: Check Nginx WebSocket location
+      shell: grep -A 5 "location /websocket" /etc/nginx/sites-available/{{ server_ip }}.conf || echo "Not configured"
+      register: nginx_websocket
+
+    - name: Display final deployment summary
+      debug:
+        msg: |
+          ═══════════════════════════════════════════════════════
+          ✅ DEPLOYMENT COMPLETE
+          ═══════════════════════════════════════════════════════
+
+          Server: {{ inventory_hostname }} ({{ server_ip }})
+          Date: {{ ansible_date_time.iso8601 }}
+
+          SERVICES STATUS:
+          ════════════════════════════════════════════════════════
+          Nginx: {{ nginx_status.status.ActiveState }}
+
+          Docker Containers:
+          {{ docker_status.stdout }}
+
+          WEBSOCKET CONFIGURATION:
+          ════════════════════════════════════════════════════════
+          Port Mapping: {{ websocket_port.stdout }}
+          Odoo Config: {{ websocket_config.stdout }}
+          Nginx Location: {{ 'Configured' if nginx_websocket.rc == 0 else 'NOT Configured' }}
+
+          ACCESS POINTS:
+          ════════════════════════════════════════════════════════
+          Odoo Web Interface: http://{{ server_ip }}
+          Grafana (if installed): http://{{ server_ip }}:3000
+          Prometheus (if installed): http://{{ server_ip }}:9090
+
+          NEXT STEPS:
+          ════════════════════════════════════════════════════════
+          1. Open http://{{ server_ip }} in browser
+          2. Login to Odoo (admin / password from setup)
+          3. Verify NO "Connection Lost" errors
+          4. Check browser console for WebSocket connection
+          5. Test POS functionality
+
+          DOCUMENTATION:
+          ════════════════════════════════════════════════════════
+          - WebSocket: ansible/WEBSOCKET_CONFIG_README.md
+          - Playbooks: ansible/PLAYBOOKS_INDEX.md
+          - Main docs: CLAUDE.md
+
+          ═══════════════════════════════════════════════════════
+          🎉 OpticsERP is ready for use!
+          ═══════════════════════════════════════════════════════

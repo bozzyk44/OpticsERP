@@ -1,0 +1,108 @@
+---
+# Monitoring role - Setup Prometheus and Grafana
+
+- name: Create monitoring directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0755'
+  loop:
+    - "{{ monitoring_dir }}"
+    - "{{ monitoring_dir }}/prometheus"
+    - "{{ monitoring_dir }}/grafana"
+    - "{{ prometheus_data_dir }}"
+    - "{{ grafana_data_dir }}"
+
+- name: Set permissions for Prometheus data directory
+  file:
+    path: "{{ prometheus_data_dir }}"
+    owner: "65534"  # nobody user in Prometheus container
+    group: "65534"
+    mode: '0755'
+
+- name: Set permissions for Grafana data directory
+  file:
+    path: "{{ grafana_data_dir }}"
+    owner: "472"  # grafana user in Grafana container
+    group: "472"
+    mode: '0755'
+
+- name: Copy Prometheus configuration
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_dir }}/prometheus/prometheus.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0644'
+  notify: restart monitoring
+
+- name: Copy Prometheus alert rules
+  template:
+    src: alert_rules.yml.j2
+    dest: "{{ monitoring_dir }}/prometheus/alert_rules.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0644'
+  notify: restart monitoring
+
+- name: Copy Grafana datasource configuration
+  template:
+    src: grafana-datasources.yml.j2
+    dest: "{{ monitoring_dir }}/grafana/datasources.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0644'
+
+- name: Copy Grafana dashboard configuration
+  template:
+    src: grafana-dashboards.yml.j2
+    dest: "{{ monitoring_dir }}/grafana/dashboards.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0644'
+
+- name: Copy monitoring docker-compose file
+  template:
+    src: docker-compose.monitoring.yml.j2
+    dest: "{{ monitoring_dir }}/docker-compose.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0644'
+  notify: restart monitoring
+
+- name: Start monitoring services
+  command: docker compose up -d
+  args:
+    chdir: "{{ monitoring_dir }}"
+  become: yes
+  become_user: "{{ deploy_user }}"
+  register: docker_compose_output
+  changed_when: "'Creating' in docker_compose_output.stdout or 'Starting' in docker_compose_output.stdout"
+
+- name: Wait for Prometheus to be ready
+  uri:
+    url: "http://localhost:{{ prometheus_port }}/-/ready"
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 30
+  delay: 2
+
+- name: Wait for Grafana to be ready
+  uri:
+    url: "http://localhost:{{ grafana_port }}/api/health"
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 30
+  delay: 2
+
+- name: Display monitoring URLs
+  debug:
+    msg: |
+      ✅ Monitoring stack deployed successfully!
+      Prometheus: http://{{ ansible_host }}:{{ prometheus_port }}
+      Grafana: http://{{ ansible_host }}:{{ grafana_port }}
+      Grafana credentials: {{ grafana_admin_user }} / {{ grafana_admin_password }}

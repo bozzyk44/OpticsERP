@@ -1,0 +1,22 @@
+---
+# Default variables for security role
+
+# SSH hardening
+ssh_port: 22
+ssh_permit_root_login: "no"
+ssh_password_authentication: "no"
+ssh_pubkey_authentication: "yes"
+ssh_challenge_response_authentication: "no"
+ssh_max_auth_tries: 3
+ssh_login_grace_time: 30
+
+# Fail2ban
+fail2ban_enabled: true
+fail2ban_bantime: 3600
+fail2ban_findtime: 600
+fail2ban_maxretry: 5
+
+# UFW firewall
+ufw_enabled: true
+ufw_default_incoming: deny
+ufw_default_outgoing: allow

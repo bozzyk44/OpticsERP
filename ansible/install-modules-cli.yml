@@ -1,0 +1,89 @@
+---
+- name: Install Odoo modules via CLI
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+    custom_modules:
+      - optics_core
+      - optics_pos_ru54fz
+      - connector_b
+      - ru_accounting_extras
+
+  tasks:
+    - name: Copy updated custom addons to server
+      synchronize:
+        src: "{{ playbook_dir }}/../addons/{{ item }}/"
+        dest: "{{ odoo_base_dir }}/addons/{{ item }}/"
+        delete: yes
+        recursive: yes
+        rsync_path: "sudo rsync"
+        rsync_opts:
+          - "--exclude=*.pyc"
+          - "--exclude=__pycache__"
+          - "--exclude=*.log"
+      loop: "{{ custom_modules }}"
+      delegate_to: localhost
+      become: no
+
+    - name: Stop Odoo container
+      shell: cd {{ odoo_base_dir }} && docker compose stop odoo
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Install modules using docker run
+      shell: |
+        docker run --rm \
+          --network opticserp_opticserp_network \
+          -v /etc/opticserp/odoo.conf:/etc/odoo/odoo.conf:ro \
+          -v /opt/opticserp/addons:/mnt/extra-addons:ro \
+          -v /opt/opticserp/data:/var/lib/odoo \
+          odoo:17.0 \
+          odoo -c /etc/odoo/odoo.conf -d odoo_production -i {{ custom_modules | join(',') }} --stop-after-init --without-demo=all --log-level=info
+      args:
+        chdir: "{{ odoo_base_dir }}"
+      environment:
+        POSTGRES_PASSWORD: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+      register: module_install
+      changed_when: "'Modules loaded' in module_install.stdout or 'Modules installed' in module_install.stdout"
+
+    - name: Display installation output
+      debug:
+        msg: "{{ module_install.stdout_lines[-50:] if module_install.stdout_lines | length > 50 else module_install.stdout_lines }}"
+
+    - name: Start Odoo container
+      shell: cd {{ odoo_base_dir }} && docker compose start odoo
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Wait for Odoo to be ready
+      wait_for:
+        port: 8069
+        delay: 10
+        timeout: 60
+
+    - name: Check Odoo is accessible
+      uri:
+        url: http://localhost:8069/web
+        status_code: 200,302,303
+        timeout: 30
+      register: odoo_check
+      retries: 5
+      delay: 10
+
+    - name: Display success message
+      debug:
+        msg: |
+          ✅ Custom modules installed successfully!
+
+          Installed modules:
+          {% for module in custom_modules %}
+            - {{ module }}
+          {% endfor %}
+
+          Odoo URL: http://194.87.235.33:8069
+          Database: odoo_production
+
+          You can now login and use the custom modules!

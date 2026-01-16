@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root Menu -->
+    <menuitem id="menu_optics_root"
+              name="Optics"
+              sequence="50"
+              web_icon="optics_core,static/description/icon.png"/>
+
+    <!-- Prescriptions Menu -->
+    <menuitem id="menu_optics_prescriptions"
+              name="Prescriptions"
+              parent="menu_optics_root"
+              action="action_optics_prescription"
+              sequence="10"/>
+
+    <!-- Lenses Menu -->
+    <menuitem id="menu_optics_lenses"
+              name="Lenses"
+              parent="menu_optics_root"
+              action="action_optics_lens"
+              sequence="20"/>
+
+    <!-- Manufacturing Orders Menu -->
+    <menuitem id="menu_optics_manufacturing"
+              name="Manufacturing Orders"
+              parent="menu_optics_root"
+              action="action_optics_manufacturing_order"
+              sequence="30"/>
+
+    <!-- Configuration Menu -->
+    <menuitem id="menu_optics_configuration"
+              name="Configuration"
+              parent="menu_optics_root"
+              sequence="100"/>
+
+    <!-- Lens Coatings Menu (Configuration) -->
+    <menuitem id="menu_optics_lens_coatings"
+              name="Lens Coatings"
+              parent="menu_optics_configuration"
+              action="action_optics_lens_coating"
+              sequence="10"/>
+
+</odoo>

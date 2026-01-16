@@ -1,0 +1,252 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# * connector_b
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-30 00:00+0000\n"
+"PO-Revision-Date: 2025-11-30 00:00+0000\n"
+"Last-Translator: Claude AI <noreply@anthropic.com>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#. module: connector_b
+#: model:ir.module.category,name:connector_b.module_category_connector_b
+msgid "Connector B (Excel/CSV Import)"
+msgstr "Connector B (Импорт Excel/CSV)"
+
+#. module: connector_b
+#: model:ir.module.category,description:connector_b.module_category_connector_b
+msgid "Import supplier catalogs from Excel/CSV with validation"
+msgstr "Импорт каталогов поставщиков из Excel/CSV с валидацией"
+
+#. module: connector_b
+#: model:ir.actions.act_window,name:connector_b.action_connector_import_profile
+#: model:ir.ui.menu,name:connector_b.menu_connector_import_profiles
+msgid "Import Profiles"
+msgstr "Профили импорта"
+
+#. module: connector_b
+#: model:ir.actions.act_window,name:connector_b.action_connector_import_job
+#: model:ir.ui.menu,name:connector_b.menu_connector_import_jobs
+msgid "Import Jobs"
+msgstr "Задания импорта"
+
+#. module: connector_b
+#: model:ir.ui.menu,name:connector_b.menu_connector_root
+msgid "Import/Export"
+msgstr "Импорт/Экспорт"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_profile__name
+msgid "Profile Name"
+msgstr "Название профиля"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_profile__supplier_id
+msgid "Supplier"
+msgstr "Поставщик"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_profile__mapping
+msgid "Column Mapping"
+msgstr "Маппинг столбцов"
+
+#. module: connector_b
+#: model:ir.model.fields,help:connector_b.field_connector_import_profile__mapping
+msgid "JSON mapping of Excel/CSV columns to Odoo fields"
+msgstr "JSON маппинг столбцов Excel/CSV на поля Odoo"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_profile__active
+msgid "Active"
+msgstr "Активен"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__name
+msgid "Job Name"
+msgstr "Название задания"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__profile_id
+msgid "Import Profile"
+msgstr "Профиль импорта"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__file_data
+msgid "File"
+msgstr "Файл"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__file_name
+msgid "File Name"
+msgstr "Имя файла"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__state
+msgid "State"
+msgstr "Состояние"
+
+#. module: connector_b
+#: selection:connector.import.job,state:0
+msgid "Draft"
+msgstr "Черновик"
+
+#. module: connector_b
+#: selection:connector.import.job,state:0
+msgid "In Progress"
+msgstr "В работе"
+
+#. module: connector_b
+#: selection:connector.import.job,state:0
+msgid "Done"
+msgstr "Выполнено"
+
+#. module: connector_b
+#: selection:connector.import.job,state:0
+msgid "Failed"
+msgstr "Ошибка"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__records_total
+msgid "Total Records"
+msgstr "Всего записей"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__records_created
+msgid "Created"
+msgstr "Создано"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__records_updated
+msgid "Updated"
+msgstr "Обновлено"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__records_failed
+msgid "Failed"
+msgstr "Ошибок"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__log_ids
+msgid "Import Logs"
+msgstr "Логи импорта"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__started_at
+msgid "Started At"
+msgstr "Начато"
+
+#. module: connector_b
+#: model:ir.model.fields,field_description:connector_b.field_connector_import_job__completed_at
+msgid "Completed At"
+msgstr "Завершено"
+
+#. module: connector_b
+#: model:ir.ui.view,arch_db:connector_b.view_connector_import_job_form
+msgid "Import"
+msgstr "Импорт"
+
+#. module: connector_b
+#: model:ir.ui.view,arch_db:connector_b.view_connector_import_job_form
+msgid "Run Import"
+msgstr "Запустить импорт"
+
+#. module: connector_b
+#: model:ir.ui.view,arch_db:connector_b.view_connector_import_job_form
+msgid "Preview"
+msgstr "Предпросмотр"
+
+#. module: connector_b
+#: model:ir.ui.view,arch_db:connector_b.view_connector_import_job_form
+msgid "Cancel"
+msgstr "Отмена"
+
+#. module: connector_b
+#: code:addons/connector_b/models/import_job.py
+#, python-format
+msgid "Import completed successfully"
+msgstr "Импорт выполнен успешно"
+
+#. module: connector_b
+#: code:addons/connector_b/models/import_job.py
+#, python-format
+msgid "Import failed with errors"
+msgstr "Импорт завершён с ошибками"
+
+#. module: connector_b
+#: code:addons/connector_b/models/import_job.py
+#, python-format
+msgid "File is required"
+msgstr "Файл обязателен"
+
+#. module: connector_b
+#: code:addons/connector_b/models/import_job.py
+#, python-format
+msgid "Import profile is required"
+msgstr "Профиль импорта обязателен"
+
+#. module: connector_b
+#: code:addons/connector_b/models/import_job.py
+#, python-format
+msgid "Unsupported file format. Please use XLSX or CSV"
+msgstr "Неподдерживаемый формат файла. Используйте XLSX или CSV"
+
+#. module: connector_b
+#: code:addons/connector_b/models/import_job.py
+#, python-format
+msgid "Cannot import while offline buffers are not synced"
+msgstr "Невозможно импортировать пока офлайн-буферы не синхронизированы"
+
+#. module: connector_b
+#: code:addons/connector_b/models/import_profile.py
+#, python-format
+msgid "Profile name is required"
+msgstr "Название профиля обязательно"
+
+#. module: connector_b
+#: code:addons/connector_b/models/import_profile.py
+#, python-format
+msgid "Invalid JSON mapping"
+msgstr "Некорректный JSON маппинг"
+
+#. module: connector_b
+#: model:ir.ui.view,arch_db:connector_b.view_connector_import_wizard
+msgid "Import Wizard"
+msgstr "Мастер импорта"
+
+#. module: connector_b
+#: model:ir.ui.view,arch_db:connector_b.view_connector_import_wizard
+msgid "Select File"
+msgstr "Выбрать файл"
+
+#. module: connector_b
+#: model:ir.ui.view,arch_db:connector_b.view_connector_import_wizard
+msgid "Select Profile"
+msgstr "Выбрать профиль"
+
+#. module: connector_b
+#: model:ir.ui.view,arch_db:connector_b.view_connector_import_wizard
+msgid "Showing first 10 rows"
+msgstr "Показаны первые 10 строк"
+
+#. module: connector_b
+#: model:ir.ui.view,arch_db:connector_b.view_connector_import_wizard
+msgid "Confirm Import"
+msgstr "Подтвердить импорт"
+
+#. module: connector_b
+#: model:ir.ui.view,arch_db:connector_b.view_connector_import_wizard
+msgid "Upsert Mode"
+msgstr "Режим создания/обновления"
+
+#. module: connector_b
+#: model:ir.ui.view,arch_db:connector_b.view_connector_import_wizard
+msgid "Create new records or update existing"
+msgstr "Создать новые записи или обновить существующие"

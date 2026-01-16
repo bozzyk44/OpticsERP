@@ -34,13 +34,8 @@
         # Security
         'security/ir.model.access.csv',
 
-        # Views
-        'views/import_profile_views.xml',
-        'views/import_job_views.xml',
-        'views/menu_views.xml',
-
-        # Wizards
-        'wizards/import_wizard_views.xml',
+        # Data
+        'data/ir_sequence_data.xml',
     ],
     'demo': [],
     'installable': True,

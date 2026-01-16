@@ -1,0 +1,93 @@
+---
+- name: Configure applications to use mock services
+  hosts: odoo_servers
+  become: true
+
+  vars:
+    odoo_base_dir: "/opt/opticserp"
+    deploy_user: "deploy"
+
+  tasks:
+    - name: Copy updated docker-compose.yml to server
+      copy:
+        src: "{{ playbook_dir }}/../docker-compose.yml"
+        dest: "{{ odoo_base_dir }}/docker-compose.yml"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0644'
+      become: yes
+
+    - name: Copy updated ofd_client.py to server
+      copy:
+        src: "{{ playbook_dir }}/../kkt_adapter/app/ofd_client.py"
+        dest: "{{ odoo_base_dir }}/kkt_adapter/app/ofd_client.py"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0644'
+      become: yes
+
+    - name: Restart KKT Adapter to apply changes
+      shell: cd {{ odoo_base_dir }} && docker compose restart kkt_adapter
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Restart Celery Worker to apply changes
+      shell: cd {{ odoo_base_dir }} && docker compose restart celery_worker
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Restart Flower to apply changes
+      shell: cd {{ odoo_base_dir }} && docker compose restart celery_flower
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Wait for services to be ready
+      pause:
+        seconds: 15
+
+    - name: Check KKT Adapter health
+      uri:
+        url: http://localhost:8000/v1/health
+        status_code: 200
+        timeout: 10
+      register: kkt_health
+      retries: 5
+      delay: 5
+
+    - name: Display KKT Adapter health
+      debug:
+        msg: "{{ kkt_health.json }}"
+
+    - name: Check mock OFD service
+      uri:
+        url: http://localhost:9000/health
+        status_code: 200
+        timeout: 5
+      register: mock_ofd_health
+      retries: 3
+      delay: 3
+
+    - name: Check services status
+      shell: docker ps --format 'table {{.Names}}\t{{.Status}}' | grep -E 'kkt_adapter|celery|flower|mock'
+      register: services_status
+      become: yes
+      become_user: "{{ deploy_user }}"
+
+    - name: Display services status
+      debug:
+        msg: "{{ services_status.stdout_lines }}"
+
+    - name: Display success message
+      debug:
+        msg: |
+          ✅ Mock services configured successfully!
+
+          Mock OFD URL: http://localhost:9000
+          Mock Odoo API URL: http://localhost:8070
+
+          Services configured:
+            - KKT Adapter: Using mock OFD (HTTP mode)
+            - Celery Worker: Using mock OFD (HTTP mode)
+            - Celery Flower: Using mock OFD (HTTP mode)
+
+          You can now test the system with mock services!

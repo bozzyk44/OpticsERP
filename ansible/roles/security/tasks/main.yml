@@ -1,0 +1,140 @@
+---
+# Security role - Harden server security
+
+- name: Install security packages
+  apt:
+    name:
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+      - apt-listchanges
+      - needrestart
+    state: present
+
+- name: Configure SSH hardening
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: '^#?Port', line: 'Port {{ ssh_port }}' }
+    - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin {{ ssh_permit_root_login }}' }
+    - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication {{ ssh_password_authentication }}' }
+    - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication {{ ssh_pubkey_authentication }}' }
+    - { regexp: '^#?ChallengeResponseAuthentication', line: 'ChallengeResponseAuthentication {{ ssh_challenge_response_authentication }}' }
+    - { regexp: '^#?MaxAuthTries', line: 'MaxAuthTries {{ ssh_max_auth_tries }}' }
+    - { regexp: '^#?LoginGraceTime', line: 'LoginGraceTime {{ ssh_login_grace_time }}' }
+    - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }
+    - { regexp: '^#?PermitEmptyPasswords', line: 'PermitEmptyPasswords no' }
+    - { regexp: '^#?Protocol', line: 'Protocol 2' }
+  notify: restart sshd
+
+- name: Configure UFW defaults
+  ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: 'incoming', policy: '{{ ufw_default_incoming }}' }
+    - { direction: 'outgoing', policy: '{{ ufw_default_outgoing }}' }
+  when: ufw_enabled
+
+- name: Allow SSH through UFW
+  ufw:
+    rule: allow
+    port: "{{ ssh_port }}"
+    proto: tcp
+  when: ufw_enabled
+
+- name: Allow application ports through UFW
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ allowed_tcp_ports }}"
+  when: ufw_enabled
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+  when: ufw_enabled
+
+- name: Configure fail2ban
+  template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    mode: '0644'
+  notify: restart fail2ban
+  when: fail2ban_enabled
+
+- name: Enable and start fail2ban
+  systemd:
+    name: fail2ban
+    enabled: yes
+    state: started
+  when: fail2ban_enabled
+
+- name: Configure unattended-upgrades
+  template:
+    src: 50unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    mode: '0644'
+
+- name: Enable unattended-upgrades
+  template:
+    src: 20auto-upgrades.j2
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    mode: '0644'
+
+- name: Disable unnecessary services
+  systemd:
+    name: "{{ item }}"
+    enabled: no
+    state: stopped
+  loop:
+    - avahi-daemon
+    - cups
+    - bluetooth
+  ignore_errors: yes
+
+- name: Set secure permissions on sensitive files
+  file:
+    path: "{{ item }}"
+    mode: '0600'
+  loop:
+    - /etc/ssh/sshd_config
+    - /etc/sudoers
+  ignore_errors: yes
+
+- name: Configure kernel security parameters
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    # Disable IP forwarding (unless needed for routing)
+    - { name: 'net.ipv4.ip_forward', value: '0' }
+    # Enable SYN cookies protection
+    - { name: 'net.ipv4.tcp_syncookies', value: '1' }
+    # Disable ICMP redirect acceptance
+    - { name: 'net.ipv4.conf.all.accept_redirects', value: '0' }
+    - { name: 'net.ipv6.conf.all.accept_redirects', value: '0' }
+    # Disable source packet routing
+    - { name: 'net.ipv4.conf.all.accept_source_route', value: '0' }
+    - { name: 'net.ipv6.conf.all.accept_source_route', value: '0' }
+    # Enable IP spoofing protection
+    - { name: 'net.ipv4.conf.all.rp_filter', value: '1' }
+    # Ignore ICMP ping requests
+    - { name: 'net.ipv4.icmp_echo_ignore_all', value: '0' }
+    # Log martian packets
+    - { name: 'net.ipv4.conf.all.log_martians', value: '1' }
+
+- name: Display security status
+  debug:
+    msg: |
+      ✅ Security hardening completed!
+      - SSH: Port {{ ssh_port }}, root login disabled
+      - UFW: Enabled, {{ allowed_tcp_ports | length }} ports allowed
+      - Fail2ban: {{ 'Enabled' if fail2ban_enabled else 'Disabled' }}
+      - Unattended upgrades: Enabled

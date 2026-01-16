@@ -1,0 +1,49 @@
+---
+# Redis role - Install and configure Redis
+
+- name: Install Redis
+  apt:
+    name:
+      - redis-server
+      - python3-redis
+    state: present
+
+- name: Create Redis config directory
+  file:
+    path: /etc/redis
+    state: directory
+    mode: '0755'
+
+- name: Configure Redis
+  template:
+    src: redis.conf.j2
+    dest: /etc/redis/redis.conf
+    mode: '0640'
+    owner: redis
+    group: redis
+  notify: restart redis
+
+- name: Configure Redis systemd service
+  template:
+    src: redis.service.j2
+    dest: /etc/systemd/system/redis.service
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart redis
+
+- name: Enable and start Redis
+  systemd:
+    name: redis
+    enabled: yes
+    state: started
+
+- name: Verify Redis is running
+  command: redis-cli ping
+  register: redis_ping
+  changed_when: false
+  failed_when: redis_ping.stdout != "PONG"
+
+- name: Redis is working
+  debug:
+    msg: "✅ Redis test passed: {{ redis_ping.stdout }}"

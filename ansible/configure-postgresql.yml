@@ -1,0 +1,16 @@
+---
+# Configure PostgreSQL with templates
+- name: Configure PostgreSQL for Odoo
+  hosts: odoo_servers
+  become: true
+
+  pre_tasks:
+    - name: Verify environment variables
+      assert:
+        that:
+          - lookup('env', 'POSTGRES_PASSWORD') | length > 0
+        fail_msg: "POSTGRES_PASSWORD not set. Run: source .env"
+        success_msg: "✅ POSTGRES_PASSWORD is set"
+
+  roles:
+    - postgresql

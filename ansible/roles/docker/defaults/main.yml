@@ -1,0 +1,14 @@
+---
+# Default variables for Docker role
+
+docker_apt_repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+docker_gpg_key: https://download.docker.com/linux/ubuntu/gpg
+
+docker_daemon_options:
+  log-driver: "json-file"
+  log-opts:
+    max-size: "{{ log_max_size }}"
+    max-file: "3"
+  storage-driver: "overlay2"
+  live-restore: true
+  userland-proxy: false
