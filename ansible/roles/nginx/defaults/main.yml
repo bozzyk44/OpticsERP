@@ -10,7 +10,16 @@ nginx_ssl_protocols: "TLSv1.2 TLSv1.3"
 nginx_ssl_ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
 nginx_ssl_prefer_server_ciphers: "off"
 
-# Virtual hosts
+# Odoo-specific settings
+odoo_port: 8069
+odoo_longpolling_port: 8072
+nginx_server_name: "{{ ansible_host }}"
+nginx_listen_port: 80
+
+# Use Odoo template (includes WebSocket support)
+nginx_use_odoo_template: true
+
+# Legacy: Virtual hosts (for non-Odoo deployments)
 nginx_vhosts:
   - server_name: "{{ ansible_host }}"
     listen_port: 80

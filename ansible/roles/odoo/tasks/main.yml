@@ -151,6 +151,28 @@
   delay: 10
   ignore_errors: yes
 
+- name: Configure web.base.url to use Nginx
+  command: >
+    docker exec -e PGPASSWORD={{ odoo_db_password }} opticserp_postgresql
+    psql -h localhost -U {{ odoo_db_user }} -d {{ odoo_db_name }}
+    -c "INSERT INTO ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date)
+        VALUES ('web.base.url', 'http://{{ nginx_server_name | default(ansible_host) }}', 1, now(), 1, now())
+        ON CONFLICT (key) DO UPDATE SET value = 'http://{{ nginx_server_name | default(ansible_host) }}';"
+  register: web_base_url_result
+  changed_when: "'INSERT' in web_base_url_result.stdout or 'UPDATE' in web_base_url_result.stdout"
+  failed_when: false
+
+- name: Freeze web.base.url
+  command: >
+    docker exec -e PGPASSWORD={{ odoo_db_password }} opticserp_postgresql
+    psql -h localhost -U {{ odoo_db_user }} -d {{ odoo_db_name }}
+    -c "INSERT INTO ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date)
+        VALUES ('web.base.url.freeze', 'True', 1, now(), 1, now())
+        ON CONFLICT (key) DO UPDATE SET value = 'True';"
+  register: freeze_result
+  changed_when: "'INSERT' in freeze_result.stdout or 'UPDATE' in freeze_result.stdout"
+  failed_when: false
+
 - name: Check Odoo container status
   command: docker ps --filter name=opticserp_odoo --format "{% raw %}{{.Status}}{% endraw %}"
   register: odoo_container_status
@@ -184,10 +206,15 @@
   debug:
     msg: |
       ✅ Odoo deployment completed!
-      Odoo URL: http://{{ ansible_host }}:{{ odoo_http_port }}
-      Longpolling: http://{{ ansible_host }}:{{ odoo_longpolling_port }}
+
+      Access URLs (through Nginx):
+      Odoo URL: http://{{ nginx_server_name | default(ansible_host) }}
       KKT Adapter: http://{{ ansible_host }}:{{ kkt_adapter_port }}
       {% if celery_flower_enabled %}Celery Flower: http://{{ ansible_host }}:{{ celery_flower_port }}{% endif %}
+
+      Internal ports (localhost only):
+      Odoo HTTP: localhost:{{ odoo_http_port }}
+      Longpolling: localhost:{{ odoo_longpolling_port }}
 
       Container status: {{ odoo_container_status.stdout }}
 

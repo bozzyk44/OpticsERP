@@ -49,20 +49,38 @@
     mode: '0644'
   notify: restart nginx
 
-- name: Configure virtual hosts
+- name: Configure Odoo virtual host with WebSocket support
+  template:
+    src: odoo-vhost.conf.j2
+    dest: "/etc/nginx/sites-available/{{ nginx_server_name }}.conf"
+    mode: '0644'
+  when: nginx_use_odoo_template | default(false)
+  notify: restart nginx
+
+- name: Enable Odoo virtual host
+  file:
+    src: "/etc/nginx/sites-available/{{ nginx_server_name }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ nginx_server_name }}.conf"
+    state: link
+  when: nginx_use_odoo_template | default(false)
+  notify: restart nginx
+
+- name: Configure generic virtual hosts (non-Odoo)
   template:
     src: vhost.conf.j2
     dest: "/etc/nginx/sites-available/{{ item.server_name }}.conf"
     mode: '0644'
   loop: "{{ nginx_vhosts }}"
+  when: not (nginx_use_odoo_template | default(false))
   notify: restart nginx
 
-- name: Enable virtual hosts
+- name: Enable generic virtual hosts (non-Odoo)
   file:
     src: "/etc/nginx/sites-available/{{ item.server_name }}.conf"
     dest: "/etc/nginx/sites-enabled/{{ item.server_name }}.conf"
     state: link
   loop: "{{ nginx_vhosts }}"
+  when: not (nginx_use_odoo_template | default(false))
   notify: restart nginx
 
 - name: Test nginx configuration

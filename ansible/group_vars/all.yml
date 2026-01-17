@@ -33,6 +33,7 @@ redis_maxmemory_policy: "allkeys-lru"
 # Odoo
 odoo_version: "17.0"
 odoo_port: 8069
+odoo_longpolling_port: 8072
 
 # KKT Adapter
 kkt_adapter_port: 8000
@@ -47,12 +48,12 @@ prometheus_port: 9090
 grafana_port: 3000
 
 # Firewall ports
+# NOTE: Odoo ports 8069/8072 are NOT exposed externally
+# All Odoo traffic goes through Nginx (port 80/443)
 allowed_tcp_ports:
   - 22    # SSH
-  - 80    # HTTP
-  - 443   # HTTPS
-  - 8069  # Odoo HTTP
-  - 8072  # Odoo Longpolling
+  - 80    # HTTP (Nginx -> Odoo)
+  - 443   # HTTPS (Nginx -> Odoo)
   - 8000  # KKT Adapter
   - 5555  # Celery Flower (monitoring)
   - 9090  # Prometheus
