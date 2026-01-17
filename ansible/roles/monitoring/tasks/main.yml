@@ -12,6 +12,7 @@
     - "{{ monitoring_dir }}"
     - "{{ monitoring_dir }}/prometheus"
     - "{{ monitoring_dir }}/grafana"
+    - "{{ monitoring_dir }}/grafana/dashboards"
     - "{{ prometheus_data_dir }}"
     - "{{ grafana_data_dir }}"
 
@@ -63,6 +64,16 @@
     group: "{{ deploy_group }}"
     mode: '0644'
 
+- name: Copy Grafana dashboard files
+  copy:
+    src: "{{ item }}"
+    dest: "{{ monitoring_dir }}/grafana/dashboards/"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: '0644'
+  with_fileglob:
+    - "dashboards/*.json"
+
 - name: Copy monitoring docker-compose file
   template:
     src: docker-compose.monitoring.yml.j2
@@ -71,6 +82,14 @@
     group: "{{ deploy_group }}"
     mode: '0644'
   notify: restart monitoring
+
+- name: Pull monitoring images
+  command: docker compose pull
+  args:
+    chdir: "{{ monitoring_dir }}"
+  become: yes
+  become_user: "{{ deploy_user }}"
+  changed_when: false
 
 - name: Start monitoring services
   command: docker compose up -d
@@ -102,7 +121,19 @@
 - name: Display monitoring URLs
   debug:
     msg: |
-      ✅ Monitoring stack deployed successfully!
+      =====================================================
+      Monitoring stack deployed successfully!
+      =====================================================
+
       Prometheus: http://{{ ansible_host }}:{{ prometheus_port }}
-      Grafana: http://{{ ansible_host }}:{{ grafana_port }}
-      Grafana credentials: {{ grafana_admin_user }} / {{ grafana_admin_password }}
+      Grafana:    http://{{ ansible_host }}:{{ grafana_port }}
+
+      Grafana Login:
+        User:     {{ grafana_admin_user }}
+        Password: {{ grafana_admin_password }}
+
+      Exporters:
+        Node Exporter:     http://{{ ansible_host }}:{{ node_exporter_port }}/metrics
+        Postgres Exporter: http://{{ ansible_host }}:{{ postgres_exporter_port }}/metrics
+        Redis Exporter:    http://{{ ansible_host }}:{{ redis_exporter_port }}/metrics
+      =====================================================

@@ -8,12 +8,6 @@ global:
     cluster: 'opticserp'
     environment: '{{ deployment_env }}'
 
-# Alertmanager configuration
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets: []
-
 # Load rules
 rule_files:
   - 'alert_rules.yml'
@@ -24,42 +18,49 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
 
-  # KKT Adapter metrics
-  - job_name: 'kkt_adapter'
+  # Node Exporter - System metrics
+  - job_name: 'node'
     static_configs:
-      - targets:
-{% for host in groups['kkt_adapters'] | default([]) %}
-        - '{{ hostvars[host].ansible_host }}:{{ kkt_adapter_port }}'
-{% endfor %}
-    relabel_configs:
-      - source_labels: [__address__]
-        target_label: instance
-      - source_labels: [__address__]
-        regex: '([^:]+):.*'
-        target_label: pos_location
-        replacement: '${1}'
+      - targets: ['node-exporter:9100']
+        labels:
+          service: 'system'
+          host: '{{ ansible_host }}'
 
-  # Odoo metrics (via node_exporter)
-  - job_name: 'odoo_servers'
-    static_configs:
-      - targets:
-{% for host in groups['odoo_servers'] | default([]) %}
-        - '{{ hostvars[host].ansible_host }}:9100'
-{% endfor %}
-
-  # PostgreSQL metrics (via postgres_exporter)
+  # PostgreSQL Exporter
   - job_name: 'postgresql'
     static_configs:
-      - targets:
-{% for host in groups['db_servers'] | default([]) %}
-        - '{{ hostvars[host].ansible_host }}:9187'
-{% endfor %}
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: 'postgresql'
+          host: '{{ ansible_host }}'
 
-  # Redis metrics (via redis_exporter)
+  # Redis Exporter
   - job_name: 'redis'
     static_configs:
-      - targets:
-{% for host in groups['db_servers'] | default([]) %}
-        - '{{ hostvars[host].ansible_host }}:9121'
-{% endfor %}
+      - targets: ['redis-exporter:9121']
+        labels:
+          service: 'redis'
+          host: '{{ ansible_host }}'
+
+  # KKT Adapter - Custom metrics
+  - job_name: 'kkt_adapter'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:{{ kkt_adapter_port }}']
+        labels:
+          service: 'kkt_adapter'
+          pos_id: 'POS-001'
+
+  # Odoo metrics (via custom endpoint if available)
+  - job_name: 'odoo'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:8069']
+        labels:
+          service: 'odoo'
+    # May fail if Odoo doesn't have prometheus metrics
+    honor_labels: true
+    scrape_timeout: 10s

@@ -4,11 +4,38 @@
 monitoring_dir: /opt/monitoring
 prometheus_data_dir: "{{ monitoring_dir }}/prometheus/data"
 grafana_data_dir: "{{ monitoring_dir }}/grafana/data"
+grafana_dashboards_dir: "{{ monitoring_dir }}/grafana/dashboards"
+
+# Container versions
+prometheus_version: "v2.48.0"
+grafana_version: "10.2.2"
+node_exporter_version: "v1.7.0"
+postgres_exporter_version: "v0.15.0"
+redis_exporter_version: "v1.55.0"
+
+# Ports
+prometheus_port: 9090
+grafana_port: 3000
+node_exporter_port: 9100
+postgres_exporter_port: 9187
+redis_exporter_port: 9121
 
 # Prometheus scrape targets
 prometheus_scrape_interval: "15s"
 prometheus_evaluation_interval: "15s"
 
+# KKT Adapter
+kkt_adapter_port: 8000
+
+# PostgreSQL for exporter
+postgres_dsn: "postgresql://{{ postgres_user | default('odoo') }}:{{ postgres_password | default('odoo') }}@localhost:5432/postgres?sslmode=disable"
+
+# Redis for exporter
+redis_addr: "localhost:6379"
+
 # Grafana admin
 grafana_admin_user: admin
-grafana_admin_password: "{{ lookup('env', 'GRAFANA_PASSWORD') | default('admin', true) }}"
+grafana_admin_password: "{{ lookup('env', 'GRAFANA_PASSWORD') | default('OpticsMonitor2026!', true) }}"
+
+# Deployment environment
+deployment_env: "{{ env | default('production') }}"

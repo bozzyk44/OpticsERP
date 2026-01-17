@@ -11,6 +11,7 @@ on:
         options:
           - modules        # Sync addons and update modules
           - restart        # Just restart services
+          - monitoring     # Deploy/update monitoring stack
           - full           # Full deployment (use with caution!)
           - check          # Check services status only
 
@@ -23,6 +24,8 @@ on:
 env:
   ANSIBLE_HOST_KEY_CHECKING: 'false'
   ANSIBLE_FORCE_COLOR: 'true'
+  SERVER_IP: '194.87.235.33'
+  SSH_USER: 'bozzyk44'
 
 jobs:
   deploy:
@@ -51,12 +54,12 @@ jobs:
           chmod 600 ~/.ssh/opticserp
 
           # Add server to known_hosts
-          ssh-keyscan -H 194.87.235.33 >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh-keyscan -H ${{ env.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Test SSH connection
         run: |
           ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
-            bozzyk44@194.87.235.33 "echo 'SSH connection successful'; hostname; uptime"
+            ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "echo 'SSH connection successful'; hostname; uptime"
 
       # ============================================================
       # CHECK SERVICES - Status check only
@@ -92,11 +95,11 @@ jobs:
               --exclude='*.log' \
               -e "ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no" \
               addons/$module/ \
-              bozzyk44@194.87.235.33:/tmp/addons/$module/
+              ${{ env.SSH_USER }}@${{ env.SERVER_IP }}:/tmp/addons/$module/
           done
 
           # Copy to destination with sudo
-          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no bozzyk44@194.87.235.33 "
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "
             for module in optics_core optics_pos_ru54fz connector_b ru_accounting_extras; do
               sudo cp -r /tmp/addons/\$module /opt/opticserp/addons/
             done
@@ -109,7 +112,7 @@ jobs:
         run: |
           echo "=== Updating Odoo modules ==="
 
-          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no bozzyk44@194.87.235.33 "
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "
             cd /opt/opticserp
 
             # Stop Odoo
@@ -128,6 +131,260 @@ jobs:
             # Wait for Odoo to be ready
             sleep 15
             curl -sI http://localhost:8069/web/health | head -3
+          "
+
+      # ============================================================
+      # MONITORING DEPLOYMENT - Prometheus, Grafana, Exporters
+      # ============================================================
+      - name: Deploy Monitoring Stack
+        if: inputs.deployment_type == 'monitoring'
+        run: |
+          echo "=== Deploying Monitoring Stack ==="
+
+          # Create directories
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "
+            sudo mkdir -p /opt/monitoring/{prometheus/data,grafana/data,grafana/dashboards}
+            sudo chown -R 65534:65534 /opt/monitoring/prometheus/data
+            sudo chown -R 472:472 /opt/monitoring/grafana/data
+            sudo chown -R ${{ env.SSH_USER }}:${{ env.SSH_USER }} /opt/monitoring/grafana/dashboards
+            sudo chown ${{ env.SSH_USER }}:${{ env.SSH_USER }} /opt/monitoring /opt/monitoring/prometheus /opt/monitoring/grafana
+          "
+
+          # Copy monitoring configuration files
+          echo "Copying monitoring configs..."
+          scp -i ~/.ssh/opticserp -o StrictHostKeyChecking=no \
+            ansible/roles/monitoring/files/dashboards/*.json \
+            ${{ env.SSH_USER }}@${{ env.SERVER_IP }}:/opt/monitoring/grafana/dashboards/
+
+      - name: Create Prometheus config
+        if: inputs.deployment_type == 'monitoring'
+        run: |
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} 'cat > /opt/monitoring/prometheus/prometheus.yml << EOF
+          global:
+            scrape_interval: 15s
+            evaluation_interval: 15s
+            external_labels:
+              cluster: opticserp
+              environment: production
+
+          rule_files:
+            - alert_rules.yml
+
+          scrape_configs:
+            - job_name: prometheus
+              static_configs:
+                - targets: ["localhost:9090"]
+
+            - job_name: node
+              static_configs:
+                - targets: ["node-exporter:9100"]
+
+            - job_name: postgresql
+              static_configs:
+                - targets: ["postgres-exporter:9187"]
+
+            - job_name: redis
+              static_configs:
+                - targets: ["redis-exporter:9121"]
+
+            - job_name: kkt_adapter
+              metrics_path: /metrics
+              static_configs:
+                - targets: ["host.docker.internal:8000"]
+              scrape_timeout: 10s
+          EOF'
+
+      - name: Create Prometheus alert rules
+        if: inputs.deployment_type == 'monitoring'
+        run: |
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} 'cat > /opt/monitoring/prometheus/alert_rules.yml << EOF
+          groups:
+            - name: opticserp_critical
+              interval: 30s
+              rules:
+                - alert: ServiceDown
+                  expr: up == 0
+                  for: 2m
+                  labels:
+                    severity: critical
+                  annotations:
+                    summary: "Service {{ \$labels.job }} is down"
+
+                - alert: HighCPUUsage
+                  expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+                  for: 10m
+                  labels:
+                    severity: warning
+
+                - alert: HighMemoryUsage
+                  expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+                  for: 10m
+                  labels:
+                    severity: warning
+
+                - alert: DiskSpaceLow
+                  expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 85
+                  for: 5m
+                  labels:
+                    severity: warning
+          EOF'
+
+      - name: Create Grafana configs
+        if: inputs.deployment_type == 'monitoring'
+        run: |
+          # Datasources
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} 'cat > /opt/monitoring/grafana/datasources.yml << EOF
+          apiVersion: 1
+          datasources:
+            - name: Prometheus
+              type: prometheus
+              uid: prometheus
+              access: proxy
+              url: http://prometheus:9090
+              isDefault: true
+              editable: false
+          EOF'
+
+          # Dashboards provider
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} 'cat > /opt/monitoring/grafana/dashboards.yml << EOF
+          apiVersion: 1
+          providers:
+            - name: OpticsERP Dashboards
+              orgId: 1
+              folder: ""
+              type: file
+              disableDeletion: false
+              updateIntervalSeconds: 10
+              options:
+                path: /var/lib/grafana/dashboards
+          EOF'
+
+      - name: Create docker-compose for monitoring
+        if: inputs.deployment_type == 'monitoring'
+        run: |
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} 'sudo tee /opt/monitoring/docker-compose.yml > /dev/null << EOF
+          version: "3.8"
+
+          services:
+            prometheus:
+              image: prom/prometheus:v2.48.0
+              container_name: prometheus
+              restart: unless-stopped
+              command:
+                - "--config.file=/etc/prometheus/prometheus.yml"
+                - "--storage.tsdb.path=/prometheus"
+                - "--storage.tsdb.retention.time=90d"
+                - "--web.enable-lifecycle"
+              ports:
+                - "9090:9090"
+              volumes:
+                - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+                - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+                - /opt/monitoring/prometheus/data:/prometheus
+              networks:
+                - monitoring
+              extra_hosts:
+                - "host.docker.internal:host-gateway"
+
+            grafana:
+              image: grafana/grafana:10.2.2
+              container_name: grafana
+              restart: unless-stopped
+              environment:
+                - GF_SECURITY_ADMIN_USER=admin
+                - GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GRAFANA_PASSWORD || 'OpticsMonitor2026!' }}
+                - GF_SERVER_ROOT_URL=http://${{ env.SERVER_IP }}:3000
+              ports:
+                - "3000:3000"
+              volumes:
+                - /opt/monitoring/grafana/data:/var/lib/grafana
+                - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+                - ./grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+                - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+              networks:
+                - monitoring
+              depends_on:
+                - prometheus
+
+            node-exporter:
+              image: prom/node-exporter:v1.7.0
+              container_name: node-exporter
+              restart: unless-stopped
+              command:
+                - "--path.procfs=/host/proc"
+                - "--path.sysfs=/host/sys"
+                - "--path.rootfs=/rootfs"
+              ports:
+                - "9100:9100"
+              volumes:
+                - /proc:/host/proc:ro
+                - /sys:/host/sys:ro
+                - /:/rootfs:ro
+              networks:
+                - monitoring
+
+            postgres-exporter:
+              image: prometheuscommunity/postgres-exporter:v0.15.0
+              container_name: postgres-exporter
+              restart: unless-stopped
+              environment:
+                - DATA_SOURCE_NAME=postgresql://odoo:odoo@opticserp_postgresql:5432/postgres?sslmode=disable
+              ports:
+                - "9187:9187"
+              networks:
+                - monitoring
+
+            redis-exporter:
+              image: oliver006/redis_exporter:v1.55.0
+              container_name: redis-exporter
+              restart: unless-stopped
+              environment:
+                - REDIS_ADDR=opticserp_redis:6379
+              ports:
+                - "9121:9121"
+              networks:
+                - monitoring
+
+          networks:
+            monitoring:
+              driver: bridge
+          EOF'
+
+      - name: Start monitoring stack
+        if: inputs.deployment_type == 'monitoring'
+        run: |
+          echo "=== Starting monitoring stack ==="
+
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "
+            cd /opt/monitoring
+
+            # Pull images
+            sudo docker compose pull
+
+            # Stop existing if running
+            sudo docker compose down 2>/dev/null || true
+
+            # Start services
+            sudo docker compose up -d
+
+            # Connect PostgreSQL and Redis to monitoring network
+            sudo docker network connect monitoring_monitoring opticserp_postgresql 2>/dev/null || true
+            sudo docker network connect monitoring_monitoring opticserp_redis 2>/dev/null || true
+
+            # Wait for services
+            sleep 10
+
+            # Verify
+            echo '--- Monitoring containers ---'
+            sudo docker ps --filter 'name=prometheus' --filter 'name=grafana' --filter 'name=exporter' --format 'table {{.Names}}\t{{.Status}}'
+
+            echo ''
+            echo '--- Prometheus health ---'
+            curl -s http://localhost:9090/-/ready || echo 'Prometheus not ready'
+
+            echo ''
+            echo '--- Grafana health ---'
+            curl -s http://localhost:3000/api/health || echo 'Grafana not ready'
           "
 
       # ============================================================
@@ -150,7 +407,7 @@ jobs:
         run: |
           echo "=== Verifying deployment ==="
 
-          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no bozzyk44@194.87.235.33 "
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "
             echo '--- Docker containers ---'
             sudo docker ps --format 'table {{.Names}}\t{{.Status}}'
 
@@ -171,6 +428,9 @@ jobs:
           echo "Type: ${{ inputs.deployment_type }}"
           echo "Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo ""
-          echo "Access Odoo: http://194.87.235.33:8069"
-          echo "KKT API: http://194.87.235.33:8000/v1/health"
+          echo "Services:"
+          echo "  Odoo:       http://${{ env.SERVER_IP }}:8069"
+          echo "  KKT API:    http://${{ env.SERVER_IP }}:8000/v1/health"
+          echo "  Prometheus: http://${{ env.SERVER_IP }}:9090"
+          echo "  Grafana:    http://${{ env.SERVER_IP }}:3000"
           echo "========================================"

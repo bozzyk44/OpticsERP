@@ -14,6 +14,7 @@ services:
       - '--storage.tsdb.retention.time=90d'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
     ports:
       - "{{ prometheus_port }}:9090"
     volumes:
@@ -22,6 +23,8 @@ services:
       - {{ prometheus_data_dir }}:/prometheus
     networks:
       - monitoring
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   grafana:
     image: grafana/grafana:{{ grafana_version }}
@@ -30,18 +33,64 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER={{ grafana_admin_user }}
       - GF_SECURITY_ADMIN_PASSWORD={{ grafana_admin_password }}
-      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel
       - GF_SERVER_ROOT_URL=http://{{ ansible_host }}:{{ grafana_port }}
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/opticserp-overview.json
     ports:
       - "{{ grafana_port }}:3000"
     volumes:
       - {{ grafana_data_dir }}:/var/lib/grafana
       - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
       - ./grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks:
       - monitoring
     depends_on:
       - prometheus
+
+  node-exporter:
+    image: prom/node-exporter:{{ node_exporter_version }}
+    container_name: node-exporter
+    restart: unless-stopped
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - "{{ node_exporter_port }}:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - monitoring
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:{{ postgres_exporter_version }}
+    container_name: postgres-exporter
+    restart: unless-stopped
+    environment:
+      - DATA_SOURCE_NAME={{ postgres_dsn }}
+    ports:
+      - "{{ postgres_exporter_port }}:9187"
+    networks:
+      - monitoring
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  redis-exporter:
+    image: oliver006/redis_exporter:{{ redis_exporter_version }}
+    container_name: redis-exporter
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR={{ redis_addr }}
+    ports:
+      - "{{ redis_exporter_port }}:9121"
+    networks:
+      - monitoring
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   monitoring:

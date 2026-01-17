@@ -1,0 +1,59 @@
+---
+# Deploy Monitoring Stack (Prometheus + Grafana + Exporters)
+# Usage: ansible-playbook deploy-monitoring.yml
+#
+# This playbook deploys:
+# - Prometheus for metrics collection
+# - Grafana for visualization and dashboards
+# - Node Exporter for system metrics
+# - PostgreSQL Exporter for database metrics
+# - Redis Exporter for cache metrics
+#
+# Access URLs after deployment:
+# - Prometheus: http://194.87.235.33:9090
+# - Grafana: http://194.87.235.33:3000
+
+- name: Deploy Monitoring Stack
+  hosts: monitoring_servers
+  become: yes
+  gather_facts: yes
+
+  vars:
+    # PostgreSQL connection for exporter
+    # Using host.docker.internal to connect from container to host PostgreSQL
+    postgres_user: odoo
+    postgres_password: "{{ lookup('env', 'ODOO_DB_PASSWORD') | default('odoo', true) }}"
+    postgres_dsn: "postgresql://{{ postgres_user }}:{{ postgres_password }}@host.docker.internal:5432/postgres?sslmode=disable"
+
+    # Redis connection
+    redis_addr: "host.docker.internal:6379"
+
+    # Grafana password (override via environment or leave default)
+    grafana_admin_password: "{{ lookup('env', 'GRAFANA_PASSWORD') | default('OpticsMonitor2026!', true) }}"
+
+  roles:
+    - monitoring
+
+  post_tasks:
+    - name: Show access information
+      debug:
+        msg: |
+          =====================================================
+          MONITORING DEPLOYMENT COMPLETE
+          =====================================================
+
+          Prometheus: http://{{ ansible_host }}:9090
+            - Targets: http://{{ ansible_host }}:9090/targets
+            - Alerts: http://{{ ansible_host }}:9090/alerts
+
+          Grafana: http://{{ ansible_host }}:3000
+            - Username: admin
+            - Password: {{ grafana_admin_password }}
+            - Home Dashboard: OpticsERP Overview
+
+          Exporters (for debugging):
+            - Node: http://{{ ansible_host }}:9100/metrics
+            - PostgreSQL: http://{{ ansible_host }}:9187/metrics
+            - Redis: http://{{ ansible_host }}:9121/metrics
+
+          =====================================================
