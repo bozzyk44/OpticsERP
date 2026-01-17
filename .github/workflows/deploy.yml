@@ -143,11 +143,12 @@ jobs:
 
           # Create directories
           ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "
-            sudo mkdir -p /opt/monitoring/{prometheus/data,grafana/data,grafana/dashboards}
+            sudo mkdir -p /opt/monitoring/{prometheus/data,grafana/data,grafana/dashboards,loki/data,promtail}
             sudo chown -R 65534:65534 /opt/monitoring/prometheus/data
             sudo chown -R 472:472 /opt/monitoring/grafana/data
+            sudo chown -R 10001:10001 /opt/monitoring/loki
             sudo chown -R ${{ env.SSH_USER }}:${{ env.SSH_USER }} /opt/monitoring/grafana/dashboards
-            sudo chown ${{ env.SSH_USER }}:${{ env.SSH_USER }} /opt/monitoring /opt/monitoring/prometheus /opt/monitoring/grafana
+            sudo chown ${{ env.SSH_USER }}:${{ env.SSH_USER }} /opt/monitoring /opt/monitoring/prometheus /opt/monitoring/grafana /opt/monitoring/promtail
           "
 
           # Copy monitoring configuration files
@@ -243,6 +244,12 @@ jobs:
               url: http://prometheus:9090
               isDefault: true
               editable: false
+            - name: Loki
+              type: loki
+              uid: loki
+              access: proxy
+              url: http://loki:3100
+              editable: false
           EOF'
 
           # Dashboards provider
@@ -257,6 +264,105 @@ jobs:
               updateIntervalSeconds: 10
               options:
                 path: /var/lib/grafana/dashboards
+          EOF'
+
+      - name: Create Loki config
+        if: inputs.deployment_type == 'monitoring'
+        run: |
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} 'cat > /opt/monitoring/loki/loki-config.yml << EOF
+          auth_enabled: false
+
+          server:
+            http_listen_port: 3100
+            grpc_listen_port: 9096
+
+          common:
+            instance_addr: 127.0.0.1
+            path_prefix: /loki
+            storage:
+              filesystem:
+                chunks_directory: /loki/chunks
+                rules_directory: /loki/rules
+            replication_factor: 1
+            ring:
+              kvstore:
+                store: inmemory
+
+          query_range:
+            results_cache:
+              cache:
+                embedded_cache:
+                  enabled: true
+                  max_size_mb: 100
+
+          schema_config:
+            configs:
+              - from: 2020-10-24
+                store: boltdb-shipper
+                object_store: filesystem
+                schema: v11
+                index:
+                  prefix: index_
+                  period: 24h
+
+          ruler:
+            alertmanager_url: http://localhost:9093
+
+          limits_config:
+            reject_old_samples: true
+            reject_old_samples_max_age: 168h
+            retention_period: 720h
+
+          compactor:
+            working_directory: /loki/compactor
+            shared_store: filesystem
+            compaction_interval: 10m
+            retention_enabled: true
+            retention_delete_delay: 2h
+            retention_delete_worker_count: 150
+          EOF'
+
+      - name: Create Promtail config
+        if: inputs.deployment_type == 'monitoring'
+        run: |
+          ssh -i ~/.ssh/opticserp -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SERVER_IP }} 'cat > /opt/monitoring/promtail/promtail-config.yml << EOF
+          server:
+            http_listen_port: 9080
+            grpc_listen_port: 0
+
+          positions:
+            filename: /tmp/positions.yaml
+
+          clients:
+            - url: http://loki:3100/loki/api/v1/push
+
+          scrape_configs:
+            - job_name: docker
+              docker_sd_configs:
+                - host: unix:///var/run/docker.sock
+                  refresh_interval: 5s
+              relabel_configs:
+                - source_labels: ["__meta_docker_container_name"]
+                  regex: "/(odoo|opticserp_odoo|opticserp_celery|opticserp_flower|opticserp_redis|opticserp_postgresql|kkt_adapter|prometheus|grafana|loki).*"
+                  action: keep
+                - source_labels: ["__meta_docker_container_name"]
+                  regex: "/(.*)"
+                  target_label: container
+                - source_labels: ["__meta_docker_container_label_com_docker_compose_service"]
+                  target_label: service
+                - source_labels: ["__meta_docker_container_label_com_docker_compose_project"]
+                  target_label: project
+                - source_labels: []
+                  target_label: environment
+                  replacement: production
+                - source_labels: []
+                  target_label: host
+                  replacement: 194.87.235.33
+              pipeline_stages:
+                - regex:
+                    expression: "(?P<level>DEBUG|INFO|WARNING|ERROR|CRITICAL|WARN)"
+                - labels:
+                    level:
           EOF'
 
       - name: Create docker-compose for monitoring
@@ -345,6 +451,33 @@ jobs:
               networks:
                 - monitoring
 
+            loki:
+              image: grafana/loki:2.9.3
+              container_name: loki
+              restart: unless-stopped
+              command: -config.file=/etc/loki/loki-config.yml
+              ports:
+                - "3100:3100"
+              volumes:
+                - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+                - /opt/monitoring/loki/data:/loki
+              networks:
+                - monitoring
+
+            promtail:
+              image: grafana/promtail:2.9.3
+              container_name: promtail
+              restart: unless-stopped
+              command: -config.file=/etc/promtail/promtail-config.yml
+              volumes:
+                - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+                - /var/run/docker.sock:/var/run/docker.sock:ro
+                - /var/lib/docker/containers:/var/lib/docker/containers:ro
+              networks:
+                - monitoring
+              depends_on:
+                - loki
+
           networks:
             monitoring:
               driver: bridge
@@ -376,7 +509,7 @@ jobs:
 
             # Verify
             echo '--- Monitoring containers ---'
-            sudo docker ps --filter 'name=prometheus' --filter 'name=grafana' --filter 'name=exporter' --format 'table {{.Names}}\t{{.Status}}'
+            sudo docker ps --filter 'name=prometheus' --filter 'name=grafana' --filter 'name=exporter' --filter 'name=loki' --filter 'name=promtail' --format 'table {{.Names}}\t{{.Status}}'
 
             echo ''
             echo '--- Prometheus health ---'
@@ -385,6 +518,10 @@ jobs:
             echo ''
             echo '--- Grafana health ---'
             curl -s http://localhost:3000/api/health || echo 'Grafana not ready'
+
+            echo ''
+            echo '--- Loki health ---'
+            curl -s http://localhost:3100/ready || echo 'Loki not ready'
           "
 
       # ============================================================
@@ -433,4 +570,5 @@ jobs:
           echo "  KKT API:    http://${{ env.SERVER_IP }}:8000/v1/health"
           echo "  Prometheus: http://${{ env.SERVER_IP }}:9090"
           echo "  Grafana:    http://${{ env.SERVER_IP }}:3000"
+          echo "  Loki:       http://${{ env.SERVER_IP }}:3100"
           echo "========================================"

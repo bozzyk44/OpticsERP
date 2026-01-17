@@ -12,6 +12,8 @@ grafana_version: "10.2.2"
 node_exporter_version: "v1.7.0"
 postgres_exporter_version: "v0.15.0"
 redis_exporter_version: "v1.55.0"
+loki_version: "2.9.3"
+promtail_version: "2.9.3"
 
 # Ports
 prometheus_port: 9090
@@ -19,6 +21,10 @@ grafana_port: 3000
 node_exporter_port: 9100
 postgres_exporter_port: 9187
 redis_exporter_port: 9121
+loki_port: 3100
+
+# Loki data directory
+loki_data_dir: "{{ monitoring_dir }}/loki/data"
 
 # Prometheus scrape targets
 prometheus_scrape_interval: "15s"

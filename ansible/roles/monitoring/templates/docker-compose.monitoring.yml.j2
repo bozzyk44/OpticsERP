@@ -26,6 +26,33 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  loki:
+    image: grafana/loki:{{ loki_version }}
+    container_name: loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "{{ loki_port }}:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - {{ loki_data_dir }}:/loki
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:{{ promtail_version }}
+    container_name: promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+
   grafana:
     image: grafana/grafana:{{ grafana_version }}
     container_name: grafana
@@ -47,6 +74,7 @@ services:
       - monitoring
     depends_on:
       - prometheus
+      - loki
 
   node-exporter:
     image: prom/node-exporter:{{ node_exporter_version }}
